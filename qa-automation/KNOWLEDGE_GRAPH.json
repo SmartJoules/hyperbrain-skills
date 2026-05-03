@@ -1,0 +1,135 @@
+{
+  "domain": "qa",
+  "service": "qa-automation",
+  "purpose": "Complete QA automation knowledge",
+  "tech_stack": {
+    "e2e_framework": "Playwright",
+    "unit_test": "Jasmine/Karma (Angular), Jest (Node.js)",
+    "integration_test": "Supertest (Node.js)",
+    "coverage": "Istanbul/nyc",
+    "reporting": "Allure, HTML"
+  },
+  "test_generation": {
+    "sources": [
+      "DeJoule Knowledge Base",
+      "Backend Knowledge Base",
+      "IoT Knowledge Base",
+      "Frontend Knowledge Base"
+    ],
+    "generates": [
+      "Unit tests (Jasmine/Jest)",
+      "Integration tests (Supertest)",
+      "E2E tests (Playwright)",
+      "Test fixtures and data",
+      "Mock objects and spies"
+    ]
+  },
+  "test_types": {
+    "unit_tests": {
+      "purpose": "Test individual functions/classes in isolation",
+      "framework": "Jasmine (Angular), Jest (Node.js)",
+      "coverage_target": "80%+",
+      "execution": "Every commit, CI/CD"
+    },
+    "integration_tests": {
+      "purpose": "Test API endpoints and database operations",
+      "framework": "Supertest",
+      "coverage_target": "100% of endpoints",
+      "execution": "Every commit, CI/CD"
+    },
+    "e2e_tests": {
+      "purpose": "Test complete user flows",
+      "framework": "Playwright",
+      "coverage_target": "Critical paths: 100%",
+      "execution": "Before releases, nightly"
+    }
+  },
+  "test_generation_patterns": {
+    "component_unit_test": {
+      "triggers": ["Angular component created", "Service method added"],
+      "generates": [
+        "Test ngOnInit lifecycle",
+        "Test observable subscriptions",
+        "Test data fetching",
+        "Test error handling",
+        "Test user interactions"
+      ],
+      "template": "Auto-generated from KB component patterns"
+    },
+    "api_integration_test": {
+      "triggers": ["API endpoint added", "API route modified"],
+      "generates": [
+        "Happy path test",
+        "Error response tests (404, 500)",
+        "Validation error tests",
+        "Authentication tests",
+        "Rate limiting tests"
+      ],
+      "template": "Auto-generated from API specs in KB"
+    },
+    "e2e_user_flow": {
+      "triggers": ["User journey identified", "Feature complete"],
+      "generates [
+        "Login → Feature flow",
+        "Data display verification",
+        "User interaction tests",
+        "Error scenario tests",
+        "Edge case tests"
+      ],
+      "template": "Auto-generated from user stories in KB"
+    }
+  },
+  "quality_gates": {
+    "before_commit": [
+      "Unit tests passing",
+      "80%+ coverage maintained",
+      "No critical bugs",
+      "Code review approved"
+    ],
+    "before_release": [
+      "All tests passing",
+      "E2E critical paths passing",
+      "Performance benchmarks met",
+      "Security review passed"
+    ]
+  },
+  "test_data": {
+    "factories": [
+      "TestDataFactory - Generates test sites, devices, telemetry",
+      "AuthFixtures - Generates test users, tokens",
+      "DeviceFixtures - Generates test devices, components"
+    ],
+    "sources": [
+      "DeJoule Knowledge Base - Realistic data from production",
+      "Backend Knowledge Base - API contracts",
+      "IoT Knowledge Base - Device behavior"
+    ]
+  },
+  "automation": {
+    "test_generation": "AI-powered from feature specs",
+    "test_execution": "CI/CD pipeline (GitHub Actions)",
+    "reporting": "Allure reports + HTML coverage",
+    "bug_tracking": "Auto-generated from test failures"
+  },
+  "tools": {
+    "playwright": {
+      "version": "1.40+",
+      "browsers": ["Chromium", "Firefox", "WebKit"],
+      "features": [
+        "Auto-waiting",
+        "Trace viewer (on failure)",
+        "Video recording (on failure)",
+        "Screenshot (on failure)"
+      ]
+    },
+    "playwright_skill": {
+      "repository": "https://github.com/lackeyjb/playwright-skill",
+      "integration": "Integrated into AI-SDLC workflow",
+      "enhancements": [
+        "DeJoule-specific page objects",
+        "Knowledge base integration",
+        "Test data generation from KB"
+      ]
+    }
+  }
+}
