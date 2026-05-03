@@ -1,9 +1,30 @@
 # AI-SDLC Skills Library
 
+[![Install](https://github.com/itsatif/ai-sdlc-skills/actions/workflows/install.yml/badge.svg)](https://github.com/itsatif/ai-sdlc-skills/blob/main/INSTALL.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/itsatif/ai-sdlc-skills/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/itsatif/ai-sdlc-skills?style=social)](https://github.com/itsatif/ai-sdlc-skills)
+
 **Author:** Atif Salafi <atif8486@gmail.com>
 **Purpose:** Complete AI-SDLC skill library for full-stack software development
 **Version:** 2.0.0
 **Last Updated:** 2026-05-03
+
+---
+
+## 🚀 Quick Install
+
+```bash
+# One-command installation
+curl -sSL https://raw.githubusercontent.com/itsatif/ai-sdlc-skills/main/install.sh | bash
+
+# Or clone and install
+git clone https://github.com/itsatif/ai-sdlc-skills.git /tmp/ai-sdlc-skills
+cd /tmp/ai-sdlc-skills && ./install.sh
+
+# Skills are now active! Restart your AI assistant.
+```
+
+**For detailed installation instructions, see [INSTALL.md](INSTALL.md)**
 
 ---
 
@@ -433,7 +454,9 @@ origin: DeJoule
 ## 🔗 Links
 
 - **Repository:** [GitHub Repository](https://github.com/itsatif/ai-sdlc-skills)
+- **Installation:** [Installation Guide](INSTALL.md)
 - **Documentation:** [Full Documentation](https://github.com/itsatif/ai-sdlc-skills/blob/main/README.md)
+- **Issues:** [Report Issues](https://github.com/itsatif/ai-sdlc-skills/issues)
 
 ---
 
