@@ -311,9 +311,9 @@ run_engine(){ # <engine> <profile> <repo> <model> <prompt>
 }
 
 # ---- argument parsing shared by run/fleet ----
-PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""
-parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT/BG, leaves rest in REST[]
-  PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""; REST=()
+PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""; SESSION=""
+parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT/BG/SESSION, leaves rest in REST[]
+  PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""; SESSION=""; REST=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --research) PROFILE=research; shift ;;
@@ -326,6 +326,7 @@ parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT
       --est)      [[ -n "${2:-}" ]] || die "--est needs a value (S|M|L or ~tokens)"; EST="$2"; shift 2 ;;  # orchestrator's magnitude estimate (recorded, not computed)
       --yes|--confirm) YES=1; shift ;;   # confirms the plan was shown to the user — see require_confirm
       --bg)       BG=1; shift ;;         # fire the worker in the background; keep orchestrating, read the report later
+      --session)  [[ -n "${2:-}" ]] || die "--session needs a name"; SESSION="$2"; shift 2 ;;  # tag the report with the calling session
       --live)     LIVE=1; shift ;;       # let the worker reach your LIVE system via MCP tools (gated by --grant-live)
       --grant-live) GRANT_LIVE=1; shift ;;  # explicit permission for live access — added only after the user agrees
       --dry)      DRY=1; shift ;;
@@ -358,6 +359,17 @@ require_confirm(){
   (This enforces propose-then-confirm. A human running this in a terminal is auto-confirmed.)"
 }
 
+report_header(){ # <engine> <prompt> <start> -> rich dispatch metadata (session/engine/model/profile/repo/times)
+  printf '# %s\n\n' "$2"
+  printf -- '- engine: **%s**' "$1"
+  local mdl; mdl="${MODEL:-$(cfg "$1" model)}"; [[ -n "$mdl" ]] && printf ' · model: %s' "$mdl"
+  [[ -n "${EFFORT:-}" ]] && printf ' · effort: %s' "$EFFORT"
+  printf ' · profile: %s' "${PROFILE:-research}"
+  [[ -n "${REPO:-}" ]] && printf ' · repo: %s' "$REPO"
+  [[ -n "${EST:-}" ]] && printf ' · est: %s' "$EST"
+  local sess="${SESSION:-${TOKENSMAX_SESSION:-}}"; [[ -n "$sess" ]] && printf ' · session: %s' "$sess"
+  printf '\n- started: %s\n\n' "$3"
+}
 cmd_run(){
   require_conf
   parse_flags "$@"
@@ -370,15 +382,22 @@ cmd_run(){
   local day rdir rfile slug; day="$(date +%F)"; rdir="$REPORTS/$day"; mkdir -p "$rdir"
   slug="$(printf '%s' "$prompt" | tr -cs 'A-Za-z0-9' '-' | cut -c1-40 | sed 's/-*$//')"
   rfile="$rdir/$(date +%H%M%S)-$slug.$eng.md"
-  if [[ "${BG:-}" == 1 ]]; then  # fire in the background, keep orchestrating, read the report later
-    { printf '# %s\n_%s · %s · %s%s_\n\n' "$prompt" "$eng" "$PROFILE" "$(date)" "${EST:+ · est:$EST}"
-      run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } > "$rfile" 2>&1 &
-    printf '▶ %s running in BACKGROUND → %s   (read later: tokensmax reports cat %s)\n' "$eng" "$rfile" "$(basename "$rfile" .md)"
+  local start; start="$(date '+%F %T')"
+  if [[ "${BG:-}" == 1 ]]; then  # fire in the background; keep orchestrating, read the report later
+    { report_header "$eng" "$prompt" "$start"
+      run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"
+      printf '\n- finished: %s\n' "$(date '+%T')"; } > "$rfile" 2>&1 &
+    local pid=$!; echo "$pid" > "${rfile%.md}.pid"
+    printf '▶ %s running in BACKGROUND (pid %s) → %s   (read later: tokensmax reports cat %s)\n' "$eng" "$pid" "$rfile" "$(basename "$rfile" .md)"
     return 0
   fi
-  { printf '# %s\n_%s · %s · %s%s_\n\n' "$prompt" "$eng" "$PROFILE" "$(date)" "${EST:+ · est:$EST}"
-    run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } 2>&1 | tee "$rfile"
-  printf '📄 report saved: %s\n' "$rfile" >&2
+  report_header "$eng" "$prompt" "$start" > "$rfile"
+  run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt" 2>&1 | tee -a "$rfile"
+  local rc=${PIPESTATUS[0]}   # the engine's real exit, not tee's
+  if [[ "$rc" -eq 0 ]]; then printf '\n- finished: %s\n' "$(date '+%T')" >> "$rfile"
+  else printf '\n- ⚠ FAILED (exit %s) at %s — partial output above is preserved\n' "$rc" "$(date '+%T')" | tee -a "$rfile" >&2; fi
+  printf '📄 report: %s\n' "$rfile" >&2
+  return "$rc"
 }
 
 cmd_fleet(){
