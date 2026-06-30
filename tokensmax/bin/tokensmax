@@ -281,7 +281,7 @@ run_engine(){ # <engine> <profile> <repo> <model> <prompt>
   if [[ "$prof" == build ]]; then
     [[ -n "$repo" ]] || die "--build needs --repo DIR"
     git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$repo is not a git repo"
-    # A fresh `git init` repo has no HEAD. Seed one so `worktree add ... HEAD` works.
+    # a fresh `git init` repo has no HEAD — seed one so `worktree add … HEAD` works
     git -C "$repo" rev-parse HEAD >/dev/null 2>&1 || git -C "$repo" -c user.email=tokensmax@local -c user.name=tokensmax commit -q --allow-empty -m "tokensmax: init" 2>/dev/null || true
     local ts br wt; ts="$(date +%Y%m%d-%H%M%S)"; br="tokensmax/$eng-$ts"; wt="$WORKTREES/$(basename "$repo")-$eng-$ts"
     mkdir -p "$WORKTREES"; git -C "$repo" worktree add -q -b "$br" "$wt" HEAD
@@ -293,11 +293,15 @@ run_engine(){ # <engine> <profile> <repo> <model> <prompt>
       git -C "$repo" worktree remove --force "$wt" >/dev/null 2>&1 || true
       git -C "$repo" branch -D "$br" >/dev/null 2>&1 || true
     else
-      # Commit the build onto the branch so `git merge` lands the files after the worktree is removed.
+      # COMMIT the build onto the branch — otherwise `git merge` brings nothing and the files are lost
+      # when the worktree is removed. (This was a real bug.)
       git -C "$wt" -c user.email=tokensmax@local -c user.name=tokensmax commit -q -m "tokensmax: $eng build" || true
-      echo "── [$eng] built + committed on $br ──"
+      # Save the diff DURABLY so the work survives even a discard / worktree cleanup.
+      local patch; patch="$REPORTS/$(date +%F)/$ts-$(basename "$repo")-$eng.patch"; mkdir -p "$(dirname "$patch")"
+      git -C "$repo" --no-pager diff HEAD "$br" > "$patch" 2>/dev/null || true
+      echo "── [$eng] built + committed on $br · patch saved: $patch ──"
       git -C "$repo" --no-pager diff --stat HEAD "$br" || true
-      echo "keep:    git -C \"$repo\" merge --no-ff $br"
+      echo "keep:    git -C \"$repo\" merge --no-ff $br      (or: git -C \"$repo\" apply \"$patch\")"
       echo "discard: git -C \"$repo\" worktree remove --force \"$wt\" && git -C \"$repo\" branch -D $br"
     fi
   else
@@ -359,7 +363,14 @@ cmd_run(){
   local prompt="${REST[1]:-}"; [[ -n "$prompt" ]] || die "missing task prompt"
   [[ -n "$(cfg "$eng" driver)" ]] || die "unknown engine '$eng' — not in $CONF (see: tokensmax list)"
   require_confirm
-  run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"
+  [[ "${DRY:-}" == 1 ]] && { run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; return; }
+  # Save a DURABLE report (so single-run output is never lost), and still show it live.
+  local day rdir rfile slug; day="$(date +%F)"; rdir="$REPORTS/$day"; mkdir -p "$rdir"
+  slug="$(printf '%s' "$prompt" | tr -cs 'A-Za-z0-9' '-' | cut -c1-40 | sed 's/-*$//')"
+  rfile="$rdir/$(date +%H%M%S)-$slug.$eng.md"
+  { printf '# %s\n_%s · %s · %s%s_\n\n' "$prompt" "$eng" "$PROFILE" "$(date)" "${EST:+ · est:$EST}"
+    run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } 2>&1 | tee "$rfile"
+  printf '📄 report saved: %s\n' "$rfile" >&2
 }
 
 cmd_fleet(){
@@ -474,7 +485,8 @@ ctx_for(){ # model -> per-request context window (the honest "potential" per cal
     *)                       echo "—" ;;
   esac
 }
-# Fetch the real model ladder from the installed claude, the same source `/model` reads.
+# FETCH the real model ladder from the installed claude (the same source `/model` reads) — not hardcoded,
+# not config: current families + latest version each. Empty if claude isn't installed there.
 claude_ladder(){
   local d="$HOME/.local/share/claude/versions" latest bin f fam tier m out=""
   latest="$(ls "$d" 2>/dev/null | sort -V | tail -1)"; [[ -n "$latest" ]] || return 1
@@ -486,7 +498,7 @@ claude_ladder(){
   done
   [[ -n "$out" ]] && echo "${out# · }"
 }
-
+# GLM / any anthropic-compatible API: fetch the live model list from the endpoint (the real source).
 api_models(){ # <engine>
   local base ke key; base="$(cfg "$1" base_url)"; ke="$(cfg "$1" key_env)"
   [[ -n "$base" && -n "$ke" ]] || return 1
@@ -499,14 +511,14 @@ try:
  sys.stdout.write(" · ".join(ids))
 except Exception: pass'
 }
-
+# Cursor: read model IDs the installed cursor-agent knows (best-effort).
 cursor_ladder(){
   local cb; cb="$(command -v cursor-agent 2>/dev/null)" || return 1
   cb="$(readlink -f "$cb" 2>/dev/null || echo "$cb")"
   grep -oaE '(claude|gpt|gemini|o[0-9])[a-z0-9.-]{2,}' "$cb" 2>/dev/null | sort -u | head -6 \
     | awk '{printf "%s%s",(NR>1?" · ":""),$0} END{if(NR)print""}'
 }
-
+# The models display per engine — FETCHED from each engine's real source where one exists.
 model_line(){ # <engine> <driver>
   local e="$1" d="$2" lad
   case "$d" in
@@ -710,6 +722,7 @@ tokensmax — orchestrate multiple coding agents (Claude, Codex, Cursor, OpenCod
   tokensmax status                      session briefing: accounts, models, what-for, per-call potential
   tokensmax list                        list configured engines + models
   tokensmax usage [today|all|DATE]      who solved what · EST vs ACTUAL tokens · cost($) · window total · ⚠ maxed + reset
+  tokensmax reports [cat <match>]       list durable run/build reports + saved .patch files (never lost to cleanup)
   tokensmax run <engine> [opts] "task"  run one engine
   tokensmax fleet [eng,eng|all] [opts] "task"   run several in parallel (saves reports)
 Profiles:  --research (default) | --review | --build --repo DIR
@@ -772,10 +785,24 @@ cmd_usage(){ # tokensmax usage [today|all|YYYY-MM-DD]  — per-run estimate vs a
   echo "  Want a 'remaining' number? set \`session_limit = <tokens>\` per engine (YOUR plan's window cap; we can't read it)."
 }
 
+cmd_reports(){ # list past durable reports/patches, or `cat <match>` to read one
+  local root="$REPORTS"
+  [[ -d "$root" ]] || { echo "no reports yet ($root)"; return 0; }
+  if [[ "${1:-}" == cat ]]; then
+    shift; local f; f="$(find "$root" -type f 2>/dev/null | grep -F -- "${1:-}" | sort | tail -1)"
+    [[ -n "$f" ]] && { echo "── $f ──"; cat "$f"; } || echo "no report matching '${1:-}'"
+    return 0
+  fi
+  echo "reports under $root   (read one: tokensmax reports cat <name-substring>)"
+  find "$root" -type f \( -name '*.md' -o -name '*.patch' \) 2>/dev/null | sort | tail -40 \
+    | while IFS= read -r f; do printf '  %s\n' "${f#"$root"/}"; done
+}
+
 main(){
   local sub="${1:-}"; shift || true
   case "$sub" in
     init) cmd_init "$@" ;;
+    reports) cmd_reports "$@" ;;
     auth) cmd_auth "${1:-}" ;;
     doctor) cmd_doctor ;;
     status) cmd_status ;;
