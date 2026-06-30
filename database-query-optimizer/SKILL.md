@@ -15,7 +15,7 @@ description: Senior Database Performance Engineer for PostgreSQL, DynamoDB, Mong
 
 When a query is slow, you have an execution plan to interpret, or you need to rewrite a query to reduce latency / CPU / memory / network / scanned records. Acts as a **Senior Database Performance Engineer**. Pairs with [[engineering-standards]] (perf rules), [[database-patterns]], [[influxdb-patterns]], and [[algorithm-picker]] (approach choice). For generating new code use [[engineering-ai-assistant]].
 
-**Always preserve query correctness. Never modify user data.** This skill analyzes and proposes — it does not run destructive changes (see Safety Rules).
+**Always preserve query correctness. Never modify user data.** This skill analyzes and proposes — it does not run destructive changes (see Safety Rules). For `DELETE`, `DROP`, `TRUNCATE`, `FLUSH`, broad `UPDATE`, or production data changes, load `production-safety-guards`, warn the user multiple times, and provide only read-only previews plus a human-run runbook.
 
 ---
 

@@ -51,7 +51,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
 Use this prompt for most non-trivial engineering tasks:
 
 ```text
-Use skill-loading-runtime, model-selection-runtime, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
+Use skill-loading-runtime, model-selection-runtime, production-safety-guards, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
 
 Goal:
 <your task>
@@ -61,8 +61,10 @@ Load skills like Pi:
 2. Rank skills by user intent, repo signals, and risk.
 3. Load only selected SKILL.md files.
 4. Select the smallest safe model tier like Pi: fast, balanced, deep, or specialist.
-5. Load references/scripts/assets only on demand.
-6. Plan, execute, verify, and summarize.
+5. Load production-safety-guards for production/destructive/customer-data work.
+6. Do not run destructive delete/drop/truncate/flush/broad-update commands as an agent; warn and draft dry-run/runbooks only.
+7. Load references/scripts/assets only on demand.
+8. Plan, execute, verify, and summarize.
 ```
 
 Use this for large multi-agent tasks:
@@ -129,6 +131,7 @@ Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for
    - **Pi Coding Agent** - Pi.dev workflow guide for building and using Pi terminal coding agents: skills, extensions, packages, prompt templates, AGENTS.md context, compaction, print/JSON/RPC/SDK modes, custom agent automation, and HyperBrain planning/verification integration.
    - **Skill Loading Runtime** - Pi-like progressive-disclosure loader for HyperBrain skills: scan `SKILL.md` frontmatter first, rank skills from user intent and repo signals, load selected skill bodies, then load references/scripts/assets only on demand with context-budget and verification rules.
    - **Model Selection Runtime** - Pi-like model/tier selector for Codex, Pi.dev, tokensmax, Claude, SDK/RPC agents, and multi-agent fleets: score complexity, risk, context, tools, latency, cost, and verification to route work to fast, balanced, deep, or specialist models with escalation/downgrade rules.
+   - **Production Safety Guards** - Hard guardrails for production, database, graph, Kubernetes/cloud, customer-data, auth/RBAC, and irreversible operations: agents must not run destructive delete/drop/truncate/flush/broad-update commands, must warn users multiple times, and may only draft dry-runs, backups, approval checklists, and human-run rollback runbooks.
    - **Prompt Harness** - Repo-aware autonomous engineering harness. Detects the repo (JouleTRACK / jt-api-v2 / IoT / generic), binds the generic DB-first + connector-first codegen workflow to that repo's real stack and conventions, gathers context from connectors + precomputed artifacts before writing code, and outputs production-ready, security-checked, tested code per engineering-standards.
    - **Algorithm Picker** - Choose the right algorithm/data structure before coding. General CS selection (sorting/search/graph/DP/hashing/heaps/tries/union-find, Big-O sanity checks) plus the JouleTRACK/IoT domain (time-series downsampling/LTTB, anomaly detection, scheduling/interval-merge, forecasting, Kafka windowing/dedup, Redis eviction).
    - **Engineering AI Assistant** - Senior backend engineer + architect + reviewer that understands the project, inspects connected DBs (schema discovery), confirms risky assumptions, then generates production-ready controllers/services/repositories/DTOs/validation/tests/OpenAPI docs in the project's own patterns. Connector-first, fewer questions.
@@ -152,7 +155,7 @@ Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for
    - **agent-tool-design** - Design agent tool-registries and loops: tool granularity + schemas, the tool-use loop (turn limits/parallelism/timeouts/truncation), cost-tiered model routing, grounding, and tracing. Generalizes Lumen's Bedrock agent.
    - **ontology-service-knowledge-base** - SmartJoules/ontology-service KB: Amazon Neptune RDF/SPARQL graph, Apache Jena/Fuseki on-prem setup + cloud sync, Brick Schema + `sj:` model, repo tools, Graph Explorer, ingestion/update safety, and query recipes for building semantics.
    - **brick** - Brick Schema lookup/modeling skill backed by ontology-service's vendored `brick-kb`; use for class, point, relationship, example, and SHACL validation questions.
-   - **neptune-graph** - SmartJoules Neptune query/update skill: site-scoped SPARQL, safe `DELETE/INSERT/WHERE`, telemetry references, components/devices/controllers/locations, water loops, and graph guardrails.
+   - **neptune-graph** - SmartJoules Neptune query/update skill: site-scoped SPARQL, read-only previews, human-run update runbooks, telemetry references, components/devices/controllers/locations, water loops, and graph guardrails.
    - **dejoule-rbac** - DeJoule/JouleTRACK RBAC implementation guide: jt-api-v2 policies, role policy catalog, site access, action permission mapping, legacy JouleTrack-API checks, and Angular route/menu/button guards.
    - **dejoule-authentication** - DeJoule/JouleTRACK authentication guide: login, JWT/session revocation, secure cookies, OTP/MFA, reCAPTCHA risk fallback, token refresh/logout, service tokens, frontend auth handling, and step-up auth.
    - **dejoule-geofencing-alerts** - Spatial and semantic geofencing for Smart Alerts: Haversine/polygon/grid algorithms, ontology-based floor/zone resolution, Neptune/Fuseki SPARQL recipes, alert routing/suppression/dedup/escalation, and UI/API integration guardrails.

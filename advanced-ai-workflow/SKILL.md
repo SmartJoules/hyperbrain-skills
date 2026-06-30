@@ -53,6 +53,7 @@ Choose the lane:
 | Effective planning / agent handoff | `agent-planning-harness`, `agent-orchestration`, `agent-delegation-contracts` |
 | Pi-like skill discovery / runtime loading | `skill-loading-runtime`, `model-selection-runtime`, `pi-coding-agent`, `agent-planning-harness`, `self-verification` |
 | Model tier selection / cost routing | `model-selection-runtime`, `skill-loading-runtime`, `agent-context-manager`, `self-verification` |
+| Production/destructive operation guard | `production-safety-guards`, `model-selection-runtime`, `self-verification`, `security-review` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
 | Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
@@ -75,6 +76,7 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | Kubernetes manifests, `deployment.yaml`, `service.yaml`, `hpa.yaml`, `pdb.yaml`, `CronJob` | `sj-k8s-knowledge-base`, `devops-deployment-planner`, `self-verification` |
 | RDF/SPARQL/Neptune/Brick/ontology code | `ontology-service-knowledge-base`, `neptune-graph`, `brick`, `self-verification` |
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
+| Destructive query or command: `DELETE`, `DROP`, `TRUNCATE`, `FLUSH`, broad `UPDATE`, graph `DELETE`, Kubernetes/cloud delete | `production-safety-guards`, `model-selection-runtime`, `security-review`, `self-verification` |
 | Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
 | LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
 | Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
@@ -117,7 +119,8 @@ Before editing:
 - Identify the exact files/symbols/contracts to change.
 - Reuse existing controllers, services, components, query helpers, styling tokens, and tests.
 - Keep the diff scoped.
-- Confirm before destructive DB/schema/production changes.
+- Load `production-safety-guards` before any production, destructive DB/schema/graph/Kubernetes/cloud, customer-data, auth/RBAC, or control-system change.
+- Do not run destructive queries/commands as an agent. For `DELETE`, `DROP`, `TRUNCATE`, `FLUSH`, broad `UPDATE`, graph `DELETE`, or infrastructure delete, warn the user multiple times and draft only a dry-run/runbook for human execution.
 
 For DeJoule:
 - JouleTRACK frontend: follow `jouletrack-angular` and `sj-ui-design-system`.

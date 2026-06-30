@@ -17,7 +17,7 @@ Collect these signals before selecting a model:
 
 - **Task type:** answer, edit, refactor, debug, review, architecture, migration, deployment, RCA, agent orchestration.
 - **Complexity:** number of files, unknowns, cross-service dependencies, algorithmic reasoning, schema depth.
-- **Risk:** auth/RBAC, customer data, production deployment, migrations, billing, security, privacy, safety.
+- **Risk:** auth/RBAC, customer data, production deployment, destructive query/command, migrations, billing, security, privacy, safety.
 - **Context size:** short prompt, selected skill bodies, large repo windows, logs, traces, diffs, KB references.
 - **Tool intensity:** shell, tests, browser, database, GitHub, cloud, MCP, graph queries, multi-agent handoff.
 - **Latency target:** interactive/fast, normal, overnight/deep.
@@ -74,12 +74,13 @@ Escalate at least one tier when any of these are true:
 
 - User asks for architecture, HLD/LLD, system design, or agent orchestration.
 - Work touches authentication, authorization, RBAC, secrets, customer data, billing, production deployment, migrations, or destructive operations.
+- Work mentions `DELETE`, `DROP`, `TRUNCATE`, `FLUSH`, broad `UPDATE`, graph `DELETE`, infrastructure delete, cache flush, or irreversible control changes.
 - The first attempt fails verification twice.
 - The task spans more than one service or more than five meaningful files.
 - The answer requires reconciling conflicting evidence.
 - A subagent or lower-tier model reports low confidence.
 
-Use `deep` immediately for RBAC/auth, security review, deployment planning, graph ontology migrations, and production incident RCA unless the user explicitly asks for a cheap draft.
+Use `deep` immediately for RBAC/auth, security review, deployment planning, graph ontology migrations, destructive-operation runbooks, and production incident RCA unless the user explicitly asks for a cheap draft. Also load `production-safety-guards` and refuse agent-side execution for destructive operations.
 
 ## Downgrade Rules
 

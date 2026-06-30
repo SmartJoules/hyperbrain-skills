@@ -20,6 +20,7 @@ Use this before `prompt-harness`, `agent-orchestration`, `engineering-planner`, 
    - Multi-agent execution: `agent-orchestration`, `agent-fleet-runner`, `agent-delegation-contracts`
    - Skill discovery/loading runtime: `skill-loading-runtime`, `agent-context-manager`
    - Model/tier selection: `model-selection-runtime`, `agent-fleet-runner`
+   - Production/destructive operations: `production-safety-guards`, `security-review`, `self-verification`
    - Product/engineering plan: `engineering-planner`
    - Architecture/HLD/LLD: `software-architecture-planner`
    - Pi.dev coding-agent / CLI harness: `pi-coding-agent`, `prompt-engineering`, `agent-tool-design`
@@ -30,8 +31,9 @@ Use this before `prompt-harness`, `agent-orchestration`, `engineering-planner`, 
 5. Define scope, non-scope, assumptions, unknowns, and dependencies.
 6. Break the work into ordered workstreams with owners or agent roles.
 7. Select model tiers per workstream with `model-selection-runtime`.
-8. Define acceptance criteria and verification gates before any implementation.
-9. Call out risks, stop conditions, and questions that truly block correctness.
+8. For production/destructive work, load `production-safety-guards`, require warnings, and plan only dry-run/runbook artifacts for human execution.
+9. Define acceptance criteria and verification gates before any implementation.
+10. Call out risks, stop conditions, and questions that truly block correctness.
 
 ## Effective Plan Shape
 

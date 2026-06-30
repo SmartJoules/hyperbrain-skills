@@ -80,11 +80,30 @@ Copy from Neptune to Fuseki by exporting named graphs with `node tools/neptune.t
 
 ---
 
-## Safe Update Pattern
+## Safe Update Runbook Pattern
 
-Writes target the writer endpoint and are irreversible. Use surgical `DELETE/INSERT/WHERE`, scoped to one site graph.
+Writes target the writer endpoint and are irreversible. Agents must not execute Neptune `DELETE`, `DELETE WHERE`, graph rebuild, or broad `INSERT/DELETE/WHERE` operations. Load `production-safety-guards`, show multiple warnings, and provide only a reviewed human-run runbook.
+
+Start with a read-only preview:
 
 ```sparql
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+
+SELECT ?node ?old
+WHERE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?node sj:deviceId "known-id" .
+    OPTIONAL { ?node sj:mutablePredicate ?old . }
+  }
+}
+LIMIT 25
+```
+
+If a human operator still approves a destructive graph change, mark the artifact as `DO NOT RUN WITHOUT HUMAN APPROVAL` and include backup, rollback, affected triple count, site graph, ticket, and two-person review.
+
+```sparql
+# DO NOT RUN WITHOUT HUMAN APPROVAL.
+# Human-run runbook artifact only. Agent must not execute.
 PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
 
 DELETE {
@@ -106,9 +125,13 @@ WHERE {
 ```
 
 Rules:
+- Do not run destructive graph queries as an agent.
+- Show multiple warnings and require explicit human-run approval via `production-safety-guards`.
+- Provide `SELECT`/`ASK` preview and affected triple count first.
+- Require graph backup/export and rollback plan before any human execution.
 - Never update without a site graph scope.
 - Do not delete identity or type triples unless doing an explicit full rebuild.
-- Test on one site first, verify with `SELECT`/`ASK`, then roll out.
+- Test on one site first, verify with `SELECT`/`ASK`, then roll out via approved human/pipeline execution.
 - Prefer repo tools or `NeptuneClient` for programmatic updates.
 
 ---

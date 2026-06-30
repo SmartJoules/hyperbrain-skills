@@ -25,7 +25,7 @@ Install for other assistants:
 Use this for most non-trivial engineering work:
 
 ```text
-Use skill-loading-runtime, model-selection-runtime, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
+Use skill-loading-runtime, model-selection-runtime, production-safety-guards, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
 
 Goal:
 <your task>
@@ -35,8 +35,27 @@ Load skills like Pi:
 2. Rank skills by user intent, repo signals, and risk.
 3. Load only selected SKILL.md files.
 4. Select the smallest safe model tier: fast, balanced, deep, or specialist.
-5. Load references/scripts/assets only on demand.
-6. Plan, execute, verify, and summarize.
+5. Load production-safety-guards for production/destructive/customer-data work.
+6. Do not run destructive delete/drop/truncate/flush/broad-update commands as an agent; warn and draft dry-run/runbooks only.
+7. Load references/scripts/assets only on demand.
+8. Plan, execute, verify, and summarize.
+```
+
+## Production Safety Guards
+
+Use whenever a task touches production, customer data, databases, graph writes, deployments, migrations, auth/RBAC, alerts, device control, or irreversible operations:
+
+```text
+Use production-safety-guards, model-selection-runtime, and self-verification.
+
+Task:
+<production or destructive task>
+
+Rules:
+- Do not execute DELETE, DROP, TRUNCATE, FLUSH, broad UPDATE, graph DELETE, Kubernetes/cloud delete, or irreversible control commands.
+- Warn the user three times: destructive risk, blast radius, and agent non-execution.
+- Provide read-only preview/dry-run first.
+- If still needed, draft only a DO NOT RUN WITHOUT HUMAN APPROVAL runbook with backup, rollback, scope, ticket, and two-person review.
 ```
 
 ## Pi-Style Coding Agent
@@ -188,7 +207,7 @@ git status --short --branch
 git diff --check
 node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package ok')"
 find . -maxdepth 2 -name SKILL.md -print
-rg -n "skill-loading-runtime|model-selection-runtime|advanced-ai-workflow|agent-planning-harness|pi-coding-agent" .
+rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|advanced-ai-workflow|agent-planning-harness|pi-coding-agent" .
 ```
 
 If the official skill validator is available with PyYAML installed:

@@ -47,7 +47,7 @@ Use this sequence for every non-trivial request:
 3. Extract routing signals from the request:
    - Explicit skill names or words like "Pi", "RBAC", "Neptune", "PrimeNG", "K8s", "postmortem".
    - File signals such as `angular.json`, `deployment.yaml`, `api/controllers`, `.ttl`, `.rq`, `Dockerfile`, or `package.json`.
-   - Risk signals such as authentication, authorization, production data, deployment, migration, billing, or customer-facing UI.
+   - Risk signals such as authentication, authorization, production data, destructive query, delete/drop/truncate/flush, deployment, migration, billing, or customer-facing UI.
 4. Rank skills with this priority:
    - Explicitly named skills.
    - Safety/security/data/deployment skills.
@@ -79,6 +79,7 @@ Select the top skills until the task is covered. Prefer three to five skills for
 For ambiguous or large engineering tasks, start with:
 
 - `advanced-ai-workflow`
+- `production-safety-guards`
 - `model-selection-runtime`
 - `agent-planning-harness`
 - `prompt-harness`
@@ -92,6 +93,7 @@ Then add domain skills from routing signals:
 - API/RBAC/auth: `api-design`, `dejoule-rbac`, `dejoule-authentication`, `security-review`
 - Ontology/graph: `ontology-service-knowledge-base`, `neptune-graph`, `brick`
 - Deployment: `sj-k8s-knowledge-base`, `deployment-patterns`
+- Production/destructive changes: `production-safety-guards`, `security-review`, `self-verification`
 - Bug learning: `bug-postmortem-learning`, `systematic-debugging`, `self-learning`
 
 ## Context Budget Rules
@@ -150,6 +152,7 @@ A custom loader should return:
 - A request can select skills without loading every `SKILL.md`.
 - Explicit skill names always win over fuzzy matches.
 - High-risk surfaces add security, RBAC, deployment, or verification skills automatically.
+- Destructive or production-affecting signals add `production-safety-guards` automatically.
 - Model tier selection runs after skill selection and before implementation.
 - References are loaded only when named by the selected skill or required by the task.
 - Final output reports selected skills, selected model tier, checks run, and any skipped references or unresolved assumptions.
