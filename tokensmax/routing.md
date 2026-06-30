@@ -2,56 +2,7 @@
 
 Source of truth: [`dispatch-policy.yaml`](./dispatch-policy.yaml). Active mode: **propose-then-confirm**.
 
-## Phase 0 — Understand & ground the goal FIRST (before magnitude, strategy, or any proposal)
-The loop below assumes the task is *already understood*. It isn't, until you've **grounded** it with the
-user. Skipping this is the #1 cause of "confidently wrong" runs: you propose a polished plan against a
-goal you *assumed*, the user approves the plan (it looks right), and the misread only surfaces after
-tokens are spent. That failure mode has a name — **goal misgeneralization** (capability intact, wrong
-target). The plan gate (step 6) checks the *how*; only a goal gate checks the *what/why*.
-
-**Use `claude --fast` (haiku) for intake** — `tokensmax run claude --research --fast`. Haiku is the
-most reliable intake engine we tested (0% empty-output, 0% tool-wander, ~10× fewer tokens than glm).
-Intent parsing, slot extraction, and gap-detection are structured, low-reasoning work, squarely
-cheap-tier (FrugalGPT cascade + RouteLLM, whose router is an 8B model + OpenAI's input-guardrail
-pattern). Do **not** burn this session or a deep model on it; keep them for *planning + dispatch*,
-which runs only once the goal is grounded. **`opencode`/glm-4.7 is the $0 fallback** — weaker than
-haiku and flaky non-interactive (~29% empty; retry masks most). **glm-5.2 is a worker tier, not
-intake** (stronger than sonnet, weaker than opus-4.8). **Intake is the one auto-dispatch that needs no
-plan-pick** — it's fixed, read-only, and cheapest-tier; there's no meaningful model/path choice for the
-user to make, so `propose-then-confirm` does not apply here (it still governs the *execution* plan).
-
-Dispatch intake as a **structured-output** research call (STRICT JSON, so gaps are *enumerated*, not
-vibe-checked — models are ~50% wrong at self-detecting underspecification, QuestBench). **Forbid tool
-use** in the prompt — the cheap engine is agentic and will otherwise wander off to read files when the
-request references a repo, returning no JSON (verified in sandbox):
-```
-tokensmax run claude --research --fast "Analyze this request. Do NOT use any tools. Do NOT
- read any files. Output STRICT JSON only in your first and only message — no prose, no markdown fence:
- {goal: '<one-line restated intent>',
-  slots: {scope, success_criteria, constraints, in_scope, out_of_scope, definition_of_done},
-  assumptions: ['<things you'd fill in to proceed>'],
-  clarity: '<clear|underspecified>',
-  gaps: ['<which required slots are missing/ambiguous>'],
-  clarifying_questions: ['<the 1-3 sharpest questions to close the gaps>']}
- Request: \"<the user's words>\""
-```
-> No `claude` seat configured? Fall back to `opencode` (glm-4.7, $0, expect ~29% empty — the bounded
-> retry handles it) or another cheap engine, or run intake inline in this session (same JSON). The point
-> is the *gate*, not which process emits the JSON.
-
-**Then the confirm-goal gate — 🛑 STOP. Do NOT estimate magnitude or pick a strategy yet:**
-- **`underspecified`** → ask the `clarifying_questions` via **AskUserQuestion** (cap at **1–3**; one
-  good question captures most of the recoverable value — Qulac — more is annoying, per PARADISE's
-  cost-of-asking). Merge the answers into the slots and re-confirm. STOP.
-- **`clear`** → restate the **goal + key assumptions** in ONE line and ask *"correct?"*. If the user
-  amends a slot, take it. STOP.
-
-**Silence is not consent** — wait for an explicit OK on the goal before Phase 1. Honor an inline
-*"just do it / skip intake"* override for power users, but the **bar to skip is high**: a request is
-"manifestly clear" only if it states a single bounded action + a success criterion; when in doubt,
-run intake (QuestBench: models ~50% wrong at self-detecting underspecification).
-
-## The loop  (Phase 1+ — only after the goal is grounded)
+## The loop
 1. **Estimate magnitude** by *reasoning* about scope (subsystems, breadth, open-endedness, expected
    output) — never a token number, never keyword-matching the prompt. **If it's large (L): phase it.**
    Propose a phased plan (bounded sub-tasks + a review gate between phases) instead of one mega-run —
@@ -62,12 +13,12 @@ run intake (QuestBench: models ~50% wrong at self-detecting underspecification).
 4. **Bind roles → engines** by matching the role's nature to each engine's `strengths`
    (from `~/.config/tokensmax/engines.conf`): design/prose/plan → a reasoning engine;
    logic/refactor/review → a code engine.
-5. **Pick the RIGHT model** via `model_routing` — match capability to the task: simple/mechanical →
-   small+fast (`--fast`), moderate → mid (`-m claude-sonnet-4-6`), hard/ambiguous/correctness-critical →
-   strong (opus default / high-effort). Not biggest-by-default, not cheapest-by-default — the fit.
+5. **Pick the RIGHT model** via `model_routing` — match capability to the task by **tier**: simple/mechanical →
+   cheap+fast (`--fast`), moderate → mid (`-m <current mid model>`), hard/ambiguous/correctness-critical →
+   deep (default top model / high-effort). Not biggest-by-default, not cheapest-by-default — the fit.
+   Resolve the concrete model from `tokensmax status` + the current lineup; never a fixed version here.
    Per role/phase if they differ (e.g. a mid drafter + a strong reviewer).
-6. **Present OPTIONS via AskUserQuestion, then 🛑 STOP** — this is the **plan gate** (the *second*
-   gate; Phase 0 was the goal gate). Don't dump text; offer the interactive
+6. **Present OPTIONS via AskUserQuestion, then 🛑 STOP** — don't dump text; offer the interactive
    picker (like brainstorming). Build **3–5 options from `tokensmax status`** (the actual engines +
    models), scaled to what's configured: recommended split · swapped split · cross-check (if ≥2
    engines) · cheap/fast · phased-if-large. Each option label names `engine → role → model` + write

@@ -12,6 +12,7 @@ CONF="$CONF_DIR/engines.conf"
 SECRETS="$CONF_DIR/secrets.env"
 REPORTS="${TOKENSMAX_REPORTS:-$HOME/.tokensmax/reports}"
 WORKTREES="${TOKENSMAX_WORKTREES:-$HOME/.tokensmax/worktrees}"
+QUEUE="${TOKENSMAX_QUEUE:-$HOME/.tokensmax/queue}"
 
 die(){ printf 'tokensmax: %s\n' "$*" >&2; exit 1; }
 have(){ command -v "$1" >/dev/null 2>&1; }
@@ -310,9 +311,9 @@ run_engine(){ # <engine> <profile> <repo> <model> <prompt>
 }
 
 # ---- argument parsing shared by run/fleet ----
-PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""
-parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT, leaves rest in REST[]
-  PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; REST=()
+PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""
+parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT/BG, leaves rest in REST[]
+  PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; BG=""; REST=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --research) PROFILE=research; shift ;;
@@ -324,6 +325,7 @@ parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT
       --effort)   [[ -n "${2:-}" ]] || die "--effort needs low|medium|high|xhigh"; EFFORT="$2"; shift 2 ;;  # codex reasoning depth (overrides config + --fast)
       --est)      [[ -n "${2:-}" ]] || die "--est needs a value (S|M|L or ~tokens)"; EST="$2"; shift 2 ;;  # orchestrator's magnitude estimate (recorded, not computed)
       --yes|--confirm) YES=1; shift ;;   # confirms the plan was shown to the user — see require_confirm
+      --bg)       BG=1; shift ;;         # fire the worker in the background; keep orchestrating, read the report later
       --live)     LIVE=1; shift ;;       # let the worker reach your LIVE system via MCP tools (gated by --grant-live)
       --grant-live) GRANT_LIVE=1; shift ;;  # explicit permission for live access — added only after the user agrees
       --dry)      DRY=1; shift ;;
@@ -368,6 +370,12 @@ cmd_run(){
   local day rdir rfile slug; day="$(date +%F)"; rdir="$REPORTS/$day"; mkdir -p "$rdir"
   slug="$(printf '%s' "$prompt" | tr -cs 'A-Za-z0-9' '-' | cut -c1-40 | sed 's/-*$//')"
   rfile="$rdir/$(date +%H%M%S)-$slug.$eng.md"
+  if [[ "${BG:-}" == 1 ]]; then  # fire in the background, keep orchestrating, read the report later
+    { printf '# %s\n_%s · %s · %s%s_\n\n' "$prompt" "$eng" "$PROFILE" "$(date)" "${EST:+ · est:$EST}"
+      run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } > "$rfile" 2>&1 &
+    printf '▶ %s running in BACKGROUND → %s   (read later: tokensmax reports cat %s)\n' "$eng" "$rfile" "$(basename "$rfile" .md)"
+    return 0
+  fi
   { printf '# %s\n_%s · %s · %s%s_\n\n' "$prompt" "$eng" "$PROFILE" "$(date)" "${EST:+ · est:$EST}"
     run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } 2>&1 | tee "$rfile"
   printf '📄 report saved: %s\n' "$rfile" >&2
@@ -723,6 +731,8 @@ tokensmax — orchestrate multiple coding agents (Claude, Codex, Cursor, OpenCod
   tokensmax list                        list configured engines + models
   tokensmax usage [today|all|DATE]      who solved what · EST vs ACTUAL tokens · cost($) · window total · ⚠ maxed + reset
   tokensmax reports [cat <match>]       list durable run/build reports + saved .patch files (never lost to cleanup)
+  tokensmax queue add <engine> "task"   queue a task to run autonomously; list | run | clear  (each run saves a report)
+  tokensmax schedule on [secs] | off    run \`queue run\` on a schedule (launchd/cron) — autonomous; status to check
   tokensmax run <engine> [opts] "task"  run one engine
   tokensmax fleet [eng,eng|all] [opts] "task"   run several in parallel (saves reports)
 Profiles:  --research (default) | --review | --build --repo DIR
@@ -732,6 +742,7 @@ Model:     -m <model>   override the engine's configured model
            --est S|M|L   record the magnitude estimate (shown in `usage` vs actual)
            --dry         show the resolved command + model, don't run
            --yes         confirm dispatch (REQUIRED non-interactively — enforces propose-then-confirm)
+           --bg          run in the background; keep orchestrating, read the report later
            --live        give the worker LIVE access to your system via MCP tools (config: mcp_config/live_tools)
            --grant-live  permission for --live (REQUIRED non-interactively; added only after the user agrees)
 EOF
@@ -798,11 +809,86 @@ cmd_reports(){ # list past durable reports/patches, or `cat <match>` to read one
     | while IFS= read -r f; do printf '  %s\n' "${f#"$root"/}"; done
 }
 
+cmd_queue(){ # durable autonomous task queue: add | list | run | clear
+  require_conf
+  local action="${1:-list}"; shift || true
+  mkdir -p "$QUEUE/pending" "$QUEUE/done" "$QUEUE/failed"
+  case "$action" in
+    add)
+      [[ $# -ge 1 ]] || die "usage: tokensmax queue add <engine> [--research|--review|--build --repo DIR] [-m|--effort] \"task\""
+      local id a; id="$(date +%Y%m%d-%H%M%S)-$$"
+      { for a in "$@"; do printf '%q ' "$a"; done; printf '\n'; } > "$QUEUE/pending/$id.task"
+      echo "queued $id  →  $*"
+      ;;
+    list)
+      printf 'queue: %s pending · %s done · %s failed\n' \
+        "$(find "$QUEUE/pending" -name '*.task' 2>/dev/null | wc -l | tr -d ' ')" \
+        "$(find "$QUEUE/done" -name '*.task' 2>/dev/null | wc -l | tr -d ' ')" \
+        "$(find "$QUEUE/failed" -name '*.task' 2>/dev/null | wc -l | tr -d ' ')"
+      local t; for t in "$QUEUE"/pending/*.task; do [[ -e "$t" ]] && printf '  • %s: %s\n' "$(basename "$t" .task)" "$(cat "$t")"; done
+      ;;
+    run)  # execute every pending task unattended (idempotent: done tasks are moved out). Each saves a report.
+      local t any=0 args
+      for t in "$QUEUE"/pending/*.task; do
+        [[ -e "$t" ]] || continue; any=1
+        eval "args=( $(cat "$t") )" || { echo "  ⚠ skip (bad task file): $t"; continue; }
+        echo "▶ queue $(basename "$t" .task) → ${args[*]}"
+        if ( cmd_run "${args[@]}" --yes ); then mv "$t" "$QUEUE/done/" 2>/dev/null || true; echo "  ✓ done"
+        else mv "$t" "$QUEUE/failed/" 2>/dev/null || true; echo "  ⚠ failed → queue/failed (inspect + re-add)"; fi
+      done
+      [[ $any == 0 ]] && echo "queue empty (nothing pending)"
+      ;;
+    clear) rm -f "$QUEUE"/pending/*.task 2>/dev/null || true; echo "cleared pending" ;;
+    *) die "queue: unknown action '$action' (use: add | list | run | clear)" ;;
+  esac
+}
+
+cmd_schedule(){ # run the queue autonomously on a schedule (launchd on macOS, cron elsewhere)
+  local action="${1:-status}"; shift || true
+  local label="com.tokensmax.queue" plist="$HOME/Library/LaunchAgents/com.tokensmax.queue.plist" tmbin
+  tmbin="$(command -v tokensmax || echo "$HOME/.local/bin/tokensmax")"
+  case "$action" in
+    on)
+      local secs="${1:-3600}"   # default: hourly
+      echo "⚠ ToS: scheduled/unattended runs against INTERACTIVE SUBSCRIPTION seats (Claude Max, ChatGPT) are a"
+      echo "   gray area — those plans are for interactive use. Prefer API-key engines (e.g. GLM) for scheduled load."
+      if have launchctl; then
+        mkdir -p "$(dirname "$plist")"
+        cat > "$plist" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$label</string>
+  <key>ProgramArguments</key><array><string>$tmbin</string><string>queue</string><string>run</string></array>
+  <key>StartInterval</key><integer>$secs</integer>
+  <key>RunAtLoad</key><false/>
+  <key>StandardOutPath</key><string>$HOME/.tokensmax/schedule.log</string>
+  <key>StandardErrorPath</key><string>$HOME/.tokensmax/schedule.log</string>
+</dict></plist>
+PL
+        launchctl unload "$plist" 2>/dev/null || true
+        launchctl load "$plist" 2>/dev/null && echo "✓ scheduled: \`tokensmax queue run\` every ${secs}s · log: ~/.tokensmax/schedule.log" \
+          || echo "  ⚠ launchctl load failed — load it manually: launchctl load \"$plist\""
+      else
+        echo "no launchctl here — add this to your crontab (crontab -e):"
+        echo "  */$(( secs/60>0 ? secs/60 : 1 )) * * * * $tmbin queue run >> \$HOME/.tokensmax/schedule.log 2>&1"
+      fi ;;
+    off)
+      if have launchctl; then launchctl unload "$plist" 2>/dev/null || true; rm -f "$plist"; echo "✓ unscheduled (launchd)"
+      else echo "remove the tokensmax line from your crontab (crontab -e)"; fi ;;
+    status|*)
+      if have launchctl; then launchctl list 2>/dev/null | grep -q "$label" && echo "scheduled (launchd: $label) · log: ~/.tokensmax/schedule.log" || echo "not scheduled"
+      else echo "check: crontab -l | grep tokensmax"; fi ;;
+  esac
+}
+
 main(){
   local sub="${1:-}"; shift || true
   case "$sub" in
     init) cmd_init "$@" ;;
     reports) cmd_reports "$@" ;;
+    queue) cmd_queue "$@" ;;
+    schedule) cmd_schedule "$@" ;;
     auth) cmd_auth "${1:-}" ;;
     doctor) cmd_doctor ;;
     status) cmd_status ;;
