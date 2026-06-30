@@ -255,6 +255,10 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 
 ## 📋 Installation
 
+> 📖 **See [USAGE_GUIDE.md](USAGE_GUIDE.md)** for detailed install steps (Claude Code,
+> Codex/Cursor/Copilot, manual, update, verify) and a full **"which skill when"**
+> reference organized by scenario, plus how skills compose on real tasks.
+
 ### Quick Install (Recommended)
 
 The installer copies each skill into its own folder under `~/.claude/skills/`,
