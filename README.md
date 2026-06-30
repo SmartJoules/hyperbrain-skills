@@ -384,6 +384,11 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 > 📖 **See [USAGE_GUIDE.md](USAGE_GUIDE.md)** for detailed install steps (Claude Code,
 > Pi, Codex/Cursor/Copilot, manual, update, verify) and a full **"which skill when"**
 > reference organized by scenario, plus how skills compose on real tasks.
+>
+> 🤖 **See [AGENTS_AND_SKILLS.md](AGENTS_AND_SKILLS.md)** for how to call agents/skills
+> (Claude Code · Pi `/skill:<name>` · Codex · tokensmax CLI · CI) and the full catalog of
+> agents + their specific jobs. Auto-generated — regenerate with
+> `node scripts/gen-agents-doc.js --write`.
 
 > **Pi (pi.dev) users:** `./install.sh --assistant pi` — Pi uses the same `SKILL.md`
 > format as Claude Code, so every skill works unchanged (installed to `~/.pi/agent/skills/`).
