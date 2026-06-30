@@ -1,6 +1,6 @@
 ---
 name: jouletrack-angular
-description: Angular development patterns and conventions for the JouleTRACK frontend. Use for all Angular work in JouleTRACK: creating components, services, and modules, building dashboards, charts, and forms, and following the project's OnPush, RxJS, and styling conventions.
+description: Angular development patterns and conventions for the JouleTRACK frontend. Use for all Angular work in JouleTRACK: creating components, services, and modules, building dashboards, charts, and forms, using PrimeNG-first UI components, using Boxicons-first icons, and following the project's OnPush, RxJS, analytics, and styling conventions.
 ---
 
 # JouleTRACK Angular Development
@@ -64,6 +64,18 @@ Prefer payloads like:
 ```
 
 Verify analytics in tests with a spy when practical; otherwise include it in the manual QA checklist.
+
+---
+
+## 🧩 PrimeNG + Boxicons Rule (Mandatory for UI)
+
+For new or changed JouleTRACK UI:
+
+- Use PrimeNG as the default component library. Reach for `p-table`, `p-dropdown`, `p-multiSelect`, `pTooltip`, `p-skeleton`, paginator, tabs, accordion, toast, overlay, chips, and related PrimeNG modules before custom markup or Angular Material.
+- Use SmartJoules internal wrappers where they are already standardized: `app-button`, `png-table`, `severity-chips`, `segment-toggle-switch`, and other repo-local shared components.
+- Use Boxicons for new icons: action icons, navigation icons, status icons, feature icons, and empty-state icons.
+- Keep Boxicons styled with `currentColor`, consistent sizing, and accessible labels/tooltips for icon-only controls.
+- Do not introduce new Angular Material components or Material Symbols when PrimeNG/internal components and Boxicons can cover the need. Existing legacy Material usage can remain when touching unrelated code.
 
 ---
 
@@ -616,7 +628,8 @@ export class EnergyTransformer {
 - ✅ **ALWAYS** declare ALL components used in feature (even nested ones)
 - ✅ **ALWAYS** import both FormsModule and ReactiveFormsModule
 - ✅ **ALWAYS** use PrimeNG as primary UI library
-- ✅ **ALWAYS** use Angular Material for specific components only
+- ✅ **ALWAYS** use Boxicons for new icons
+- ✅ **ALWAYS** use Angular Material only for legacy/specific repo-standard components
 - ✅ **ALWAYS** export reusable components in exports array
 - ✅ **NEVER** use ViewEncapsulation.Emulated (use None)
 
@@ -741,6 +754,17 @@ import { ChartModule } from 'primeng/chart';
   ]
 })
 export class MyFeatureModule { }
+```
+
+### Adding Boxicons
+
+Use the repo's existing Boxicons setup if present. If the package is not installed yet, prefer the scoped official packages from Boxicons and avoid unofficial wrappers.
+
+```html
+<i class="bx bx-filter-alt" aria-hidden="true"></i>
+<button app-button type="button" pTooltip="Filter alerts" aria-label="Filter alerts">
+  <i class="bx bx-filter-alt" aria-hidden="true"></i>
+</button>
 ```
 
 ---

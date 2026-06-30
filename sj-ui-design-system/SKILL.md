@@ -2,7 +2,8 @@
 name: sj-ui-design-system
 description: >
   SmartJoules / JouleTRACK frontend design system reference for the dejoule-v4 Angular 15 app.
-  Covers component selection, design tokens, accessibility, data resilience, Highcharts charting,
+  Covers PrimeNG-first component selection, Boxicons-first icon selection, design tokens,
+  accessibility, data resilience, Highcharts charting,
   and Impeccable design quality integration. Triggers on UI component questions, styling, forms,
   tables, charts, accessibility, loading states, error handling, empty states, keyboard navigation,
   focus management, and design review. Also covers NgRx patterns, status colours, typography,
@@ -23,13 +24,14 @@ generic Angular or PrimeNG patterns.
 | Layer | Technology | Version |
 |---|---|---|
 | Framework | Angular | 15.x |
-| Primary component lib | Angular Material | 15.2.9 |
-| Specialist component lib | PrimeNG | 15.4.1 |
+| Primary component lib for new UI | PrimeNG | 15.4.1 |
+| Secondary/legacy component lib | Angular Material | 15.2.9 |
 | State management | NgRx Store + Component-Store | 15.x |
 | Charts / data viz | Highcharts + D3 | v6 / v5 |
 | Date picker | @danielmoncada/angular-datetime-picker | 15.x |
 | Font | Work Sans (+ Roboto fallback) | — |
-| Icons | Material Symbols Rounded (filled, wght 300) | — |
+| Icons for new UI | Boxicons | use existing setup or scoped `@boxicons/*` packages |
+| Legacy icons | Material Symbols Rounded / PrimeIcons | preserve only where already embedded in existing components |
 | Error tracking | Sentry Angular | 7.x |
 
 ---
@@ -67,10 +69,11 @@ These are defined in `src/styles.css` under `:root`. Always use these variables.
 --primary-500: #f90;
 ```
 
-### Typography
+### Typography and Icons
 - **Font family**: `'Work Sans', 'Roboto', sans-serif` — set globally on body
-- **Material icons**: use class `material-symbols-rounded` with variation settings
-  `font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24`
+- **New icons**: use Boxicons for product, action, navigation, status, and feature icons.
+  Keep icons as `currentColor`, size them consistently with the component, and add accessible labels/tooltips for icon-only controls.
+- **Legacy icons**: Material Symbols and PrimeIcons may remain in existing components, but do not introduce them in new UI when Boxicons can cover the need.
 
 ### Global utility classes (from styles.css)
 ```css
@@ -102,6 +105,14 @@ These are defined in `src/styles.css` under `:root`. Always use these variables.
 ## 3. Component Decision Tree
 
 When a developer asks "which component should I use for X", follow this decision tree:
+
+### Global component rule
+
+PrimeNG is the default component library for new UI surfaces. Use repo-standard internal wrappers where they exist (`app-button`, `png-table`, `severity-chips`, `segment-toggle-switch`), because those wrappers encode SmartJoules styling and behavior. Use Angular Material only for legacy surfaces or specific components already standardized by this design system.
+
+### Icon rule
+
+Use Boxicons for new icons. Verify the icon name exists, keep color as `currentColor`, do not mix icon libraries in one new surface, and ensure icon-only actions have `aria-label` plus tooltip text.
 
 ### Data tables — ENFORCED RULE (non-negotiable)
 
@@ -687,7 +698,9 @@ export class MyComponent { }
 
 - ❌ **Do NOT hardcode hex colours**. Use `var(--n-*)` CSS custom properties.
 - ❌ **Do NOT install new UI libraries** for things already in the stack (date pickers, tables, dropdowns).
+- ❌ **Do NOT build custom UI when a PrimeNG or SmartJoules internal component exists. PrimeNG is the default for new UI components.**
 - ❌ **Do NOT add new `MatLegacy*` imports**. Use non-legacy Material APIs.
+- ❌ **Do NOT introduce Material Symbols, PrimeIcons, or custom SVGs for new icons when Boxicons covers the need.**
 - ❌ **Do NOT use `mat-table` or any Angular Material table for data grids** — this is absolute. Always `p-table`.
 - ❌ **Do NOT put filters outside the table** (separate filter bar above the table). Filters belong inside `<ng-template pTemplate="header">` as a second `<tr>` row using `p-columnFilter`. See §3 Tier 2.
 - ❌ **Do NOT use a bare `<h1>` or custom heading HTML** for page titles. Always use the standard heading structure from §16 with `app-button` for actions.

@@ -1,6 +1,6 @@
 ---
 name: engineering-standards
-description: Mandatory engineering standards for writing ANY code. Use whenever creating, modifying, or reviewing code, designing a system, frontend interactions, or adding a Kafka/Redis/DB integration. Enforces OOP + SOLID, the strategy/decorator/observer/factory/builder design patterns, DRY/KISS, minimal-diff changes, Google Analytics events for meaningful FE interactions, robust connection standards (Kafka heartbeat/offset/lag, Redis singleton/retry/safe handling), and resilience: no memory leaks, no unhandled promises, explicit error/loading/empty/partial states, query optimization, fewer DB calls, and caching with an eviction strategy.
+description: Mandatory engineering standards for writing ANY code. Use whenever creating, modifying, or reviewing code, designing a system, frontend interactions, or adding a Kafka/Redis/DB integration. Enforces OOP + SOLID, the strategy/decorator/observer/factory/builder design patterns, DRY/KISS, minimal-diff changes, PrimeNG-first UI components, Boxicons-first icons, Google Analytics events for meaningful FE interactions, robust connection standards (Kafka heartbeat/offset/lag, Redis singleton/retry/safe handling), and resilience: no memory leaks, no unhandled promises, explicit error/loading/empty/partial states, query optimization, fewer DB calls, and caching with an eviction strategy.
 ---
 
 # Engineering Standards (Mandatory)
@@ -74,6 +74,14 @@ This skill is a hard requirement, not a suggestion.
 - [ ] **Centralize tracking** in an analytics service/helper; do not scatter raw `gtag` calls through components unless that is already the local repo pattern.
 - [ ] **Test or verify** analytics calls for critical interactions with unit tests, spies, or a manual QA checklist.
 
+## 2B. Frontend UI Library and Icons (mandatory)
+
+- [ ] **PrimeNG-first UI** — every new or changed Angular UI should use PrimeNG components before custom HTML or Angular Material. Prefer `p-table`, `p-dropdown`, `p-multiSelect`, `pTooltip`, `p-skeleton`, dialogs/overlays, chips, tabs, accordions, paginator, toast, and form controls where they fit.
+- [ ] **Internal components still win when already standardized** — if the repo has a mandated SmartJoules wrapper such as `app-button`, `png-table`, `severity-chips`, or `segment-toggle-switch`, use that wrapper because it carries local styling/behavior.
+- [ ] **Angular Material is fallback/legacy only** — use Material only for existing legacy surfaces or a component already standardized by the repo. Do not introduce new Material components when a PrimeNG or internal equivalent exists.
+- [ ] **Boxicons-first icons** — use Boxicons for new product/action/navigation/status icons. Keep icons as `currentColor`, size them consistently with surrounding text/buttons, add accessible labels/tooltips for icon-only actions, and verify the icon exists instead of guessing names.
+- [ ] **No mixed icon sets in one new surface** — do not mix Boxicons, Material Symbols, PrimeIcons, and custom SVGs unless preserving an existing local component contract.
+
 ---
 
 ## 3. Database & Performance
@@ -120,6 +128,7 @@ Every Kafka producer/consumer MUST follow these:
 - [ ] No memory leaks (subscriptions/timers/listeners/connections cleaned up)
 - [ ] No unhandled promises; errors handled at every boundary
 - [ ] Loading + error + empty + partial-data states all handled (UI)
+- [ ] UI uses PrimeNG/internal SmartJoules components first and Boxicons for new icons
 - [ ] Frontend interactions emit Google Analytics events via the central analytics helper, with no PII/secrets
 - [ ] Queries optimized; N+1 removed; fewer DB calls
 - [ ] Cache has a defined eviction strategy and is invalidated on write
