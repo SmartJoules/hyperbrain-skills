@@ -51,6 +51,9 @@ jobs:
           echo "$docs" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
       - name: Lint changed design docs (rejects on violation)
+        env:
+          DDLINT_REQUIRE_APPROVAL: '1'   # require a human-approval signal in the doc
+          DDLINT_MAX_PAGES: '15'         # 15-page hard cap
         run: |
           mapfile -t files < <(printf '%s\n' "${{ steps.changed.outputs.files }}" | sed '/^$/d')
           if [ ${#files[@]} -eq 0 ]; then

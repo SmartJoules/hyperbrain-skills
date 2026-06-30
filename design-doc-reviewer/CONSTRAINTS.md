@@ -11,6 +11,17 @@ Rollout/Migration/Rollback (if it changes prod/schema/contracts) · Testing stra
 Open Questions. *(A doc declaring itself an ADR may use the lighter ADR shape:
 Context + Decision + Alternatives.)*
 
+## Pre-conditions (checked first → reject)
+- **≤ 15 pages.** A design doc must be tight. The linter estimates pages from
+  `max(words/450, non-blank-lines/55)` and rejects over 15 (override with
+  `DDLINT_MAX_PAGES`). Move bulk to linked appendices.
+- **Human-approved first.** The doc must carry a human approval signal (e.g.
+  `Status: Approved`, `Ready for review`, `Reviewed by <name>`) before automated
+  review — the agent/gate is a *second* gate. Enforced as a blocker when
+  `DDLINT_REQUIRE_APPROVAL=1` (warning otherwise).
+- **Not sloppy.** An unfinished/placeholder/wall-of-text draft is rejected outright
+  (judgment applied by the design-doc-review-agent).
+
 ## Hard constraints (BLOCKER → reject)
 - No hardcoded secrets/tokens/credentials/private keys — env vars / secret manager only.
   A design that touches LLM/DB/3rd-party keys must source them by name from env or a

@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 /**
  * design-doc-lint — deterministic gate for design docs (no API key needed).
- * Enforces the MECHANICAL subset of the design-doc-reviewer skill:
+ * Enforces the MECHANICAL subset of the design-doc-reviewer / design-doc-review-agent skills:
+ *   - 15-page hard cap (estimated from words/non-blank lines — Markdown has no page count)
+ *   - human-approved precondition (doc must carry an Approved/Ready-for-review status)
  *   - required sections present + non-empty
  *   - no hardcoded secrets / tokens
  *   - no hardcoded site IDs / env values (DeJoule rule)
  *   - no banned anti-patterns mentioned as the design (::ng-deep, unbounded cache, per-request Redis)
  * Exits non-zero (fails the CI check) on any BLOCKER. The full judgment review +
- * suggestions come from the design-doc-reviewer skill (advisory job in the workflow).
+ * suggestions come from the design-doc-review-agent skill (advisory job in the workflow).
  *
  * Usage:  node design-doc-lint.js <file...>
  *         (CI passes the changed design-doc paths)
- * Env:    DDLINT_REQUIRE_SKILL_REF=1  → also require a "Skills / Standards" reference (warn->blocker)
+ * Env:    DDLINT_REQUIRE_SKILL_REF=1   → also require a "Skills / Standards" reference (warn->blocker)
+ *         DDLINT_REQUIRE_APPROVAL=1    → require a human-approval status in the doc (warn->blocker)
+ *         DDLINT_MAX_PAGES=15          → override the page cap (default 15)
  */
 'use strict';
 const fs = require('fs');
@@ -46,6 +50,26 @@ function lintFile(file) {
   let text;
   try { text = fs.readFileSync(file, 'utf8'); }
   catch (e) { return { file, blockers: [`cannot read file: ${e.message}`], warnings: [] }; }
+
+  // 0a) 15-page HARD CAP. Markdown has no page count → estimate from the larger of
+  //     words/450 and non-blank-lines/55 (matches the design-doc-review-agent rule).
+  const maxPages = parseInt(process.env.DDLINT_MAX_PAGES || '15', 10);
+  const words = (text.match(/\S+/g) || []).length;
+  const nonBlankLines = text.split('\n').filter(l => l.trim() !== '').length;
+  const estPages = Math.max(words / 450, nonBlankLines / 55);
+  if (estPages > maxPages) {
+    blockers.push(`exceeds the ${maxPages}-page limit (~${estPages.toFixed(1)} pages: ${words} words / ${nonBlankLines} non-blank lines) — keep the doc tight; move bulk to linked appendices`);
+  }
+
+  // 0b) Human-approved precondition — the doc should carry an explicit approval status set
+  //     by a human BEFORE automated review. Warn by default; blocker if DDLINT_REQUIRE_APPROVAL=1.
+  const head = text.slice(0, 1200);
+  const approved = /\b(status\s*[:=]\s*)?(approved|ready[ -]?for[ -]?review|sign[ -]?ed[ -]?off|reviewed[ -]?by)\b/i.test(head);
+  if (!approved) {
+    const msg = 'no human-approval signal (e.g. "Status: Approved" / "Reviewed by <name>") — a design doc must be human-approved before automated review';
+    if (process.env.DDLINT_REQUIRE_APPROVAL === '1') blockers.push(msg);
+    else warnings.push(msg);
+  }
 
   // 1) Required sections (scale: tiny ADRs are exempt if they declare themselves an ADR)
   const isAdr = /\b(ADR|architecture decision record)\b/i.test(text.slice(0, 600));
