@@ -80,6 +80,7 @@ show_help() {
     echo ""
     echo -e "${YELLOW}Skills Included:${NC}"
     echo "    - AI Superpowers (Brainstorming & Planning)"
+    echo "    - Engineering Standards (SOLID, patterns, Kafka/Redis, resilience)"
     echo "    - TDD Workflow"
     echo "    - Angular, React, Vue, Next.js Patterns"
     echo "    - State Management (Redux, Zustand, Pinia, NgRx)"

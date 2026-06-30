@@ -53,7 +53,8 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **This is the entry point for all AI-assisted work**
 
 ### Core Development Skills
-2. **TDD Workflow** - Test-driven development with Red-Green-Refactor cycle
+2. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
+3. **TDD Workflow** - Test-driven development with Red-Green-Refactor cycle
 3. **Angular Patterns** - Enterprise Angular development patterns
 4. **React Patterns** - Modern React with hooks, React Query, TypeScript
 5. **Vue Patterns** - Vue 3 Composition API, Pinia, Vue Query
