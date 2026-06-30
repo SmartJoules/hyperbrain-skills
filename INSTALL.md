@@ -67,6 +67,20 @@ done
 ```
 **Install Location:** `~/.codex/skills/`
 
+> **How Codex / Cursor / Copilot use these skills.** These agents have no native
+> `SKILL.md` registry (that auto-activation is Claude-Code-specific). The installer
+> therefore puts the skills under `skills/<name>/SKILL.md` **and generates an
+> `AGENTS.md`** index next to them. `AGENTS.md` lists every skill with its
+> description and bakes in the mandatory engineering standards. To use it:
+>
+> - **Codex** auto-reads an `AGENTS.md` from the working directory — copy the
+>   generated `~/.codex/skills/AGENTS.md` to your repo root, or point Codex at it.
+> - The agent opens the matching `skills/<name>/SKILL.md` for the task at hand.
+> - `engineering-standards` applies to every change.
+>
+> So the *content* is fully reusable by Codex; only the automatic per-task
+> activation that Claude Code does is replaced by the `AGENTS.md` index.
+
 ---
 
 ## 🔧 Advanced Options

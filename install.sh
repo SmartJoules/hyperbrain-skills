@@ -40,8 +40,8 @@ print_warning() {
 }
 
 # Default values
-INSTALL_DIR="$HOME/.claude/skills"
-BACKUP_DIR="$HOME/.claude/skills.backup.$(date +%Y%m%d_%H%M%S)"
+INSTALL_DIR=""              # resolved per-assistant below if not passed via --dir
+INSTALL_DIR_EXPLICIT=false  # set true when the user passes --dir
 CLONE_DIR="/tmp/hyperbrain-skills.$$"
 SKIP_BACKUP=false
 ASSISTANT="claude"
@@ -98,6 +98,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -d|--dir)
             INSTALL_DIR="$2"
+            INSTALL_DIR_EXPLICIT=true
             shift 2
             ;;
         -a|--assistant)
@@ -123,6 +124,18 @@ done
 # Main installation flow
 main() {
     print_header
+
+    # Resolve the install dir per assistant unless the user passed --dir.
+    if [ "$INSTALL_DIR_EXPLICIT" = false ]; then
+        case "$ASSISTANT" in
+            claude)  INSTALL_DIR="$HOME/.claude/skills" ;;
+            cursor)  INSTALL_DIR="$HOME/.cursor/skills" ;;
+            copilot) INSTALL_DIR="$HOME/.copilot/skills" ;;
+            codex)   INSTALL_DIR="$HOME/.codex/skills" ;;
+            *)       INSTALL_DIR="$HOME/.claude/skills" ;;
+        esac
+    fi
+    BACKUP_DIR="${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
 
     # Check prerequisites
     print_info "Checking prerequisites..."
@@ -191,39 +204,59 @@ main() {
             ;;
 
         codex|cursor|copilot)
-            # For other assistants, create compatible structure
-            mkdir -p "$INSTALL_DIR/.skills"
-            cp -r "$CLONE_DIR"/* "$INSTALL_DIR/.skills/" 2>/dev/null || true
+            # Codex/Cursor/Copilot have no SKILL.md auto-registry. They DO read an
+            # AGENTS.md from the working directory. So: install skills cleanly
+            # per-folder under <dir>/skills/, then generate an AGENTS.md index that
+            # points the agent at the relevant skill and bakes in the mandatory
+            # engineering standards.
+            local skills_root="$INSTALL_DIR/skills"
+            mkdir -p "$skills_root"
+            local count=0
+            while IFS= read -r skill_md; do
+                local skill_dir skill_name
+                skill_dir="$(dirname "$skill_md")"
+                skill_name="$(basename "$skill_dir")"
+                rm -rf "$skills_root/$skill_name"
+                cp -r "$skill_dir" "$skills_root/$skill_name"
+                count=$((count + 1))
+            done < <(find "$CLONE_DIR" -name SKILL.md -not -path '*/.git/*' | sort)
 
-            # Create index file for easy discovery
-            cat > "$INSTALL_DIR/.skills/index.md" << 'EOF'
-# AI-SDLC Skills Index
+            # Generate AGENTS.md from the actual installed skills + their descriptions.
+            {
+                echo "# AGENTS.md — HyperBrain Skills (Codex / Cursor / Copilot)"
+                echo
+                echo "**Purpose:** Instructions for generic AI coding agents that do not have a"
+                echo "native skill registry. The reusable knowledge lives in \`skills/<name>/SKILL.md\`."
+                echo
+                echo "## How to use"
+                echo
+                echo "1. Before any code task, scan the skill list below and **open the \`SKILL.md\`"
+                echo "   of the skill(s) matching the task** (e.g. Angular work -> \`jouletrack-angular\`)."
+                echo "2. \`engineering-standards\` applies to **every** change — read it once and follow it."
+                echo "3. Follow the skill's conventions instead of inventing your own."
+                echo
+                echo "## Critical Rules (always)"
+                echo
+                echo "Follow \`skills/engineering-standards/SKILL.md\` on every change:"
+                echo "- OOP + SOLID; use the right design pattern (strategy/factory/builder/observer/decorator); DRY, KISS, minimum diff."
+                echo "- No memory leaks, no unhandled promises, error handling at every boundary; handle loading/error/empty/partial-data states."
+                echo "- Optimize queries, remove N+1, fewer DB calls; caches MUST have an eviction strategy (TTL/LRU/max-size) + invalidation on write."
+                echo "- Kafka: heartbeat, explicit offset commit after processing, monitor lag, idempotency, DLQ, graceful shutdown."
+                echo "- Redis: singleton/pool (never per-request), retry+backoff, TTL/eviction, graceful degradation, cleanup."
+                echo
+                echo "## Available Skills (load only when relevant)"
+                echo
+                for d in "$skills_root"/*/; do
+                    [ -f "$d/SKILL.md" ] || continue
+                    local nm ds
+                    nm="$(basename "$d")"
+                    ds="$(sed -n 's/^description: //p' "$d/SKILL.md" | head -1)"
+                    echo "- **\`skills/$nm/SKILL.md\`** — ${ds:-$nm}"
+                done
+            } > "$INSTALL_DIR/AGENTS.md"
 
-This directory contains comprehensive AI-SDLC development skills.
-
-## Available Skills
-
-- **superpowers-brainstorming/** - AI brainstorming and planning framework
-- **angular-patterns/** - Angular development patterns
-- **react-patterns/** - React development patterns
-- **vue-patterns/** - Vue.js development patterns
-- **nextjs-patterns/** - Next.js full-stack patterns
-- **state-management/** - Redux, Zustand, Pinia, NgRx patterns
-- **nodejs-patterns/** - Node.js/Express API patterns
-- **python-patterns/** - FastAPI and Python patterns
-- **go-patterns/** - Go/Gin patterns
-- **database-patterns/** - PostgreSQL, InfluxDB, MongoDB, Redis
-- **mqtt-patterns/** - IoT MQTT communication
-- **kafka-patterns/** - Stream processing with Kafka
-- **influxdb-patterns/** - Time-series data patterns
-- **iot-architecture/** - Complete IoT system design
-- **tdd-workflow/** - Test-driven development
-
-## Usage
-
-Refer to individual skill directories for detailed documentation.
-EOF
-            print_success "Skills installed for $ASSISTANT"
+            print_success "Installed $count skills + AGENTS.md for $ASSISTANT"
+            print_info "  Point your agent at $INSTALL_DIR/AGENTS.md (or copy it to your repo root)"
             ;;
 
         *)
