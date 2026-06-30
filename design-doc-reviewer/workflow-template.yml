@@ -1,0 +1,87 @@
+# Design Doc Review — drop into .github/workflows/design-doc-review.yml of a repo.
+#
+# Job 1 (design-doc-gate): deterministic linter — BLOCKS the PR on a non-conforming
+#   design doc. No secrets needed; works immediately.
+# Job 2 (ai-design-review): Claude Code Action — advisory AI review + suggestions,
+#   posted as a PR comment. Runs ONLY if the ANTHROPIC_API_KEY secret exists, so it
+#   never breaks PRs before the secret is configured.
+#
+# Adjust `paths` to where this repo keeps design docs.
+name: Design Doc Review
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '**/*-design.md'
+      - '**/DESIGN.md'
+      - 'docs/**/specs/**'
+      - 'docs/**/design/**'
+      - 'docs/adr/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  design-doc-gate:
+    name: Design doc gate (blocking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Fetch the design-doc linter
+        run: |
+          mkdir -p .ci
+          curl -fsSL \
+            https://raw.githubusercontent.com/SmartJoules/hyperbrain-skills/main/design-doc-reviewer/scripts/design-doc-lint.js \
+            -o .ci/design-doc-lint.js
+      - name: Determine changed design docs
+        id: changed
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          docs=$(git diff --name-only --diff-filter=ACM "$base" "$head" \
+            | grep -E '(-design\.md$|/DESIGN\.md$|^DESIGN\.md$|docs/.*/(specs|design)/|docs/adr/)' || true)
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$docs" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Lint changed design docs (rejects on violation)
+        run: |
+          mapfile -t files < <(printf '%s\n' "${{ steps.changed.outputs.files }}" | sed '/^$/d')
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No design docs changed — nothing to gate."; exit 0
+          fi
+          printf 'Checking:\n%s\n\n' "${files[*]}"
+          node .ci/design-doc-lint.js "${files[@]}"
+
+  ai-design-review:
+    name: AI design review (advisory)
+    runs-on: ubuntu-latest
+    # Only runs when the secret is present — safe to merge this workflow before it's set.
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - name: Check for API key
+        id: haskey
+        run: |
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then echo "present=true" >> "$GITHUB_OUTPUT";
+          else echo "present=false" >> "$GITHUB_OUTPUT"; echo "ANTHROPIC_API_KEY not set — skipping AI review (gate still enforced)."; fi
+      - uses: actions/checkout@v4
+        if: steps.haskey.outputs.present == 'true'
+      - name: Claude design-doc review
+        if: steps.haskey.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: >
+            Review the design doc(s) changed in this PR using the design-doc-reviewer
+            skill standards (required sections, engineering-standards constraints, and
+            alignment with the applicable hyperbrain skills). Post a PR comment with the
+            VERDICT (APPROVE / APPROVE-WITH-CHANGES / REJECT), blockers/major/minor
+            findings, strengths, and an ordered list of required changes. Be specific and
+            actionable — every rejection names where, why (which constraint/skill), and
+            the fix. Do not approve a doc with any blocker.
