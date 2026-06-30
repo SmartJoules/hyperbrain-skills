@@ -126,6 +126,25 @@ Define the inference contract:
 - eval gate and canary/rollback plan
 ```
 
+## Data Modeling Algorithm
+
+Use when designing tables, collections, relationships, indexes, GSIs/LSIs, migrations, or access patterns:
+
+```text
+Use data-modeling-algorithm, database-patterns, database-query-optimizer, production-safety-guards, and self-verification.
+
+Task:
+<data modeling task>
+
+Create the best SQL/NoSQL model:
+- list entities, ownership, lifecycle, and invariants
+- list access patterns with filters, sort, cardinality, frequency, and latency SLO
+- choose SQL vs DynamoDB vs MongoDB vs time-series vs graph store
+- design relationships, constraints, indexes, composite keys, GSIs/LSIs, projections, and tenant/site scope
+- include migration/backfill/rollback plan and verification queries
+- explain trade-offs, hot partition risks, unbounded arrays, full scans, N+1 risks, and write amplification
+```
+
 ## Bug Fix And Postmortem Learning
 
 Use when a bug is solved or needs RCA:
