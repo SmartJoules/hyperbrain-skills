@@ -51,9 +51,10 @@ Choose the lane:
 |---|---|
 | Product/spec/prototype to implementation | `proto-to-dejoule`, `prd-to-html-prototype`, `prompt-harness` |
 | Effective planning / agent handoff | `agent-planning-harness`, `agent-orchestration`, `agent-delegation-contracts` |
+| Pi-like skill discovery / runtime loading | `skill-loading-runtime`, `pi-coding-agent`, `agent-planning-harness`, `self-verification` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
-| Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
+| Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `skill-loading-runtime`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
 | Review/debug/performance | `database-query-optimizer`, `engineering-standards`, `tdd-workflow` |
@@ -75,7 +76,8 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
 | Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
 | LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
-| Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
+| Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `skill-loading-runtime`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
+| Skill discovery, `SKILL.md` frontmatter, progressive disclosure, context budget routing, custom skill loader | `skill-loading-runtime`, `pi-coding-agent`, `agent-context-manager`, `self-verification` |
 | Bug fix, incident, flaky test, production regression | `root-cause-analyzer`, `bug-postmortem-learning`, `code-reviewer`, `tdd-workflow` |
 | Large cross-file task or unclear ownership | `agent-planning-harness`, `agentic-engineering`, `agent-orchestration`, `agent-context-manager` |
 

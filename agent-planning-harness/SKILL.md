@@ -18,6 +18,7 @@ Use this before `prompt-harness`, `agent-orchestration`, `engineering-planner`, 
    - Code generation/API/service: `prompt-harness`
    - Large multi-file task: `agentic-engineering`
    - Multi-agent execution: `agent-orchestration`, `agent-fleet-runner`, `agent-delegation-contracts`
+   - Skill discovery/loading runtime: `skill-loading-runtime`, `agent-context-manager`
    - Product/engineering plan: `engineering-planner`
    - Architecture/HLD/LLD: `software-architecture-planner`
    - Pi.dev coding-agent / CLI harness: `pi-coding-agent`, `prompt-engineering`, `agent-tool-design`

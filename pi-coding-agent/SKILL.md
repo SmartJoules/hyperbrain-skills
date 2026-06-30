@@ -24,11 +24,12 @@ For exact commands and flags, check the installed Pi version with `pi --help` or
 
 Start non-trivial Pi work with this stack:
 
-1. `agent-planning-harness` for goal, scope, workstreams, risks, and verification gates.
-2. `advanced-ai-workflow` for the default execution loop.
-3. `prompt-harness` for repo-aware code generation.
-4. `self-verification` before final answers, commits, or deployments.
-5. `long-term-memory` and `self-learning` when the work produces reusable knowledge.
+1. `skill-loading-runtime` to scan skill metadata first, rank skills, and load only selected instructions/resources.
+2. `agent-planning-harness` for goal, scope, workstreams, risks, and verification gates.
+3. `advanced-ai-workflow` for the default execution loop.
+4. `prompt-harness` for repo-aware code generation.
+5. `self-verification` before final answers, commits, or deployments.
+6. `long-term-memory` and `self-learning` when the work produces reusable knowledge.
 
 Add these only when the task needs them:
 
@@ -44,8 +45,8 @@ Add these only when the task needs them:
 When a user asks Pi to build, fix, review, or research:
 
 1. Read `AGENTS.md`, repo README, package/build files, and the target files.
-2. Classify the task with `advanced-ai-workflow`.
-3. Select the smallest useful HyperBrain skill set.
+2. Use `skill-loading-runtime` to scan all skill frontmatter, rank matches, and load only the smallest useful HyperBrain skill set.
+3. Classify the task with `advanced-ai-workflow`.
 4. Produce an execution plan with acceptance criteria and verification gates.
 5. Run the task through Pi, keeping tool calls and file edits tightly scoped.
 6. Verify with tests, build checks, static checks, or targeted inspection.
