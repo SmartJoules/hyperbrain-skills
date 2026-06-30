@@ -55,7 +55,8 @@ Choose the lane:
 | Model tier selection / cost routing | `model-selection-runtime`, `skill-loading-runtime`, `agent-context-manager`, `self-verification` |
 | Production/destructive operation guard | `production-safety-guards`, `model-selection-runtime`, `self-verification`, `security-review` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
-| AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
+| AI/LLM/RAG/agent work | `inference-engineering`, `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
+| Production inference serving | `inference-engineering`, `model-selection-runtime`, `llm-eval-guardrails`, `production-safety-guards` |
 | Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
@@ -78,7 +79,8 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
 | Destructive query or command: `DELETE`, `DROP`, `TRUNCATE`, `FLUSH`, broad `UPDATE`, graph `DELETE`, Kubernetes/cloud delete | `production-safety-guards`, `model-selection-runtime`, `security-review`, `self-verification` |
 | Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
-| LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
+| LLM/RAG/agent tools, Bedrock, tool registries, evals | `inference-engineering`, `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
+| Inference serving, streaming chat, structured output, model registry/routing, prompt/model versioning, cost/latency telemetry | `inference-engineering`, `model-selection-runtime`, `prompt-engineering`, `llm-eval-guardrails`, `agent-tool-design` |
 | Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
 | Skill discovery, `SKILL.md` frontmatter, progressive disclosure, context budget routing, custom skill loader | `skill-loading-runtime`, `pi-coding-agent`, `agent-context-manager`, `self-verification` |
 | Model choice, cost tiering, provider routing, escalation/downgrade after verification | `model-selection-runtime`, `skill-loading-runtime`, `agent-fleet-runner`, `self-verification` |
