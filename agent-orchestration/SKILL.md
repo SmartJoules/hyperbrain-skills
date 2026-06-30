@@ -7,7 +7,7 @@ description: Use when planning, creating, allocating, delegating to, coordinatin
 
 **Purpose:** Turn one vague AI task into a managed team of focused agents with clear roles, small context packets, safe permissions, and a real integration/verification gate.
 
-Use this with `advanced-ai-workflow` for the operating model, `agentic-engineering` for low-token execution, `tokensmax` for routing to real agent seats, and `agent-tool-design` when building runtime LLM agents and tools.
+Use this with `agent-planning-harness` for effective plans, `advanced-ai-workflow` for the operating model, `agentic-engineering` for low-token execution, `tokensmax` for routing to real agent seats, and `agent-tool-design` when building runtime LLM agents and tools.
 
 ## When to Orchestrate
 
@@ -18,6 +18,7 @@ Skip orchestration for tiny single-file fixes, obvious mechanical edits, or task
 ## Core Roles
 
 - **Planning Agent:** Convert the goal into workstreams, dependencies, risks, acceptance criteria, and the integration plan.
+- **Planning Harness:** Require the planning agent to run `agent-planning-harness` before dispatch so every worker receives an executable context packet.
 - **Research Agent:** Read-only discovery of code, docs, schemas, tickets, logs, PR history, or external references. Return evidence with file paths, line numbers, URLs, or query results.
 - **Architecture Agent:** Produce HLD/LLD, API contracts, data model choices, ADRs, sequence diagrams, and tradeoffs.
 - **Implementation Agent:** Own one bounded code surface: backend, frontend, database, DevOps, ontology, RBAC, alerts, tests, or migration.

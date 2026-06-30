@@ -50,6 +50,7 @@ Choose the lane:
 | Lane | Primary skills |
 |---|---|
 | Product/spec/prototype to implementation | `proto-to-dejoule`, `prd-to-html-prototype`, `prompt-harness` |
+| Effective planning / agent handoff | `agent-planning-harness`, `agent-orchestration`, `agent-delegation-contracts` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
@@ -124,7 +125,7 @@ Use this compact plan unless the user gives a better one:
 
 1. Detect repo and task lane.
 2. Retrieve existing context with the cheapest source first.
-3. If the task is non-trivial, route with `tokensmax`; otherwise do it locally.
+3. Use `agent-planning-harness` for non-trivial work, then route with `tokensmax` when useful; otherwise do it locally.
 4. Implement in small, contract-shaped changes.
 5. Verify with focused tests/review/evals.
 6. Run `self-verification`, then report changed files, verification, residual risk, and any persisted learning.
