@@ -266,6 +266,224 @@ node tools/neptune.ts load --source s3://<bucket>/batch-ingestion/suh-hyd/ \
 
 ---
 
+## Apache Jena / Fuseki On-Prem Graph DB
+
+Use Apache Jena Fuseki as the on-prem graph backend when a site cannot depend on cloud Neptune. Fuseki is the portable SPARQL server target in the Ontology Service architecture; it exposes SPARQL 1.1 query/update and Graph Store Protocol endpoints.
+
+### Recommended Shape
+
+| Cloud | On-prem |
+|---|---|
+| Amazon Neptune RDF cluster | Apache Jena Fuseki |
+| IAM SigV4 HTTP client | Basic-auth/internal-network HTTP client |
+| `http://smartjoules.org/<site>/brick` named graphs | Same named graph IRIs |
+| `http://smartjoules.org/schema` shared schema graph | Same named graph IRI |
+| S3 bulk loader | Local RDF upload / `s-put` / Graph Store Protocol |
+| `tools/neptune.ts` | Keep command surface, swap adapter underneath |
+
+Keep the ontology contract identical across cloud and on-prem:
+- Same graph IRIs
+- Same instance IRIs
+- Same `brick:` and `sj:` vocabularies
+- Same SPARQL queries
+- Same `GRAPH <http://smartjoules.org/<site>/brick>` scoping
+- Same N-Quads/Turtle export artifacts
+
+### Local Docker Setup
+
+Fast local/dev setup using the common community image with a web UI:
+
+```bash
+docker volume create fuseki-data
+docker run --name ontology-fuseki \
+  -p 3030:3030 \
+  -e ADMIN_PASSWORD=change-me \
+  -v fuseki-data:/fuseki \
+  stain/jena-fuseki
+```
+
+For production-like on-prem packaging, prefer Apache Jena's `jena-fuseki-docker` tooling from the matching Jena release and build/pin the image version yourself. The Apache Docker tooling is command-line/network-protocol oriented and is easier to customize for controlled deployments; the community `stain/jena-fuseki` image is convenient for developer bootstrap and UI-driven testing.
+
+Open:
+
+```text
+http://localhost:3030/
+```
+
+Create dataset:
+- Dataset name: `ontology`
+- Type: persistent/TDB if available in the UI
+- Enable update only on trusted/internal environments
+
+Endpoint pattern:
+
+```text
+Query:  http://localhost:3030/ontology/query
+Update: http://localhost:3030/ontology/update
+Data:   http://localhost:3030/ontology/data
+```
+
+Production/on-prem notes:
+- Put Fuseki behind an internal reverse proxy.
+- Require authentication; never expose update endpoints publicly.
+- Persist `/fuseki` to disk.
+- Snapshot the volume before bulk reloads.
+- Run the service in read-only mode for consumers; keep update access limited to the ingestion/sync job.
+
+### Copy Cloud Neptune Data to Local Fuseki
+
+Best full-copy flow:
+
+```bash
+# 1. From ontology-service, while on VPN, export cloud Neptune.
+node tools/neptune.ts export --out neptune-dump --format turtle
+
+# 2. Load the shared schema graph.
+curl -u admin:change-me \
+  -X PUT \
+  -H 'Content-Type: text/turtle' \
+  --data-binary @neptune-dump/smartjoules_org_schema.ttl \
+  'http://localhost:3030/ontology/data?graph=http%3A%2F%2Fsmartjoules.org%2Fschema'
+
+# 3. Load each site graph. Use the graph IRI encoded as the graph query param.
+curl -u admin:change-me \
+  -X PUT \
+  -H 'Content-Type: text/turtle' \
+  --data-binary @neptune-dump/smartjoules_org_suh_hyd_brick.ttl \
+  'http://localhost:3030/ontology/data?graph=http%3A%2F%2Fsmartjoules.org%2Fsuh-hyd%2Fbrick'
+```
+
+If using Jena command-line tools, the equivalent pattern is:
+
+```bash
+s-put http://localhost:3030/ontology/data http://smartjoules.org/schema neptune-dump/smartjoules_org_schema.ttl
+s-put http://localhost:3030/ontology/data http://smartjoules.org/suh-hyd/brick neptune-dump/smartjoules_org_suh_hyd_brick.ttl
+s-query --service http://localhost:3030/ontology/query 'SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g'
+```
+
+For very large copies, prefer N-Quads because the named graph is stored as the fourth term and survives cross-store movement cleanly. Export or generate N-Quads per site, then load into the dataset with the Graph Store Protocol or Jena loader tooling.
+
+### Verify Local Copy
+
+Run the same SPARQL against Neptune and Fuseki and compare counts:
+
+```sparql
+SELECT ?g (COUNT(*) AS ?triples)
+WHERE { GRAPH ?g { ?s ?p ?o } }
+GROUP BY ?g
+ORDER BY ?g
+```
+
+Smoke-test one site:
+
+```sparql
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+SELECT ?type (COUNT(*) AS ?n) WHERE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?x a ?type .
+  }
+} GROUP BY ?type ORDER BY DESC(?n) LIMIT 30
+```
+
+Expected parity:
+- Same named graph list
+- Same triple counts per copied graph
+- Same query results for site-scoped recipes
+- Same telemetry reference IDs
+- No query logic changes in consumers
+
+### Sync Strategies
+
+Choose by freshness requirement:
+
+| Strategy | Use when | How |
+|---|---|---|
+| Snapshot copy | Dev/test, disaster recovery, periodic on-prem refresh | Export Neptune named graphs, replace Fuseki named graphs with `PUT` |
+| Site-level refresh | One site changed materially | Export one site graph, `PUT` only that named graph, verify counts |
+| Event/projector sync | Production on-prem parity | Send validated ontology events to an on-prem projector that writes Fuseki via SPARQL UPDATE |
+| Artifact sync | Offline/limited network sites | Generate N-Quads from source configs, ship signed artifact, load into Fuseki |
+
+Recommended production path:
+1. Keep Neptune and Fuseki behind the same Ontology Service interface.
+2. Use pure SPARQL 1.1 in the Query Catalog; no Neptune-only features.
+3. Use a Graph Store Adapter with two implementations: `NeptuneGraphStore` and `FusekiGraphStore`.
+4. Project validated config events into both stores, or replay events into Fuseki for on-prem sites.
+5. Keep `graphVersion` in Redis/local cache so consumers know what model version they are reading.
+
+### Fuseki Adapter Sketch
+
+```ts
+export interface GraphStore {
+  query(sparql: string, accept?: string): Promise<string>;
+  update(sparql: string): Promise<string>;
+}
+
+export class FusekiGraphStore implements GraphStore {
+  constructor(
+    private readonly base = process.env.FUSEKI_BASE ?? "http://localhost:3030/ontology",
+    private readonly auth = process.env.FUSEKI_BASIC_AUTH,
+  ) {}
+
+  async query(sparql: string, accept = "application/sparql-results+json") {
+    return this.post(`${this.base}/query`, "query", sparql, accept);
+  }
+
+  async update(sparql: string) {
+    return this.post(`${this.base}/update`, "update", sparql, "application/sparql-results+json");
+  }
+
+  private async post(url: string, field: "query" | "update", sparql: string, accept: string) {
+    const headers: Record<string, string> = {
+      "content-type": "application/x-www-form-urlencoded",
+      accept,
+    };
+    if (this.auth) headers.authorization = `Basic ${this.auth}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: new URLSearchParams({ [field]: sparql }),
+    });
+    if (!res.ok) throw new Error(`Fuseki HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`);
+    return res.text();
+  }
+}
+```
+
+Do not put Fuseki auth secrets in source. Use environment variables or site-local secret management.
+
+### On-Prem Update Pattern
+
+Use the same surgical SPARQL as Neptune. Only the transport changes:
+
+```bash
+curl -u admin:change-me \
+  -X POST \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'update@update.rq' \
+  http://localhost:3030/ontology/update
+```
+
+Never update the union graph. Always update the target named graph:
+
+```sparql
+DELETE { GRAPH <http://smartjoules.org/suh-hyd/brick> { ?s ?p ?old } }
+INSERT { GRAPH <http://smartjoules.org/suh-hyd/brick> { ?s ?p ?new } }
+WHERE  { GRAPH <http://smartjoules.org/suh-hyd/brick> { ... } }
+```
+
+### On-Prem Guardrails
+
+- Treat Fuseki update endpoint like production write access.
+- Use immutable graph IRIs so cloud/on-prem queries are byte-identical.
+- Store backups before `PUT` replacing a named graph.
+- Verify counts and sample semantic traversals after every sync.
+- Keep Brick TBox and `sj:` schema graph synced before ABox/site data.
+- Do not depend on inference unless you explicitly configure and test it; ontology-service already materializes needed parent types/inverses.
+- For edge sites, prefer signed N-Quads artifacts plus checksum over direct cloud DB access.
+
+---
+
 ## Brick Schema Technique
 
 Use the vendored offline `brick-kb`, not memory:

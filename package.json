@@ -27,6 +27,8 @@
     "developer-productivity",
     "ontology",
     "neptune",
+    "jena",
+    "fuseki",
     "sparql",
     "brick-schema",
     "development"

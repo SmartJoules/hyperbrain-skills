@@ -74,7 +74,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **prompt-engineering** - Systematic prompting: structure, few-shot, structured/JSON output, chain-of-thought, prompt caching, model-tier-aware prompting, and prompt-injection defense (Bedrock Converse / Claude / Qwen).
    - **llm-eval-guardrails** - Evaluate LLM features (eval sets, LLM-as-judge, grounding/verify-gate, regression) and guard them (PII/secret redaction, injection defense, output validation, rate + cost limits, fallbacks).
    - **agent-tool-design** - Design agent tool-registries and loops: tool granularity + schemas, the tool-use loop (turn limits/parallelism/timeouts/truncation), cost-tiered model routing, grounding, and tracing. Generalizes Lumen's Bedrock agent.
-   - **ontology-service-knowledge-base** - SmartJoules/ontology-service KB: Amazon Neptune RDF/SPARQL graph, Brick Schema + `sj:` model, repo tools, Graph Explorer, ingestion/update safety, and query recipes for building semantics.
+   - **ontology-service-knowledge-base** - SmartJoules/ontology-service KB: Amazon Neptune RDF/SPARQL graph, Apache Jena/Fuseki on-prem setup + cloud sync, Brick Schema + `sj:` model, repo tools, Graph Explorer, ingestion/update safety, and query recipes for building semantics.
    - **brick** - Brick Schema lookup/modeling skill backed by ontology-service's vendored `brick-kb`; use for class, point, relationship, example, and SHACL validation questions.
    - **neptune-graph** - SmartJoules Neptune query/update skill: site-scoped SPARQL, safe `DELETE/INSERT/WHERE`, telemetry references, components/devices/controllers/locations, water loops, and graph guardrails.
 

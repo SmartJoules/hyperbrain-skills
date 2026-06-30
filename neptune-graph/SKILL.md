@@ -7,6 +7,8 @@ description: Use when writing, reviewing, fetching, or updating SmartJoules Amaz
 
 The ontology graph is RDF/SPARQL in Amazon Neptune. Use the repo tools; do not hand-roll signed HTTP requests.
 
+For on-prem deployments, the same graph model can run on Apache Jena Fuseki. Keep SPARQL, graph IRIs, and named-graph scoping identical; only the transport/adapter changes.
+
 ---
 
 ## Graphs
@@ -46,6 +48,23 @@ node tools/neptune.ts load --source s3://<bucket>/<prefix>/ --role <iamRoleArn>
 ```
 
 Prerequisites: VPN, AWS profile `sjpl-aws`, Node >= 22, `.env` Neptune endpoints.
+
+For local/on-prem Fuseki:
+
+```bash
+docker volume create fuseki-data
+docker run --name ontology-fuseki -p 3030:3030 -e ADMIN_PASSWORD=change-me -v fuseki-data:/fuseki stain/jena-fuseki
+```
+
+Use:
+
+```text
+http://localhost:3030/ontology/query
+http://localhost:3030/ontology/update
+http://localhost:3030/ontology/data
+```
+
+Copy from Neptune to Fuseki by exporting named graphs with `node tools/neptune.ts export --out neptune-dump --format turtle`, then loading each file into the same graph IRI through Fuseki's Graph Store Protocol (`/ontology/data?graph=<encoded graph IRI>`). Verify with per-graph triple counts.
 
 ---
 
