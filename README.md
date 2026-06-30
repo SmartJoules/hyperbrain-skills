@@ -77,6 +77,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **ontology-service-knowledge-base** - SmartJoules/ontology-service KB: Amazon Neptune RDF/SPARQL graph, Apache Jena/Fuseki on-prem setup + cloud sync, Brick Schema + `sj:` model, repo tools, Graph Explorer, ingestion/update safety, and query recipes for building semantics.
    - **brick** - Brick Schema lookup/modeling skill backed by ontology-service's vendored `brick-kb`; use for class, point, relationship, example, and SHACL validation questions.
    - **neptune-graph** - SmartJoules Neptune query/update skill: site-scoped SPARQL, safe `DELETE/INSERT/WHERE`, telemetry references, components/devices/controllers/locations, water loops, and graph guardrails.
+   - **dejoule-rbac** - DeJoule/JouleTRACK RBAC implementation guide: jt-api-v2 policies, role policy catalog, site access, action permission mapping, legacy JouleTrack-API checks, and Angular route/menu/button guards.
 
 ### DeJoule Operations & Diagnostics (need SmartJoules MCP: Sentinel, Morpheus)
    - **cpa-health** - Holistic health audit of CPA (Chiller Plant Automation) + the full IoT stack (sensors → PostgreSQL → runtime → InfluxDB → commands → BMS).

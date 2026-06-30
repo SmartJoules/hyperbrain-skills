@@ -31,6 +31,9 @@
     "fuseki",
     "sparql",
     "brick-schema",
+    "rbac",
+    "authorization",
+    "jouletrack",
     "development"
   ],
   "scripts": {
@@ -61,6 +64,7 @@
     "ontology-service-knowledge-base/",
     "brick/",
     "neptune-graph/",
+    "dejoule-rbac/",
     "tdd-workflow/",
     "angular-patterns/",
     "react-patterns/",
