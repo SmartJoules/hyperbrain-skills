@@ -33,7 +33,7 @@ Composes (does NOT duplicate): [[design-doc-reviewer]] (the rules + verdict form
    |--------|------|-----------------|
    | Angular, component/service, dashboard, `--n-*`, PrimeNG | **JouleTRACK** | [[jouletrack-angular]], [[jouletrack-library]], [[design-knowledge-base]] |
    | Sails, Waterline, controller/service/model, `/v1/...`, dejoule-api | **jt-api-v2** | [[backend-knowledge-base]], [[dejoule-knowledge-base]] |
-   | device feedback, Kafka consumer, event-driven ingestion, Prisma, command ack | **iot-feedback-handler** | repo context below + [[iot-knowledge-base]], [[kafka-patterns]] |
+   | device feedback, Kafka consumer, event-driven ingestion, mode/recipe/relinquish/bulk-asset, command ack | **iot-feedback-handler** | [[iot-feedback-handler-knowledge-base]] + [[iot-knowledge-base]], [[kafka-patterns]] |
    | InfluxDB / DynamoDB / Redis / Postgres | any | [[database-patterns]], [[influxdb-patterns]], [[database-query-optimizer]] |
    | LLM/agent/RAG | any | [[rag-retrieval]], [[prompt-engineering]], [[llm-eval-guardrails]], [[agent-tool-design]], [[lumen-knowledge-base]] |
 3. **Load real context cheaply** (retrieve-don't-read per [[agentic-engineering]]): for each target repo read its `AGENTS.md` / `CLAUDE.md` / `ARCHITECTURE_AND_STANDARDS.md`, `ai-context/*`, and `graphify-out/GRAPH_REPORT.md` if present; the KB skill above; then targeted grep into the repo for the specific symbols/endpoints/patterns the doc proposes. Do NOT read whole modules.
@@ -54,7 +54,7 @@ OnPush; `takeUntil(destroy$)`/async pipe; typed services with `catchError`; no `
 Thin `api/controllers/*` → `api/services/*` (logic) → `api/models/*` (Waterline); routes in `config/routes.js`, auth in `config/policies.js` (don't change without consent); "repository" = Waterline model + service (no foreign ORM); preserve nulls in time-series (no `fill(0)`); connection standards (singleton ioredis, Kafka offset-after-process, lag). Feedback cites `backend-knowledge-base`.
 
 ### iot-feedback-handler (TypeScript microservice, event-driven)
-Enterprise TS strict; **explicit layered architecture** — `src/{config,constants,handlers,interface,orchestrators,repositories,services,utils}`; **Repository / Factory / Strategy / Singleton** patterns are mandated (per its `ARCHITECTURE_AND_STANDARDS.md`); OOP + GoF required; Express + **KafkaJS** (heartbeat, offset-after-process, lag, DLQ, snappy), Prisma + Postgres/MongoDB/DynamoDB/InfluxDB, Redis singleton, Sentry + pino logging; MCP (Morpheus) usage is mandated for AI agents. Feedback cites `iot-communication/iot-feedback-handler/ARCHITECTURE_AND_STANDARDS.md` and the relevant layer.
+See [[iot-feedback-handler-knowledge-base]] for the full architecture. In brief: explicit **layered architecture** `handlers→orchestrators→services→repositories` (downward deps only; thin handlers, fat services, no DB in services); **Repository / Factory / Strategy / Singleton** patterns mandated (per its `ARCHITECTURE_AND_STANDARDS.md`); OOP-only main flows; Express + **KafkaJS+snappy** (manual offset-after-process, heartbeat; note: NO DLQ — failures skip+Sentry), cloud/edge **DocumentStoreFactory** (DynamoDB/MongoDB) + Postgres audit + Redis singleton (TTL 3600), Sentry + structured pino; **Morpheus MCP query is mandated** for AI agents before changes. Feedback cites the KB skill + the relevant layer/file.
 
 > If a target repo has its own `AGENTS.md`/`ARCHITECTURE_AND_STANDARDS.md`, that repo's rules win for repo-specific specifics; hyperbrain [[engineering-standards]] is the cross-repo baseline.
 
