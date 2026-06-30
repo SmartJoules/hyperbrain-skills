@@ -49,6 +49,10 @@
     "geofencing",
     "alerts",
     "spatial-context",
+    "onprem",
+    "on-premise",
+    "hybrid-cloud",
+    "sqs-fifo",
     "jouletrack",
     "development"
   ],
@@ -90,6 +94,7 @@
     "dejoule-rbac/",
     "dejoule-authentication/",
     "dejoule-geofencing-alerts/",
+    "dejoule-onpremise/",
     "software-architecture-planner/",
     "tdd-workflow/",
     "angular-patterns/",
