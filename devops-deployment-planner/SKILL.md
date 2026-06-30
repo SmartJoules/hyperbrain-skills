@@ -9,6 +9,8 @@ Act as a DevOps engineer and platform architect. Convert an application or servi
 
 Inspect the repository before generating files. Match the existing build system, runtime, ports, environment variables, health checks, and deployment conventions.
 
+For SmartJoules/DeJoule Kubernetes deployments, use `sj-k8s-knowledge-base` and place service manifests in the centralized `SmartJoules/sj-k8s` repo instead of creating per-service Kubernetes deployment repos.
+
 ---
 
 ## Discovery Checklist
@@ -22,6 +24,7 @@ Before recommending deployment:
 - environment variables and secrets
 - database/cache/queue dependencies
 - existing Dockerfile, compose, Helm, Terraform, CI workflows
+- for SmartJoules services, existing `sj-k8s` deployment/job/RBAC/ingress patterns
 - health/readiness endpoints
 - logging format
 - deployment target: VM, Kubernetes, ECS, Lambda, on-prem, or hybrid
