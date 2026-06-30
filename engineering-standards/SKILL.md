@@ -121,6 +121,26 @@ Every Kafka producer/consumer MUST follow these:
 
 ---
 
+## 5B. Secrets & API Keys (LLM / DB / 3rd-party) — mandatory
+
+**Never hardcode a secret, never commit one, never log one, never paste one into a doc/PR/chat.** Every key (LLM API keys, DB creds, tokens, private keys) is supplied at runtime from a secret store, referenced by name.
+
+**Where each key goes (by where the code runs):**
+- **App / backend services** — read from **environment variables** (`process.env.ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, DB creds). Source them from a secret manager (AWS Secrets Manager / SSM / Vault) or the platform's env config — not a checked-in file. Validate required keys exist **at startup**; fail fast with a clear message (don't half-boot with a missing key).
+- **GitHub Actions / CI** — add as a **repo or org secret** (`Settings → Secrets and variables → Actions`, or `gh secret set ANTHROPIC_API_KEY --repo <owner>/<repo>`) and reference via `${{ secrets.NAME }}`. Prefer an **org secret** scoped to the needed repos over copying per-repo. CI must degrade gracefully if an optional key is absent (skip the step, don't fail the build).
+- **Local agents (Pi, Claude Code)** — shell env (`export ANTHROPIC_API_KEY=...` in `~/.zshrc`) or a **gitignored** `.env`. Never in a tracked file.
+- **tokensmax / multi-seat** — provider keys in `~/.config/tokensmax/secrets.env`, referenced by `key_env` in `engines.conf`. **Share tooling, not logins** — each user signs into their own seat; never copy another person's `~/.claude*` / `~/.codex` (scrambles usage/billing and shares a token).
+
+**Rules:**
+- [ ] Keys come only from env / secret store, referenced by name — zero literals in code, config, docs, or commits.
+- [ ] `.env`, `secrets.env`, key files are **gitignored**; provide a committed `.env.example` with names only (no values).
+- [ ] **Least privilege** — scope each key to what it needs (e.g. a CI key that can't touch prod data); separate keys per environment (dev/beta/prod).
+- [ ] **Rotation** — keys are rotatable without a code change (because they're externalized); rotate immediately if one is ever exposed.
+- [ ] Error messages and logs **redact** keys/tokens; never echo a key back to a user or into a trace.
+- [ ] A leaked/committed key is an incident: rotate it, purge it, and check no other copy exists.
+
+---
+
 ## 6. Before You Say "Done" — Quality Gate
 
 - [ ] SOLID respected; the right pattern used (or deliberately none) — no branchy `if/else` that a Strategy/Factory would remove
@@ -135,5 +155,6 @@ Every Kafka producer/consumer MUST follow these:
 - [ ] Kafka: heartbeat, offset commit policy, lag monitored, DLQ, graceful shutdown
 - [ ] Redis: singleton/pool, retry+backoff, TTL/eviction, graceful degradation, cleanup
 - [ ] Inputs validated; no `any`; types explicit
+- [ ] Secrets/API keys from env or secret store only — none hardcoded, committed, logged, or in docs; `.env`/key files gitignored; least-privilege + rotatable (§5B)
 
 > Rule of thumb: if a reviewer can point at one of these boxes and it's unchecked, the code is not done.

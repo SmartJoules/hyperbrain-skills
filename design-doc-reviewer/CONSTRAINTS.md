@@ -13,6 +13,10 @@ Context + Decision + Alternatives.)*
 
 ## Hard constraints (BLOCKER → reject)
 - No hardcoded secrets/tokens/credentials/private keys — env vars / secret manager only.
+  A design that touches LLM/DB/3rd-party keys must source them by name from env or a
+  secret store (CI: GitHub repo/org secret; local: env/gitignored `.env`; tokensmax:
+  `~/.config/tokensmax/secrets.env`), least-privilege + rotatable, never logged. See
+  engineering-standards §5B.
 - No hardcoded site IDs or environment values (site comes from context/config).
 - No anti-patterns proposed *as* the design: `::ng-deep`/`/deep/`/`>>>` (use
   `ViewEncapsulation.None` + scoping class); per-request Redis/DB connections
