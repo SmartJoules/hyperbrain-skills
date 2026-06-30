@@ -23,6 +23,7 @@ Use this before `prompt-harness`, `agent-orchestration`, `engineering-planner`, 
    - Deployment/K8s: `devops-deployment-planner`, `sj-k8s-knowledge-base`
    - UI/JouleTRACK: `jouletrack-angular`, `sj-ui-design-system`
    - Bug/RCA: `root-cause-analyzer`, `bug-postmortem-learning`
+   - Code-signal routing: use the "Top Skills From Code Signals" table in `advanced-ai-workflow`
 5. Define scope, non-scope, assumptions, unknowns, and dependencies.
 6. Break the work into ordered workstreams with owners or agent roles.
 7. Define acceptance criteria and verification gates before any implementation.

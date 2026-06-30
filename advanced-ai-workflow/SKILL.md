@@ -59,6 +59,26 @@ Choose the lane:
 | Solved bug/postmortem learning | `bug-postmortem-learning`, `root-cause-analyzer`, `self-learning` |
 | Memory and self-verification | `long-term-memory`, `self-learning`, `self-verification` |
 
+### 1A. Top Skills From Code Signals
+
+When inspecting a repo, use code signals to select the top skills before planning:
+
+| Code signal | Top skills to load |
+|---|---|
+| `angular.json`, `src/styles.css`, PrimeNG imports, `--n-*` tokens | `jouletrack-angular`, `sj-ui-design-system`, `engineering-standards`, `self-verification` |
+| PrimeNG templates such as `p-table`, `p-dropdown`, `pTooltip`, or `pi pi-*` icon classes | `sj-ui-design-system`, `jouletrack-angular`; migrate new icons toward Boxicons where appropriate |
+| Sails app files: `api/controllers`, `api/services`, `api/models`, `config/routes.js` | `prompt-harness`, `backend-knowledge-base`, `dejoule-rbac`, `engineering-standards` |
+| API/service generation, CRUD, DTOs, repositories, migrations | `prompt-harness`, `api-service-generator`, `backend-implementation-planner`, `database-query-optimizer` |
+| Kubernetes manifests, `deployment.yaml`, `service.yaml`, `hpa.yaml`, `pdb.yaml`, `CronJob` | `sj-k8s-knowledge-base`, `devops-deployment-planner`, `self-verification` |
+| RDF/SPARQL/Neptune/Brick/ontology code | `ontology-service-knowledge-base`, `neptune-graph`, `brick`, `self-verification` |
+| RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
+| Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
+| LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
+| Bug fix, incident, flaky test, production regression | `root-cause-analyzer`, `bug-postmortem-learning`, `code-reviewer`, `tdd-workflow` |
+| Large cross-file task or unclear ownership | `agent-planning-harness`, `agentic-engineering`, `agent-orchestration`, `agent-context-manager` |
+
+If multiple signals match, load the smallest set that covers the highest-risk surface first: auth/RBAC, data/schema, deployment, frontend user interactions, then implementation details.
+
 ### 2. Retrieve Before Reading
 
 Use this order:
