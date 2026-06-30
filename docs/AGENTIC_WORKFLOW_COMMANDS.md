@@ -107,6 +107,25 @@ Select the smallest safe model tier:
 Return the tier, score, rationale, and escalation policy before execution.
 ```
 
+## Inference Engineering
+
+Use when building, reviewing, or optimizing production LLM/ML/RAG/agent inference paths:
+
+```text
+Use inference-engineering, model-selection-runtime, prompt-engineering, llm-eval-guardrails, agent-tool-design, production-safety-guards, and self-verification.
+
+Task:
+<inference task>
+
+Define the inference contract:
+- input, output, model, tool, safety, and eval contracts
+- model tier, prompt/model version, timeout, retry, fallback, and cost budget
+- structured output validation and safe parsing
+- streaming/batching/caching behavior
+- telemetry: trace ID, model tier, tokens, latency, cost, validation status, fallback
+- eval gate and canary/rollback plan
+```
+
 ## Bug Fix And Postmortem Learning
 
 Use when a bug is solved or needs RCA:
