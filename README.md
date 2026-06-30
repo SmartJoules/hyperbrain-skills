@@ -46,6 +46,8 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
 
 ## 📚 Current Skills
 
+Open the dark-mode visual guide at [`agent-skills-guide.html`](agent-skills-guide.html) to see how the agent orchestration skills work together and how to use them.
+
 ### 🧠 Superpowers (Mandatory First Step)
 1. **AI Superpowers - Brainstorming & Planning** - **ACTIVATES AUTOMATICALLY** for all user requests
    - Comprehensive question generation before any planning

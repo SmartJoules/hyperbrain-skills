@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HyperBrain Agent Skills Guide</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07090f;
+      --panel: #101722;
+      --panel-2: #141d2a;
+      --line: #263243;
+      --text: #eef4ff;
+      --muted: #9fb0c6;
+      --cyan: #38d6c7;
+      --green: #68d391;
+      --gold: #f4bf66;
+      --rose: #ff7a90;
+      --blue: #7aa2ff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(135deg, #07090f 0%, #0c1018 44%, #090b12 100%);
+      background-size: 34px 34px, 34px 34px, auto;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(7, 9, 15, 0.78);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar .shell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      gap: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(56, 214, 199, 0.55);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(56, 214, 199, 0.25), rgba(122, 162, 255, 0.2)),
+        #0e1822;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 28px rgba(56, 214, 199, 0.2);
+      font-size: 13px;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    nav a {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 9px 11px;
+      border-radius: 8px;
+    }
+
+    nav a:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
+      align-items: center;
+      gap: 44px;
+      padding: 74px 0 56px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--cyan);
+      background: rgba(56, 214, 199, 0.08);
+      border: 1px solid rgba(56, 214, 199, 0.22);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 24px 0 18px;
+      font-size: 78px;
+      line-height: 0.95;
+      letter-spacing: 0;
+      max-width: 860px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.65;
+      max-width: 760px;
+      margin: 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 32px;
+    }
+
+    .button {
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 8px;
+      padding: 13px 16px;
+      font-weight: 740;
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .button.primary {
+      border-color: rgba(56, 214, 199, 0.45);
+      background: linear-gradient(135deg, rgba(56, 214, 199, 0.22), rgba(122, 162, 255, 0.16));
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .console {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(180deg, rgba(16, 23, 34, 0.96), rgba(10, 15, 23, 0.96));
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .console-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .lights {
+      display: flex;
+      gap: 7px;
+    }
+
+    .light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--rose);
+    }
+
+    .light:nth-child(2) {
+      background: var(--gold);
+    }
+
+    .light:nth-child(3) {
+      background: var(--green);
+    }
+
+    .console-body {
+      padding: 20px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .agent-row {
+      display: grid;
+      grid-template-columns: 94px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 48px;
+      padding: 11px 12px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+    }
+
+    .tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 850;
+      color: #061014;
+      background: var(--cyan);
+      border-radius: 999px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    .tag.green {
+      background: var(--green);
+    }
+
+    .tag.gold {
+      background: var(--gold);
+    }
+
+    .tag.rose {
+      background: var(--rose);
+    }
+
+    .agent-row strong {
+      font-size: 14px;
+    }
+
+    .agent-row span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .status {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    section {
+      padding: 54px 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 520px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: rgba(16, 23, 34, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 220px;
+      box-shadow: 0 14px 44px rgba(0, 0, 0, 0.18);
+    }
+
+    .card:hover {
+      border-color: rgba(56, 214, 199, 0.34);
+      transform: translateY(-2px);
+    }
+
+    .card .num {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      color: #071017;
+      background: var(--cyan);
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    .card:nth-child(2) .num {
+      background: var(--gold);
+    }
+
+    .card:nth-child(3) .num {
+      background: var(--blue);
+    }
+
+    .card:nth-child(4) .num {
+      background: var(--green);
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .card ul {
+      margin: 14px 0 0;
+      padding-left: 18px;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 16px;
+      background: rgba(20, 29, 42, 0.74);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .step-index {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(122, 162, 255, 0.16);
+      border: 1px solid rgba(122, 162, 255, 0.3);
+      color: var(--blue);
+      font-weight: 900;
+    }
+
+    .step h3 {
+      margin: 2px 0 7px;
+      font-size: 17px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .prompt {
+      background: #081018;
+      border: 1px solid rgba(56, 214, 199, 0.22);
+      border-radius: 8px;
+      padding: 18px;
+      overflow: auto;
+      color: #cdefff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    code,
+    pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(16, 23, 34, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .matrix th,
+    .matrix td {
+      text-align: left;
+      padding: 15px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      vertical-align: top;
+    }
+
+    .matrix th {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .matrix td {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .matrix td:first-child {
+      color: var(--text);
+      font-weight: 760;
+    }
+
+    .callout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      background:
+        linear-gradient(135deg, rgba(56, 214, 199, 0.14), rgba(244, 191, 102, 0.1)),
+        rgba(16, 23, 34, 0.9);
+      border: 1px solid rgba(56, 214, 199, 0.22);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 42px;
+    }
+
+    .callout p {
+      color: var(--muted);
+      margin: 8px 0 0;
+      line-height: 1.6;
+    }
+
+    footer {
+      padding: 42px 0 54px;
+      color: var(--muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 940px) {
+      h1 {
+        font-size: 56px;
+      }
+
+      h2 {
+        font-size: 36px;
+      }
+
+      .hero p {
+        font-size: 18px;
+      }
+
+      .hero,
+      .workflow,
+      .callout {
+        grid-template-columns: 1fr;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-title {
+        display: block;
+      }
+
+      .section-title p {
+        margin-top: 12px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100% - 24px, 1180px);
+      }
+
+      nav {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 42px;
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+
+      h2 {
+        font-size: 30px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .agent-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .tag {
+        width: max-content;
+      }
+
+      .matrix {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell">
+      <a class="brand" href="#top" aria-label="HyperBrain Agent Skills Guide">
+        <span class="brand-mark">AI</span>
+        <span>HyperBrain Agent Skills</span>
+      </a>
+      <nav aria-label="Page sections">
+        <a href="#skills">Skills</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#use">How to Use</a>
+        <a href="#matrix">Matrix</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero shell" aria-labelledby="title">
+      <div>
+        <span class="eyebrow">Multi-agent operating guide</span>
+        <h1 id="title">Run AI agents like an engineering team.</h1>
+        <p>
+          HyperBrain's agent skills turn one large request into a planned, delegated, context-bounded,
+          verified workflow. Use them to allocate agents, create precise task briefs, run workers in
+          parallel, manage context, and integrate results without losing quality.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#use">Start with the workflow</a>
+          <a class="button" href="#skills">Explore the skills</a>
+        </div>
+      </div>
+
+      <aside class="console" aria-label="Agent execution board">
+        <div class="console-top">
+          <span>Live orchestration pattern</span>
+          <span class="lights" aria-hidden="true">
+            <span class="light"></span>
+            <span class="light"></span>
+            <span class="light"></span>
+          </span>
+        </div>
+        <div class="console-body">
+          <div class="agent-row">
+            <span class="tag">Plan</span>
+            <div>
+              <strong>Agent Orchestration</strong><br>
+              <span>Workstreams, roles, dependencies, gates</span>
+            </div>
+            <span class="status">ready</span>
+          </div>
+          <div class="agent-row">
+            <span class="tag gold">Brief</span>
+            <div>
+              <strong>Delegation Contracts</strong><br>
+              <span>Scope, tools, permissions, outputs</span>
+            </div>
+            <span class="status">locked</span>
+          </div>
+          <div class="agent-row">
+            <span class="tag green">Run</span>
+            <div>
+              <strong>Fleet Runner</strong><br>
+              <span>Parallel research, build, review, QA</span>
+            </div>
+            <span class="status">active</span>
+          </div>
+          <div class="agent-row">
+            <span class="tag rose">Gate</span>
+            <div>
+              <strong>Integration Reviewer</strong><br>
+              <span>Conflicts, tests, release decision</span>
+            </div>
+            <span class="status">verify</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="skills" class="shell" aria-labelledby="skills-title">
+      <div class="section-title">
+        <h2 id="skills-title">The Agent Skill Suite</h2>
+        <p>Use the smallest skill that matches the job. Load the full suite only for large work that needs planning, delegation, execution, and integration.</p>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="num">1</div>
+          <h3>Agent Orchestration</h3>
+          <p>Use first when the request is large, ambiguous, cross-repo, or risky. It creates the roster, dependencies, ownership boundaries, and verification gates.</p>
+          <ul>
+            <li>Planning agents</li>
+            <li>Specialist roles</li>
+            <li>Execution order</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <div class="num">2</div>
+          <h3>Agent Context Manager</h3>
+          <p>Use before dispatching agents. It builds small context packets so each worker gets the right files, constraints, contracts, and evidence.</p>
+          <ul>
+            <li>Token budgets</li>
+            <li>Context packets</li>
+            <li>Result compression</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <div class="num">3</div>
+          <h3>Delegation Contracts</h3>
+          <p>Use when writing the actual agent prompt. It defines mission, scope, non-scope, tools, permissions, acceptance criteria, output schema, and stop conditions.</p>
+          <ul>
+            <li>Read-only briefs</li>
+            <li>Scoped write briefs</li>
+            <li>Retry prompts</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <div class="num">4</div>
+          <h3>Fleet Runner</h3>
+          <p>Use when multiple agents should run in parallel or staged pipelines. It handles worker status, model tiering, retries, cost control, and execution modes.</p>
+          <ul>
+            <li>Parallel research</li>
+            <li>Parallel build</li>
+            <li>Cross-check</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="workflow" class="shell" aria-labelledby="workflow-title">
+      <div class="section-title">
+        <h2 id="workflow-title">Recommended Workflow</h2>
+        <p>The pattern is simple: plan, packet, brief, run, integrate. Each phase narrows uncertainty before the next one spends effort.</p>
+      </div>
+
+      <div class="workflow">
+        <article class="step">
+          <div class="step-index">01</div>
+          <div>
+            <h3>Classify the request</h3>
+            <p>Decide if this is a solo task, parallel research, contract-first build, cross-check, or full fleet run.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-index">02</div>
+          <div>
+            <h3>Create the agent roster</h3>
+            <p>Assign planning, research, architecture, implementation, QA, review, and integration roles only where useful.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-index">03</div>
+          <div>
+            <h3>Prepare context packets</h3>
+            <p>Send the minimum context each agent needs: repo instructions, relevant files, contracts, constraints, and evidence.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-index">04</div>
+          <div>
+            <h3>Write delegation contracts</h3>
+            <p>Make each prompt crisp: mission, scope, non-scope, allowed tools, output schema, verification, and stop conditions.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-index">05</div>
+          <div>
+            <h3>Run the fleet</h3>
+            <p>Execute independent workers in parallel, sequence dependent work, track status, and retry only with narrower prompts.</p>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-index">06</div>
+          <div>
+            <h3>Integrate and verify</h3>
+            <p>Reconcile contracts, inspect conflicts, run tests or QA, document residual risks, and decide ready, ready-with-risk, or not-ready.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="use" class="shell" aria-labelledby="use-title">
+      <div class="callout">
+        <div>
+          <h2 id="use-title">How to Use It</h2>
+          <p>Paste one of these prompts into Codex or your HyperBrain-enabled assistant. Replace the bracketed parts with your real repo, feature, PR, incident, or architecture goal.</p>
+        </div>
+        <a class="button primary" href="#matrix">Choose a skill</a>
+      </div>
+
+      <pre class="prompt"><code>Use agent-orchestration to plan a multi-agent workflow for [goal].
+Create the agent roster, workstreams, dependencies, context packets, delegation contracts,
+execution order, verification gate, and integration plan.</code></pre>
+
+      <pre class="prompt"><code>Use agent-fleet-runner for [goal].
+Run parallel research/build/review only where ownership is clean. Track each worker as:
+Agent | Mode | Scope | Status | Output expected | Risk | Verification.</code></pre>
+
+      <pre class="prompt"><code>Use agent-context-manager to create minimal context packets for agents working on [repo/task].
+Include only relevant instructions, files, symbols, contracts, evidence, constraints, and return format.</code></pre>
+
+      <pre class="prompt"><code>Use agent-integration-reviewer after these agent outputs.
+Reconcile conflicts, inspect changed files, verify shared contracts, run the final gate,
+and return release decision: ready, ready-with-risk, or not-ready.</code></pre>
+    </section>
+
+    <section id="matrix" class="shell" aria-labelledby="matrix-title">
+      <div class="section-title">
+        <h2 id="matrix-title">When to Trigger Which Skill</h2>
+        <p>This matrix keeps the workflow fast. Pick the skill for the decision you need right now.</p>
+      </div>
+
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Situation</th>
+            <th>Use Skill</th>
+            <th>Expected Output</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Large feature, architecture change, or cross-repo task</td>
+            <td>agent-orchestration</td>
+            <td>Agent roster, dependency graph, execution order, risks, and verification gate</td>
+          </tr>
+          <tr>
+            <td>Need to run several workers at once</td>
+            <td>agent-fleet-runner</td>
+            <td>Dispatch mode, worker status board, retry rules, and integration checkpoint</td>
+          </tr>
+          <tr>
+            <td>Workers need scoped repo knowledge</td>
+            <td>agent-context-manager</td>
+            <td>Minimal context packet, token budget, no-leak boundaries, and result summary rules</td>
+          </tr>
+          <tr>
+            <td>Need precise prompts for subagents</td>
+            <td>agent-delegation-contracts</td>
+            <td>Mission, scope, tools, permissions, acceptance criteria, output schema, stop conditions</td>
+          </tr>
+          <tr>
+            <td>Multiple agents have produced outputs</td>
+            <td>agent-integration-reviewer</td>
+            <td>Conflict resolution, diff review, final verification, and release decision</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      HyperBrain Agent Skills Guide. Designed for high-efficiency, evidence-grounded multi-agent software work.
+    </div>
+  </footer>
+</body>
+</html>
