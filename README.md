@@ -54,6 +54,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
 
 ### Core Development Skills
 2. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
+   - **PRD → HTML Prototype** - Turns a PRD/feature spec into a standalone HTML prototype in the JouleTRACK/DeJoule theme (dark teal header, side nav, light background, white cards, Work Sans, `--n-*` tokens)
 3. **TDD Workflow** - Test-driven development with Red-Green-Refactor cycle
 3. **Angular Patterns** - Enterprise Angular development patterns
 4. **React Patterns** - Modern React with hooks, React Query, TypeScript
