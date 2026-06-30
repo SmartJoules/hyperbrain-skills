@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyperBrain Skills — Overview</title>
+<style>
+  :root{
+    --teal:#072B31; --teal-2:#0e3b42; --accent:#28939D; --orange:#FF9900;
+    --green:#228B22; --bg:#f6f6f6; --card:#fff; --ink:#1A1A1A; --muted:rgba(0,0,0,.6);
+    --border:#E8E8E8; --shadow:0 4px 15px rgba(189,189,189,.25);
+    --radius:10px; --font:'Work Sans','Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+  header.hero{background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;padding:64px 0 56px}
+  header.hero .wrap{display:flex;flex-direction:column;gap:14px}
+  .badge{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);
+    border-radius:20px;padding:4px 14px;font-size:13px;width:max-content}
+  h1{font-size:42px;font-weight:700;margin:6px 0 0;letter-spacing:.3px}
+  .tag{font-size:19px;color:#cfe6e9;max-width:760px;font-weight:400}
+  .stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
+  .stat{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.2);border-radius:var(--radius);
+    padding:14px 20px;min-width:120px}
+  .stat .n{font-size:30px;font-weight:700;color:#fff}
+  .stat .l{font-size:13px;color:#bfdbe0}
+
+  section{padding:48px 0}
+  section:nth-child(even){background:#fff}
+  h2{font-size:27px;font-weight:600;margin:0 0 6px;color:var(--teal)}
+  h2 .em{font-size:22px;margin-right:8px}
+  .sub{color:var(--muted);margin:0 0 26px;font-size:16px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:20px}
+  section:nth-child(even) .card{background:var(--bg)}
+  .card h3{margin:0 0 8px;font-size:17px;color:var(--teal)}
+  .card p{margin:0;font-size:14.5px;color:#333}
+  .card .ico{font-size:22px}
+
+  .pill{display:inline-block;background:rgba(40,147,157,.12);color:var(--accent);
+    border-radius:12px;padding:3px 10px;font-size:12.5px;font-weight:600;margin:0 6px 6px 0}
+
+  pre{background:var(--teal);color:#e8f3f4;border-radius:8px;padding:16px 18px;overflow:auto;
+    font-size:13.5px;line-height:1.5;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  code.inl{background:rgba(7,43,49,.07);padding:1px 6px;border-radius:4px;font-size:13px;
+    font-family:ui-monospace,Menlo,monospace}
+
+  /* SDLC flow */
+  .flow{display:flex;flex-direction:column;gap:0;margin-top:10px}
+  .step{display:grid;grid-template-columns:46px 1fr;gap:18px;position:relative;padding-bottom:26px}
+  .step:not(:last-child)::before{content:"";position:absolute;left:22px;top:46px;bottom:-4px;width:2px;background:var(--border)}
+  .step .num{width:46px;height:46px;border-radius:50%;background:var(--teal);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;z-index:1}
+  .step .body{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:16px 18px}
+  section:nth-child(even) .step .body{background:var(--bg)}
+  .step .body h4{margin:0 0 4px;font-size:16px;color:var(--teal)}
+  .step .body .what{font-size:14.5px;margin:0 0 8px;color:#333}
+  .step .skills .pill{background:rgba(255,153,0,.13);color:#9a5b00}
+
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--border);font-size:14px}
+  th{background:var(--teal);color:#fff;font-weight:600;font-size:13px}
+  tr:last-child td{border-bottom:none}
+
+  footer{background:var(--teal);color:#bfdbe0;padding:28px 0;font-size:13.5px;text-align:center}
+  .note{font-size:12.5px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">SmartJoules · Internal Engineering Platform</span>
+    <h1>HyperBrain Skills</h1>
+    <p class="tag">A one-stop AI agentic engineering platform — battle-tested agents, skills, and knowledge bases that make every developer (and every AI coding agent) build the SmartJoules way: faster, consistent, and at lower token cost.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">86</div><div class="l">total skills</div></div>
+      <div class="stat"><div class="n">24</div><div class="l">callable agents</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">repo knowledge bases</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">AI tools supported</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- WHAT -->
+<section>
+  <div class="wrap">
+    <h2><span class="em">🧠</span>What it is</h2>
+    <p class="sub">A shared library installed into your AI coding agent. Skills load automatically by relevance, or you call them by name.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">🤖</div><h3>Agents that do work</h3><p>Reviewers, planners, generators, analyzers, optimizers — callable workers that review code, plan features, generate APIs, optimize queries, and find root causes.</p></div>
+      <div class="card"><div class="ico">📚</div><h3>Repo knowledge bases</h3><p>Precomputed context for JouleTRACK, jt-api-v2, iot-feedback-handler, Lumen, the ontology service & more — so the AI knows our real architecture without re-reading the codebase.</p></div>
+      <div class="card"><div class="ico">📐</div><h3>Standards &amp; patterns</h3><p>Engineering standards, design patterns, language conventions, design tokens — encoded once, applied on every change.</p></div>
+      <div class="card"><div class="ico">🔌</div><h3>Works everywhere</h3><p>Claude Code, Pi (pi.dev), Codex, Cursor, Copilot — one <code class="inl">./install.sh</code> per tool. Same skills, any agent.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section>
+  <div class="wrap">
+    <h2><span class="em">✅</span>Benefits</h2>
+    <p class="sub">Why it moves the needle for the team.</p>
+    <div class="grid">
+      <div class="card"><h3>🚀 Higher productivity</h3><p>Reuse battle-tested workflows instead of re-deriving them. Planning, TDD, review, deploy — all on rails. Targeting a meaningful uplift in dev throughput.</p></div>
+      <div class="card"><h3>🎯 Consistency by default</h3><p>Every dev and every AI agent follows the same SOLID/patterns/resilience standards and the real repo conventions — fewer review cycles, fewer "not how we do it" PRs.</p></div>
+      <div class="card"><h3>💸 Lower token cost</h3><p>Retrieve-don't-read (graphify + KBs) and decompose-don't-accumulate keep large work cheap — tokens scale with #sub-tasks, not files × tasks.</p></div>
+      <div class="card"><h3>🛡️ Quality gates built in</h3><p>Design-doc gate, code review, architecture review, security &amp; secret-handling standards — issues caught before merge, in CI and in the agent.</p></div>
+      <div class="card"><h3>🧩 Multi-agent ready</h3><p>Orchestrate a fleet (tokensmax) — parallel scoped agents, model tiers, worktree-isolated writes, then merge &amp; verify. Big work, controlled cost.</p></div>
+      <div class="card"><h3>♻️ Compounding context</h3><p>Decisions, contracts and patterns persist into knowledge bases &amp; memory, so each task starts smarter and reads less than the last.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE -->
+<section>
+  <div class="wrap">
+    <h2><span class="em">⚙️</span>How to use it</h2>
+    <p class="sub">Install once, then call skills by name or let them auto-load.</p>
+    <pre># Install for your agent (per tool)
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hb &amp;&amp; cd /tmp/hb
+./install.sh                 # Claude Code  → ~/.claude/skills/
+./install.sh --assistant pi  # Pi (pi.dev)  → ~/.pi/agent/skills/
+# also: --assistant codex | cursor | copilot
+
+# Use it
+#  Claude Code : "use the code-reviewer skill on this diff"  (or auto-loads)
+#  Pi          : /skill:design-doc-review-agent docs/design/widget-design.md
+#  Fleet (CLI) : /tokensmax build the comfort-index widget end-to-end</pre>
+    <p style="margin-top:18px"><b>Three ways skills activate:</b></p>
+    <span class="pill">Auto-load — matched by the task you describe</span>
+    <span class="pill">Call by name — "use &lt;skill&gt;"</span>
+    <span class="pill">Pi slash — /skill:&lt;name&gt; &lt;args&gt;</span>
+    <span class="pill">Fleet — /tokensmax &lt;task&gt;</span>
+    <p class="note">Full reference: <a href="../USAGE_GUIDE.md">USAGE_GUIDE.md</a> (which skill when · multi-agent · low-token mode) and <a href="../AGENTS_AND_SKILLS.md">AGENTS_AND_SKILLS.md</a> (full catalog).</p>
+  </div>
+</section>
+
+<!-- SDLC FLOW -->
+<section>
+  <div class="wrap">
+    <h2><span class="em">🔄</span>One complete SDLC flow</h2>
+    <p class="sub">Example: <b>"Add a Comfort-Index widget to JouleTRACK"</b> — end to end, showing where HyperBrain helps at each stage.</p>
+    <div class="flow">
+
+      <div class="step"><div class="num">1</div><div class="body">
+        <h4>Ideate &amp; frame</h4>
+        <p class="what">Turn the request into a framed problem with goals/non-goals and 2–3 approaches before any code.</p>
+        <div class="skills"><span class="pill">superpowers-brainstorm</span><span class="pill">expert-personas</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">2</div><div class="body">
+        <h4>Design doc</h4>
+        <p class="what">Author from the FAANG-style template; get human approval; the review agent + CI gate verify it (≤15 pages, required sections, repo-aligned, no hardcoded secrets) — reject &amp; suggest fixes if it's not.</p>
+        <div class="skills"><span class="pill">design-doc-harness</span><span class="pill">design-doc-review-agent</span><span class="pill">software-architecture-planner</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">3</div><div class="body">
+        <h4>Plan &amp; decompose</h4>
+        <p class="what">Break into scoped sub-tasks (API · query · UI) with file lists &amp; contracts. Pull repo context from KBs cheaply — no whole-module reads.</p>
+        <div class="skills"><span class="pill">agentic-engineering</span><span class="pill">backend-implementation-planner</span><span class="pill">graphify-integration</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">4</div><div class="body">
+        <h4>Build (multi-agent, repo-grounded)</h4>
+        <p class="what">Dispatch scoped agents in parallel: jt-api-v2 endpoint (Sails/Waterline), the Influx query, and the Angular widget (OnPush, <code class="inl">--n-*</code> tokens) — each agent gets only its slice + the right KB/standard.</p>
+        <div class="skills"><span class="pill">agent-fleet-runner</span><span class="pill">tokensmax</span><span class="pill">jouletrack-angular</span><span class="pill">backend-knowledge-base</span><span class="pill">api-service-generator</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">5</div><div class="body">
+        <h4>Optimize &amp; harden</h4>
+        <p class="what">Tune the time-series query (downsample, cache with eviction — fewer DB calls), pick the right algorithm, and enforce resilience &amp; connection standards.</p>
+        <div class="skills"><span class="pill">database-query-optimizer</span><span class="pill">algorithm-picker</span><span class="pill">engineering-standards</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">6</div><div class="body">
+        <h4>Test (TDD)</h4>
+        <p class="what">Tests first, 80%+ coverage — unit, integration, and the critical user flow E2E.</p>
+        <div class="skills"><span class="pill">tdd-workflow</span><span class="pill">playwright-patterns</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">7</div><div class="body">
+        <h4>Review</h4>
+        <p class="what">Code review (quality/security/perf) + architecture review for the changed surface + integrate/reconcile the agents' outputs before the PR.</p>
+        <div class="skills"><span class="pill">code-reviewer</span><span class="pill">architecture-reviewer</span><span class="pill">agent-integration-reviewer</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">8</div><div class="body">
+        <h4>Ship</h4>
+        <p class="what">Deployment plan + CI/CD; secrets from the secret store (never hardcoded); safe rollout &amp; rollback.</p>
+        <div class="skills"><span class="pill">devops-deployment-planner</span><span class="pill">sj-k8s-knowledge-base</span></div>
+      </div></div>
+
+      <div class="step"><div class="num">9</div><div class="body">
+        <h4>Operate &amp; learn</h4>
+        <p class="what">If something breaks: root-cause from logs/traces. Persist new contracts &amp; decisions back into the KBs so the next task is cheaper.</p>
+        <div class="skills"><span class="pill">root-cause-analyzer</span><span class="pill">self-learning</span><span class="pill">local-kb</span></div>
+      </div></div>
+
+    </div>
+    <p class="note">Net effect: the orchestrator holds a small plan + structured results — not the API layer, the query engine, and the dashboard module all at once. Big feature, bounded context, consistent output.</p>
+  </div>
+</section>
+
+<!-- AT A GLANCE -->
+<section>
+  <div class="wrap">
+    <h2><span class="em">🗂️</span>The catalog at a glance</h2>
+    <p class="sub">86 skills across three kinds.</p>
+    <table>
+      <tr><th>Kind</th><th>Count</th><th>Examples</th></tr>
+      <tr><td><b>Agents &amp; workers</b> — they do the work</td><td>24</td><td>code-reviewer · architecture-reviewer · design-doc-review-agent · database-query-optimizer · api-service-generator · root-cause-analyzer · software-architecture-planner · tokensmax</td></tr>
+      <tr><td><b>Knowledge bases</b> — repo/domain context</td><td>7</td><td>backend-knowledge-base · iot-feedback-handler-knowledge-base · lumen-knowledge-base · ontology-service-knowledge-base · dejoule-knowledge-base</td></tr>
+      <tr><td><b>Reference &amp; patterns</b> — standards / how-to</td><td>55</td><td>engineering-standards · jouletrack-angular · kafka-patterns · influxdb-patterns · prompt-engineering · rag-retrieval · algorithm-picker</td></tr>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    HyperBrain Skills · SmartJoules / DeJoule · <a href="https://github.com/SmartJoules/hyperbrain-skills" style="color:#7fd3da">github.com/SmartJoules/hyperbrain-skills</a>
+    <div class="note" style="color:#88b5ba;margin-top:8px">Open <code style="color:#cfe6e9">presentation/index.html</code> in any browser. Stats reflect the repo at time of generation.</div>
+  </div>
+</footer>
+
+</body>
+</html>

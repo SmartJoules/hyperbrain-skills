@@ -389,6 +389,9 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 > (Claude Code · Pi `/skill:<name>` · Codex · tokensmax CLI · CI) and the full catalog of
 > agents + their specific jobs. Auto-generated — regenerate with
 > `node scripts/gen-agents-doc.js --write`.
+>
+> 🎤 **Presenting it?** Open [presentation/index.html](presentation/index.html) in a browser —
+> a self-contained overview of benefits, usage, and a complete SDLC flow example.
 
 > **Pi (pi.dev) users:** `./install.sh --assistant pi` — Pi uses the same `SKILL.md`
 > format as Claude Code, so every skill works unchanged (installed to `~/.pi/agent/skills/`).
