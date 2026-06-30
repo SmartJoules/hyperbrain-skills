@@ -80,6 +80,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **dejoule-rbac** - DeJoule/JouleTRACK RBAC implementation guide: jt-api-v2 policies, role policy catalog, site access, action permission mapping, legacy JouleTrack-API checks, and Angular route/menu/button guards.
    - **dejoule-authentication** - DeJoule/JouleTRACK authentication guide: login, JWT/session revocation, secure cookies, OTP/MFA, reCAPTCHA risk fallback, token refresh/logout, service tokens, frontend auth handling, and step-up auth.
    - **dejoule-geofencing-alerts** - Spatial and semantic geofencing for Smart Alerts: Haversine/polygon/grid algorithms, ontology-based floor/zone resolution, Neptune/Fuseki SPARQL recipes, alert routing/suppression/dedup/escalation, and UI/API integration guardrails.
+   - **software-architecture-planner** - Staff/principal engineer + solution architect workflow that converts business requirements into scalable architecture, HLD/LLD, ADRs, Mermaid diagrams, API/database/security/deployment designs, risks, sprint plans, and team task breakdowns.
 
 ### DeJoule Operations & Diagnostics (need SmartJoules MCP: Sentinel, Morpheus)
    - **cpa-health** - Holistic health audit of CPA (Chiller Plant Automation) + the full IoT stack (sensors → PostgreSQL → runtime → InfluxDB → commands → BMS).
