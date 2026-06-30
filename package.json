@@ -36,6 +36,9 @@
     "authentication",
     "jwt",
     "mfa",
+    "geofencing",
+    "alerts",
+    "spatial-context",
     "jouletrack",
     "development"
   ],
@@ -69,6 +72,7 @@
     "neptune-graph/",
     "dejoule-rbac/",
     "dejoule-authentication/",
+    "dejoule-geofencing-alerts/",
     "tdd-workflow/",
     "angular-patterns/",
     "react-patterns/",
