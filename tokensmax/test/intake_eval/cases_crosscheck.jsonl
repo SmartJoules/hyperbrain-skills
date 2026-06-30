@@ -1,0 +1,5 @@
+{"id":"C07","category":"clear-terse","request":"bump version to 1.2.0.","gold":"clear","expected_gaps":[]}
+{"id":"C06","category":"clear-terse","request":"gitignore node_modules.","gold":"clear","expected_gaps":[]}
+{"id":"C08","category":"edge-ambiguous-complete","request":"Use the existing Postgres connection string from the DATABASE_URL env var to connect, and log 'connected' on success. Exit 1 on failure.","gold":"clear","expected_gaps":[]}
+{"id":"U01","category":"underspecified-scope","request":"add monitoring to the controller.","gold":"underspecified","expected_gaps":["which","controller","metric","success"]}
+{"id":"U05","category":"underspecified-constraints","request":"add a new alert type to SAANS.","gold":"underspecified","expected_gaps":["alert","trigger","threshold","condition"]}

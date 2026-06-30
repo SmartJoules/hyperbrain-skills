@@ -1,22 +1,12 @@
 ---
-description: Orchestrate your agent fleet — dispatch a task across your seats (or status/usage/etc.)
-argument-hint: "[a task | status | usage | doctor | init]"
+description: Orchestrate your agent fleet — status, usage, or dispatch a task across your seats
+argument-hint: "[status | usage [scope] | doctor | run <engine> \"task\" | fleet \"task\" | <a task>]"
 ---
-The user invoked `/tokensmax $ARGUMENTS`. You are the **ORCHESTRATOR** — route the work to their other
-agent seats; **do not build/solve it yourself.** Doing it here burns this session's tokens; delegating
-to a cheaper seat (Codex, GLM, …) is the point.
+The user invoked `/tokensmax $ARGUMENTS`. Act as the **tokensmax orchestrator** — follow the `tokensmax` skill (dispatch-policy.yaml + routing.md).
 
-If `$ARGUMENTS` is a bare subcommand (`status` · `usage` · `doctor` · `list` · `auth` · `init`), run
-`tokensmax <that>` and report. **Otherwise it's a TASK — follow the `tokensmax` skill loop, in order:**
+Route on `$ARGUMENTS`:
 
-1. **🛑 Build NOTHING yet.** First tool calls: `tokensmax status` (brief the fleet) → then
-   **`AskUserQuestion`** with routing options. If you're about to Write/Edit/run the task yourself before
-   the user picks — that's the failure; present the picker instead.
-2. **Options reasoned from the real fleet** (`status`) — recommended first, labelled by outcome,
-   mechanics (engine→model/effort + cost) in the description. **Include a token-saving option** (hand the
-   whole task to a cheaper seat solo). Building UI/code IS dispatchable — never solo it because it's visual.
-3. **User picks → dispatch** `tokensmax run|fleet --yes [-m … | --effort …] --est …`, then report who
-   solved what + tokens + $ via `tokensmax usage`.
-
-Do it in-session only if genuinely undispatchable (live data you can't reach · judging an already-rendered
-thing · you already hold the answer) — and then say so and ask first.
+- **empty or `status`** → run `tokensmax status` (Bash) and brief them in prose: which accounts/subscriptions are wired, each engine's models (deep/fast) + what it's used for, and the per-request potential. Note the honest caveat: live remaining quota isn't queryable — the ⚠ flag is the real ceiling.
+- **`usage [scope]`** → run `tokensmax usage $ARGUMENTS` and tell them **which engine solved what**, tokens + **$ cost** (EST vs ACTUAL), the **window total**, and any **⚠ maxed (+ reset)**. Remaining only if `session_limit` is set; never invent a quota number.
+- **`doctor` | `list` | `auth` | `init`** → run that `tokensmax` subcommand and report the result.
+- **anything else** (a task to do) → **Phase 0 first: ground the goal.** Dispatch **`claude --research --fast` (haiku)** to return a STRICT-JSON read of the request (`goal`, `slots`, `assumptions`, `clarity`, `gaps`, `clarifying_questions` — see `routing.md` §Phase 0 for the exact prompt, which **forbids tool use** so the engine doesn't wander; haiku is the preferred intake engine — 0% empty/0% tool-wander in eval; if no claude seat, fall back to `opencode`/glm-4.7 ($0, ~29% empty — retry masks it) or do it inline in this session). Then the **confirm-goal gate, then 🛑 STOP**: if `underspecified`, ask its 1–3 clarifying questions via AskUserQuestion (merge answers, re-confirm); if `clear`, restate the goal + key assumptions in one line and ask *"correct?"*. **Run NOTHING else until the goal is confirmed — silence is not consent.** Honor an explicit *"just do it / skip intake"* (bar to skip is high). **Only then** estimate **magnitude** by reasoning (phase big work by default). Then the **plan gate (propose-and-confirm, then STOP)**: run `tokensmax status`, say in one line what you'd do and why, then offer **3–5 options via AskUserQuestion** — **labelled by OUTCOME** (e.g. *Balanced · recommended*, *Top quality*, *Quick & cheap*, *Two independent takes*), recommended one first, with the mechanics (engine → role → model/effort + cost↔quality) in each description. Not a flat menu of model-combos. **Run nothing until they pick.** Silence is not consent. (The CLI enforces this — `run`/`fleet` refuse to dispatch without `--yes`; `--dry` previews.) After they choose, dispatch that plan with `tokensmax run`/`fleet --yes --est <S|M|L>`; afterwards tell them who solved what + tokens + $ cost.

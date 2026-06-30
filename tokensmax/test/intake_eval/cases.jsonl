@@ -1,0 +1,16 @@
+{"id":"C01","category":"clear-simple","request":"Add a '--version' flag to the tokensmax CLI that prints the version from package.json and exits 0.","gold":"clear","expected_gaps":[]}
+{"id":"C02","category":"clear-simple","request":"Rename the function getCwd to getCurrentWorkingDirectory everywhere in src/.","gold":"clear","expected_gaps":[]}
+{"id":"C03","category":"clear-simple","request":"Add a unit test that asserts 2+2 equals 4 in math.test.js.","gold":"clear","expected_gaps":[]}
+{"id":"C04","category":"clear-complex","request":"Refactor the InfluxDB query layer to use a connection pool of size 10, add retry with exponential backoff (max 3 retries, base 500ms), and return an empty list instead of throwing on timeout. Update the 3 callers in handlers/.","gold":"clear","expected_gaps":[]}
+{"id":"C05","category":"clear-complex","request":"Implement OAuth2 password-grant login: POST /token with user+pass, return access_token (JWT, 1h TTL) + refresh_token (30d), store refresh hash in users table. Add /refresh and /logout endpoints.","gold":"clear","expected_gaps":[]}
+{"id":"C06","category":"clear-terse","request":"gitignore node_modules.","gold":"clear","expected_gaps":[]}
+{"id":"C07","category":"clear-terse","request":"bump version to 1.2.0.","gold":"clear","expected_gaps":[]}
+{"id":"C08","category":"edge-ambiguous-complete","request":"Use the existing Postgres connection string from the DATABASE_URL env var to connect, and log 'connected' on success. Exit 1 on failure.","gold":"clear","expected_gaps":[]}
+{"id":"U01","category":"underspecified-scope","request":"add monitoring to the controller.","gold":"underspecified","expected_gaps":["which","controller","metric","success"]}
+{"id":"U02","category":"underspecified-scope","request":"make the dashboard faster.","gold":"underspecified","expected_gaps":["faster","performance","metric","baseline","target"]}
+{"id":"U03","category":"underspecified-criteria","request":"rewrite the auth module.","gold":"underspecified","expected_gaps":["why","success","criteria","reason"]}
+{"id":"U04","category":"underspecified-criteria","request":"improve code quality in the repo.","gold":"underspecified","expected_gaps":["quality","metric","success","definition"]}
+{"id":"U05","category":"underspecified-constraints","request":"add a new alert type to SAANS.","gold":"underspecified","expected_gaps":["alert","trigger","threshold","condition"]}
+{"id":"U06","category":"edge-multi-intent","request":"add logging and also fix the memory leak and redesign the homepage.","gold":"underspecified","expected_gaps":["which","scope","leak","logging","homepage"]}
+{"id":"U07","category":"repo-referencing-clear","request":"In /Users/mac/Documents/dejoule-skills/skills/tokensmax/bin/tokensmax, add a --quiet flag that suppresses all stdout except the final result line. Exit 0.","gold":"clear","expected_gaps":[]}
+{"id":"U08","category":"repo-referencing-underspecified","request":"improve the controller firmware in /Users/mac/Documents/controllerFirmware.","gold":"underspecified","expected_gaps":["improve","what","how","metric"]}
