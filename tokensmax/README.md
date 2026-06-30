@@ -270,7 +270,13 @@ subscription* seats is a **ToS gray area** — the **API** is the sanctioned pat
 ### Config
 
 `~/.config/tokensmax/engines.conf` (see [`engines.conf.example`](./engines.conf.example)) declares each
-engine: `driver`, auth location, `model` / `model_fast`, `effort` / `effort_fast`, `strengths`, optional
-`session_limit`. Keys go in `secrets.env` (never committed). `tokensmax init` writes it for you.
+engine: `driver`, auth location, `model` / `model_fast` / `model_mid`, `effort` / `effort_fast`,
+`strengths`, optional `session_limit`, and, for OpenCode only, `agent` to pin an opencode agent
+(list with `opencode agent list`). Keys go in `secrets.env` (never committed). `tokensmax init` writes it
+for you.
+
+> **Claude `config_dir` gotcha:** omit it for the default seat so Claude reads `~/.claude.json`.
+> Setting `config_dir = ~/.claude` breaks login detection. Set it only for an isolated enterprise seat
+> such as `~/.claude-enterprise`, which pins `CLAUDE_CONFIG_DIR` at dispatch.
 
 Run `./test.sh` for a no-auth smoke test (parsing, model resolution, the confirm gate).

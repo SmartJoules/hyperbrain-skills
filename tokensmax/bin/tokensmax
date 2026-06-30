@@ -281,13 +281,25 @@ run_engine(){ # <engine> <profile> <repo> <model> <prompt>
   if [[ "$prof" == build ]]; then
     [[ -n "$repo" ]] || die "--build needs --repo DIR"
     git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$repo is not a git repo"
+    # A fresh `git init` repo has no HEAD. Seed one so `worktree add ... HEAD` works.
+    git -C "$repo" rev-parse HEAD >/dev/null 2>&1 || git -C "$repo" -c user.email=tokensmax@local -c user.name=tokensmax commit -q --allow-empty -m "tokensmax: init" 2>/dev/null || true
     local ts br wt; ts="$(date +%Y%m%d-%H%M%S)"; br="tokensmax/$eng-$ts"; wt="$WORKTREES/$(basename "$repo")-$eng-$ts"
     mkdir -p "$WORKTREES"; git -C "$repo" worktree add -q -b "$br" "$wt" HEAD
     echo "▶ [$eng] worktree: $wt (branch $br)"
     emit_engine "$wt" || true
     git -C "$wt" add -A
-    echo "── [$eng] built ──"; git -C "$wt" --no-pager diff --cached --stat || true
-    echo "keep: git -C \"$repo\" merge --no-ff $br   |   discard: git -C \"$repo\" worktree remove --force \"$wt\" && git -C \"$repo\" branch -D $br"
+    if git -C "$wt" diff --cached --quiet; then
+      echo "── [$eng] produced no file changes — cleaning up ──"
+      git -C "$repo" worktree remove --force "$wt" >/dev/null 2>&1 || true
+      git -C "$repo" branch -D "$br" >/dev/null 2>&1 || true
+    else
+      # Commit the build onto the branch so `git merge` lands the files after the worktree is removed.
+      git -C "$wt" -c user.email=tokensmax@local -c user.name=tokensmax commit -q -m "tokensmax: $eng build" || true
+      echo "── [$eng] built + committed on $br ──"
+      git -C "$repo" --no-pager diff --stat HEAD "$br" || true
+      echo "keep:    git -C \"$repo\" merge --no-ff $br"
+      echo "discard: git -C \"$repo\" worktree remove --force \"$wt\" && git -C \"$repo\" branch -D $br"
+    fi
   else
     emit_engine "$repo"
   fi
@@ -462,13 +474,49 @@ ctx_for(){ # model -> per-request context window (the honest "potential" per cal
     *)                       echo "—" ;;
   esac
 }
-tiers_for(){ # <driver> <deep-model> <fast-model> -> your configured defaults + how other tiers are reached.
-  # NB: no version names are baked in here — the CLI is model-agnostic; the orchestrator picks the
-  # actual tier from the provider's CURRENT lineup and passes it with -m.
-  case "$1" in
-    codex) printf 'model %s · depth via effort: low|medium|high|xhigh' "${2:-built-in}" ;;
-    *)     printf 'default %s%s · other tiers via -m (orchestrator picks from the current lineup)' "${2:-built-in}" "${3:+ · fast $3}" ;;
+# Fetch the real model ladder from the installed claude, the same source `/model` reads.
+claude_ladder(){
+  local d="$HOME/.local/share/claude/versions" latest bin f fam tier m out=""
+  latest="$(ls "$d" 2>/dev/null | sort -V | tail -1)"; [[ -n "$latest" ]] || return 1
+  bin="$d/$latest"; [[ -e "$bin" ]] || return 1
+  for f in haiku:cheap sonnet:mid opus:deep fable:max; do
+    fam="${f%%:*}"; tier="${f##*:}"
+    m="$(grep -oaE "claude-$fam-[0-9]+-[0-9]+" "$bin" 2>/dev/null | grep -vE '[0-9]{6}' | sort -uV | tail -1)"
+    [[ -n "$m" ]] && out="$out · $tier $m"
+  done
+  [[ -n "$out" ]] && echo "${out# · }"
+}
+
+api_models(){ # <engine>
+  local base ke key; base="$(cfg "$1" base_url)"; ke="$(cfg "$1" key_env)"
+  [[ -n "$base" && -n "$ke" ]] || return 1
+  have curl && have python3 || return 1
+  load_secrets; key="${!ke:-}"; [[ -n "$key" ]] || return 1
+  curl -fsS --max-time 6 -H "x-api-key: $key" -H "authorization: Bearer $key" -H "anthropic-version: 2023-06-01" \
+    "${base%/}/v1/models" 2>/dev/null | python3 -c 'import sys,json
+try:
+ d=json.load(sys.stdin); ids=[m.get("id","") for m in d.get("data",[]) if m.get("id")][:8]
+ sys.stdout.write(" · ".join(ids))
+except Exception: pass'
+}
+
+cursor_ladder(){
+  local cb; cb="$(command -v cursor-agent 2>/dev/null)" || return 1
+  cb="$(readlink -f "$cb" 2>/dev/null || echo "$cb")"
+  grep -oaE '(claude|gpt|gemini|o[0-9])[a-z0-9.-]{2,}' "$cb" 2>/dev/null | sort -u | head -6 \
+    | awk '{printf "%s%s",(NR>1?" · ":""),$0} END{if(NR)print""}'
+}
+
+model_line(){ # <engine> <driver>
+  local e="$1" d="$2" lad
+  case "$d" in
+    claude)        lad="$(claude_ladder)";  [[ -n "$lad" ]] && { echo "$lad   (fetched: claude install)"; return; } ;;
+    anthropic-api) lad="$(api_models "$e")"; [[ -n "$lad" ]] && { echo "$lad   (fetched: ${e} /v1/models)"; return; } ;;
+    cursor)        lad="$(cursor_ladder)";   [[ -n "$lad" ]] && { echo "$lad   (from cursor-agent)"; return; } ;;
+    codex)         echo "model $(cfg "$e" model) · depth = effort low|medium|high|xhigh   (ChatGPT plan: one model, no list to fetch)"; return ;;
   esac
+  local m mf mid; m="$(cfg "$e" model)"; mf="$(cfg "$e" model_fast)"; mid="$(cfg "$e" model_mid)"
+  echo "deep ${m:-built-in}${mid:+ · mid $mid}${mf:+ · cheap $mf} · other tiers via -m"
 }
 cmd_status(){ # session-start briefing: subscriptions, models, what-for, per-call potential
   require_conf
@@ -486,7 +534,7 @@ cmd_status(){ # session-start briefing: subscriptions, models, what-for, per-cal
     esac
     printf '\n  ● %-10s (%s)\n' "$e" "$d"
     printf '      account  : %s\n' "$seat"
-    printf '      models   : %s\n' "$(tiers_for "$d" "$m" "$mf")"
+    printf '      models   : %s\n' "$(model_line "$e" "$d")"
     printf '      default  : %s%s%s\n' "${m:-built-in}" "${mf:+, fast=$mf}" "${eff:+, effort=$eff}"
     printf '      used for : %s\n' "${strg:-—}"
     printf '      potential: %s context per request\n' "$(ctx_for "$m")"

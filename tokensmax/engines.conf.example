@@ -20,6 +20,7 @@ driver = claude
 # config_dir = ~/.claude-enterprise   # uncomment ONLY for an isolated enterprise seat
 model = claude-opus-4-8           # deep/default. others: claude-sonnet-4-6, claude-fable-5, claude-opus-4-7/-4-6
 model_fast = claude-haiku-4-5     # cheap tier — used when you pass --fast
+# model_mid = claude-sonnet-4-6   # optional: declare a mid tier so status/options show cheap, mid, and deep
 strengths = design, reasoning, prose, planning, architecture
 # --- optional: LIVE access (lets a worker query your real system, gated by --grant-live) ---
 # mcp_config = ~/.config/tokensmax/mcp/labs.json   # MCP servers that reach your live data (Sentinel, Morpheus, InfluxDB…)
