@@ -54,6 +54,7 @@ Choose the lane:
 | Pi-like skill discovery / runtime loading | `skill-loading-runtime`, `model-selection-runtime`, `pi-coding-agent`, `agent-planning-harness`, `self-verification` |
 | Model tier selection / cost routing | `model-selection-runtime`, `skill-loading-runtime`, `agent-context-manager`, `self-verification` |
 | Production/destructive operation guard | `production-safety-guards`, `model-selection-runtime`, `self-verification`, `security-review` |
+| Data modeling / schema design | `data-modeling-algorithm`, `database-patterns`, `database-query-optimizer`, `production-safety-guards` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `inference-engineering`, `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
 | Production inference serving | `inference-engineering`, `model-selection-runtime`, `llm-eval-guardrails`, `production-safety-guards` |
@@ -73,7 +74,8 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | `angular.json`, `src/styles.css`, PrimeNG imports, `--n-*` tokens | `jouletrack-angular`, `sj-ui-design-system`, `engineering-standards`, `self-verification` |
 | PrimeNG templates such as `p-table`, `p-dropdown`, `pTooltip`, or PrimeIcons CSS classes (`pi pi-*`) | `sj-ui-design-system`, `jouletrack-angular`; migrate new icons toward Boxicons where appropriate |
 | Sails app files: `api/controllers`, `api/services`, `api/models`, `config/routes.js` | `prompt-harness`, `backend-knowledge-base`, `dejoule-rbac`, `engineering-standards` |
-| API/service generation, CRUD, DTOs, repositories, migrations | `prompt-harness`, `api-service-generator`, `backend-implementation-planner`, `database-query-optimizer` |
+| API/service generation, CRUD, DTOs, repositories, migrations | `data-modeling-algorithm`, `prompt-harness`, `api-service-generator`, `backend-implementation-planner`, `database-query-optimizer` |
+| Database models, SQL schema, NoSQL collections, DynamoDB GSI/LSI, indexes, relationships, migrations | `data-modeling-algorithm`, `database-patterns`, `database-query-optimizer`, `production-safety-guards` |
 | Kubernetes manifests, `deployment.yaml`, `service.yaml`, `hpa.yaml`, `pdb.yaml`, `CronJob` | `sj-k8s-knowledge-base`, `devops-deployment-planner`, `self-verification` |
 | RDF/SPARQL/Neptune/Brick/ontology code | `ontology-service-knowledge-base`, `neptune-graph`, `brick`, `self-verification` |
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
