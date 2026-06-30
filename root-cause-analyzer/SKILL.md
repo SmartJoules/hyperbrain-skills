@@ -22,6 +22,7 @@ Avoid guessing. Separate facts from hypotheses. Prefer a narrow, testable root c
 7. Recommend permanent fix.
 8. Define verification steps.
 9. Add prevention and runbook updates.
+10. After the bug or incident is solved, invoke `bug-postmortem-learning` to produce a blameless postmortem and ask the user whether to ingest reusable fix knowledge into the repo/project KB.
 
 Ask for missing time range, environment, or affected service only if needed.
 
@@ -117,6 +118,7 @@ Do not present a hypothesis as root cause until it has direct supporting evidenc
 
 - Always include verification steps.
 - Always include prevention.
+- After resolution, ask whether the fix pattern should be saved as KB through `bug-postmortem-learning`.
 - Always state confidence.
 - Separate immediate mitigation from permanent fix.
 - Include what monitoring/alert would have caught it earlier.

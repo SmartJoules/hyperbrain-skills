@@ -15,6 +15,7 @@ description: HyperBrain's default high-efficiency AI engineering workflow. Use a
 Use this skill for:
 - Features spanning more than one file or layer
 - Debugging where root cause is not obvious
+- Solved bugs that should become reusable team knowledge
 - Code review or security/performance review
 - Prototype-to-production planning
 - LLM/RAG/agent feature changes
@@ -54,6 +55,7 @@ Choose the lane:
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
 | Review/debug/performance | `database-query-optimizer`, `engineering-standards`, `tdd-workflow` |
+| Solved bug/postmortem learning | `bug-postmortem-learning`, `root-cause-analyzer`, `self-learning` |
 
 ### 2. Retrieve Before Reading
 
@@ -108,6 +110,7 @@ Minimum gate:
 
 After meaningful work:
 - Add reusable decisions, API contracts, schema facts, and gotchas to the appropriate KB or memory artifact.
+- After a bug is solved, use `bug-postmortem-learning` to write a postmortem, ask the user for KB-ingestion approval, and save only durable fix patterns.
 - Update skill guidance when a pattern becomes repeatable.
 - Keep graph/local context fresh after structural changes.
 
@@ -145,5 +148,5 @@ Use this compact plan unless the user gives a better one:
 - [ ] Exact files/contracts identified before editing
 - [ ] Implementation follows repo conventions and `engineering-standards`
 - [ ] Focused tests/build/review/evals completed or limitations stated
-- [ ] Reusable learning persisted when applicable
+- [ ] Reusable learning persisted when applicable, with user approval for bug-fix KB ingestion
 - [ ] Efficiency signals captured: time saved, fewer reads, parallel work, fewer review loops, or cost reduced
