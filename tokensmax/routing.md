@@ -13,9 +13,10 @@ Source of truth: [`dispatch-policy.yaml`](./dispatch-policy.yaml). Active mode: 
 4. **Bind roles → engines** by matching the role's nature to each engine's `strengths`
    (from `~/.config/tokensmax/engines.conf`): design/prose/plan → a reasoning engine;
    logic/refactor/review → a code engine.
-5. **Pick the RIGHT model** via `model_routing` — match capability to the task: simple/mechanical →
-   small+fast (`--fast`), moderate → mid (`-m claude-sonnet-4-6`), hard/ambiguous/correctness-critical →
-   strong (opus default / high-effort). Not biggest-by-default, not cheapest-by-default — the fit.
+5. **Pick the RIGHT model** via `model_routing` — match capability to the task by **tier**: simple/mechanical →
+   cheap+fast (`--fast`), moderate → mid (`-m <current mid model>`), hard/ambiguous/correctness-critical →
+   deep (default top model / high-effort). Not biggest-by-default, not cheapest-by-default — the fit.
+   Resolve the concrete model from `tokensmax status` + the current lineup; never a fixed version here.
    Per role/phase if they differ (e.g. a mid drafter + a strong reviewer).
 6. **Present OPTIONS via AskUserQuestion, then 🛑 STOP** — don't dump text; offer the interactive
    picker (like brainstorming). Build **3–5 options from `tokensmax status`** (the actual engines +
