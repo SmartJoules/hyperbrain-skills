@@ -8,14 +8,14 @@ it cost.
 
 ```
 YOU ── goal ──▶  this session (orchestrator)
-                   │  estimate size · pick strategy · bind engine+model · PROPOSE
-                   │  └──── 🛑 you pick a plan ────┐
-        ┌──────────┼──────────┐                   │
-        ▼          ▼          ▼                    ▼
-     Claude     Codex      others   ──────▶   dispatch  (read-only, or isolated build)
-   design /    logic /     cheap /
-   reasoning   review      bulk
-        └──────── merge ────────┘   → one answer, or a diff you keep / discard
+                   │  🛑 ground the goal (cheap intake) → estimate size · pick strategy · PROPOSE
+                   │  └──── 🛑 you confirm the goal, then pick a plan ────┐
+         ┌──────────┼──────────┐                   │
+         ▼          ▼          ▼                    ▼
+      Claude     Codex      others   ──────▶   dispatch  (read-only, or isolated build)
+    design /    logic /     cheap /
+    reasoning   review      bulk
+         └──────── merge ────────┘   → one answer, or a diff you keep / discard
 ```
 
 ---
@@ -27,6 +27,11 @@ You're in a session. You type:
 ```
 /tokensmax build a small weather dashboard — current conditions + 5-day forecast
 ```
+
+**0. It grounds the goal first.** The cheapest fast tier (haiku) reads your request and returns a
+structured read — for this clear, bounded request it restates: *"build a static weather dashboard,
+current conditions + 5-day forecast — correct?"* You confirm; it moves on. (For an under-specified ask
+it would ask 1–3 sharp questions here and stop until you answer.)
 
 **1. It briefs you on the fleet** (`tokensmax status`) — your actual seats, models, and what each is for:
 
@@ -66,6 +71,9 @@ From one prompt: two independent attempts, merged — nothing hardcoded, nothing
 
 Most "run N agents" tools loop over a list and hope. tokensmax is opinionated where it counts:
 
+- **Grounds the goal before it plans.** The cheapest fast tier reads your request first and surfaces a
+  restated goal + assumptions (or asks 1–3 sharp questions) — you confirm *what* before it proposes
+  *how*. No more confidently-wrong plans against a goal it silently assumed.
 - **Right-sized models, not max-by-default.** It offers the full ladder (cheap → mid → deep) and
   *recommends the fit* — you don't pay Opus prices for a lint pass, and it won't silently default to the
   top model. Uses the **current** lineup; no version is hardcoded.
@@ -182,6 +190,11 @@ The CLI is **model-agnostic** — it runs whatever you pass with `-m`, no versio
 holds the default + fast model; the orchestrator picks other tiers from the provider's current lineup.
 `--dry` previews the resolved command and model without running.
 
+Cross-family capability ladder (for tier assignment — names still resolve from `tokensmax status`):
+**glm-4.7 < haiku < sonnet < glm-5.2 < opus-4.8**. So `glm-5.2` is a strong $0 worker (use it
+mid-to-hard), while `glm-4.7` is the weakest cheap tier — fine for bulk, but **prefer haiku for Phase-0
+intake** (glm-4.7 is flaky in non-interactive mode).
+
 ### Big tasks get phased, not one-shot
 
 A single huge run can hit a rate limit mid-way and return nothing, can't be reviewed, can't resume. So
@@ -193,10 +206,49 @@ model's *judgment about scope* — never a hardcoded budget, never a regex on yo
 ### The dispatch policy
 
 Before dispatching, the orchestrator reads [`dispatch-policy.yaml`](./dispatch-policy.yaml) and follows
-[`routing.md`](./routing.md): estimate magnitude → match a strategy (`solo` · `parallel-split` ·
+[`routing.md`](./routing.md): **Phase 0 — ground the goal** (cheapest fast tier `--research --fast` —
+prefer haiku — returns a structured read → restate goal+assumptions, or ask 1–3 clarifying questions, and
+STOP until you confirm it) → estimate magnitude → match a strategy (`solo` · `parallel-split` ·
 `planner-builder` · `cross-check` · `pipeline` · `phased`) → bind roles to engines by `strengths` →
 pick the right-sized model → **present options and stop** → on your pick, dispatch + verify. `mode:`
 switches between `propose-then-confirm` (default), `auto-announce`, `auto-escalate`.
+
+### Testing & verification
+
+Two tiers — run **Tier 1** on every change; run **Tier 2** when you touch Phase 0 (intake), the routing
+policy, or the intake prompt.
+
+**Tier 1 — smoke test (no auth, ~1 s).** `./test.sh` exercises the CLI mechanics with no engine logged
+in: argument parsing, `--fast`/`--effort`/`-m` model resolution, the confirm gate (`run`/`fleet` refuse
+without `--yes`), `--dry`, and graceful `usage` with no reports.
+
+**Tier 2 — Phase-0 intake eval (needs auth, ~10 min).** `test/intake_eval/` is a gold-labeled,
+stratified harness that dispatches each case through the **exact intake prompt** the skill prescribes,
+K times, and measures whether the gate behaves. Methodology + latest results in
+[`test/intake_eval/FINDINGS.md`](./test/intake_eval/FINDINGS.md); the gist:
+
+- **Dataset:** 16 cases as clear/underspecified pairs + edge slices (terse-clear, ambiguous-complete,
+  multi-intent, and the **repo-referencing tool-wander trap**). Methodology: QuestBench pairs
+  (arXiv:2503.22674) + Qulac clarification-need (1907.06554).
+- **Metrics:** classification **precision/recall/F1** (recall-on-underspecified is the headline — a
+  false-clear is the costly error, goal misgeneralization); **schema fidelity** (BFCL-style, ICML'25);
+  **tool-restraint** (the overtooling/no-op slice); **pass@k / pass^k** nondeterminism
+  (τ-bench 2406.12045, HumanEval 2107.03374); cost.
+- **Latest result:** recall(underspecified) **100% on both opencode/glm and claude/haiku** (0
+  false-clears); tool-wander **fixed** by the no-tools intake prompt (haiku 0%, glm 2%); schema
+  strict-valid 94–100%. Known limits: cheap models **over-ask on terse-clear** requests —
+  prompt-intrinsic and a *safe* failure direction; **opencode/glm intermittently returns empty** in
+  non-interactive mode (~29%; haiku 0%). It's a regression guard + failure-discovery set (small N, K=3),
+  not a population benchmark.
+
+```bash
+# Tier 1
+./test.sh
+# Tier 2 — full run (default engine: opencode)
+K=3 ENGINE=opencode python3 test/intake_eval/run_eval.py
+# Tier 2 — cross-engine diagnostic on the failure slice
+K=2 ENGINE=claude CASES=cases_crosscheck.jsonl python3 test/intake_eval/run_eval.py
+```
 
 ### Where it helps — and its two blind spots
 
@@ -273,4 +325,5 @@ subscription* seats is a **ToS gray area** — the **API** is the sanctioned pat
 engine: `driver`, auth location, `model` / `model_fast`, `effort` / `effort_fast`, `strengths`, optional
 `session_limit`. Keys go in `secrets.env` (never committed). `tokensmax init` writes it for you.
 
-Run `./test.sh` for a no-auth smoke test (parsing, model resolution, the confirm gate).
+Run `./test.sh` for a no-auth smoke test; see **Testing & verification** above for the full two-tier
+strategy (incl. the Phase-0 intake eval).

@@ -2,7 +2,48 @@
 
 Source of truth: [`dispatch-policy.yaml`](./dispatch-policy.yaml). Active mode: **propose-then-confirm**.
 
-## The loop
+## Phase 0 — Understand & ground the goal FIRST (before magnitude, strategy, or any proposal)
+The loop below assumes the task is *understood*. It isn't, until you've **grounded** it. Skipping this is
+the "confidently-wrong" failure: you propose a polished plan against a goal you *assumed*, the user
+approves the plan, and the misread only surfaces after tokens are spent (**goal misgeneralization**).
+The plan gate (step 6) checks the *how*; only a goal gate checks the *what/why*.
+
+**Use your cheapest fast tier for intake** — `tokensmax run claude --research --fast` (haiku; the most
+reliable intake engine in our eval — 0% empty-output, 0% tool-wander). An OpenCode/GLM cheap model is
+the $0 fallback (weaker + flaky non-interactive, ~29% empty; retry masks most). Resolve the concrete
+model from `tokensmax status`; never burn a mid/deep model on this — it's structured, low-reasoning
+work (FrugalGPT cascade + RouteLLM + OpenAI input-guardrail). **Intake is the one auto-dispatch that
+needs no plan-pick** — fixed/read-only/cheap; `propose-then-confirm` still governs the execution plan.
+
+Dispatch it as a **structured-output** research call — STRICT JSON, so gaps are *enumerated* not
+vibe-checked (models are ~50% wrong at self-detecting underspecification, QuestBench). **Forbid tool
+use** — agentic cheap engines otherwise wander off to read files on repo-referencing requests and return
+no JSON (verified in `test/intake_eval`):
+```
+tokensmax run claude --research --fast "Analyze this request. Do NOT use any tools. Do NOT read any
+ files. Output STRICT JSON only in your first and only message — no prose, no markdown fence:
+ {goal: '<one-line restated intent>',
+  slots: {scope, success_criteria, constraints, in_scope, out_of_scope, definition_of_done},
+  assumptions: ['<things you'd fill in to proceed>'],
+  clarity: '<clear|underspecified>',
+  gaps: ['<which required slots are missing/ambiguous>'],
+  clarifying_questions: ['<the 1-3 sharpest questions to close the gaps>']}
+ Request: \"<the user's words>\""
+```
+> No `claude` seat? Fall back to `opencode`/glm-4.7 ($0, expect ~29% empty — retry masks it) or another
+> cheap engine, or run intake inline in this session (same JSON). The point is the *gate*, not which
+> process emits it.
+
+**Then the confirm-goal gate — 🛑 STOP. Do NOT estimate magnitude or pick a strategy yet:**
+- **`underspecified`** → ask the `clarifying_questions` via **AskUserQuestion** (cap **1–3**; one good
+  question captures most of the value — Qulac). Merge answers into the slots, re-confirm. STOP.
+- **`clear`** → restate the **goal + key assumptions** in ONE line, ask *"correct?"*. STOP.
+
+**Silence is not consent** — wait for an explicit OK on the goal before Phase 1. Honor *"just do it /
+skip intake"*, but the **bar to skip is high**: a request is "manifestly clear" only if it states a
+single bounded action + a success criterion; when in doubt, run intake.
+
+## The loop  (Phase 1+ — only after the goal is grounded)
 1. **Estimate magnitude** by *reasoning* about scope (subsystems, breadth, open-endedness, expected
    output) — never a token number, never keyword-matching the prompt. **If it's large (L): phase it.**
    Propose a phased plan (bounded sub-tasks + a review gate between phases) instead of one mega-run —
@@ -18,7 +59,8 @@ Source of truth: [`dispatch-policy.yaml`](./dispatch-policy.yaml). Active mode: 
    deep (default top model / high-effort). Not biggest-by-default, not cheapest-by-default — the fit.
    Resolve the concrete model from `tokensmax status` + the current lineup; never a fixed version here.
    Per role/phase if they differ (e.g. a mid drafter + a strong reviewer).
-6. **Present OPTIONS via AskUserQuestion, then 🛑 STOP** — don't dump text; offer the interactive
+6. **Present OPTIONS via AskUserQuestion, then 🛑 STOP** — this is the **plan gate** (the *second*
+   gate; Phase 0 was the goal gate). Don't dump text; offer the interactive
    picker (like brainstorming). Build **3–5 options from `tokensmax status`** (the actual engines +
    models), scaled to what's configured: recommended split · swapped split · cross-check (if ≥2
    engines) · cheap/fast · phased-if-large. Each option label names `engine → role → model` + write
@@ -39,9 +81,10 @@ Source of truth: [`dispatch-policy.yaml`](./dispatch-policy.yaml). Active mode: 
    one tier up**. Check `tokensmax usage` for estimate vs actual + cost + any ⚠ limit hits.
 
 ## After dispatch — assembly invariants
-- `--build` worktrees **stage but don't commit**. Copy the produced files out of each worktree
-  into the real repo, then commit. Don't rely on `git merge` (branches sit at HEAD).
-- **Stagger** two `--build` launches >1s apart — branch names are timestamped to the second.
+- `--build` **commits its work on the branch** and saves a durable `.patch`. To keep it, run the printed
+  `keep:` command (`git -C <repo> merge --no-ff <branch>`) or `git apply` the `.patch`. Output is **never
+  lost to worktree cleanup** (the old "stage-only, copy files out" advice is obsolete — it caused file loss).
+- The CLI **staggers** parallel `--build` launches and **auto-seeds HEAD** on a fresh `git init` repo.
 - For `parallel-split`, commit `SPEC.md` to HEAD **before** dispatch so every worktree sees it.
 - **Verify** before claiming done: contract IDs present, code parses, hooks line up.
 

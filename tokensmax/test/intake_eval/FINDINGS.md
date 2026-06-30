@@ -67,6 +67,30 @@ characterized: (1) **terse-clear over-asking is intrinsic to the prompt** and is
 direction (worth a future prompt refinement, but not a correctness bug); (2) **opencode/glm is flaky in
 non-interactive mode**, so the skill should **prefer claude --fast/haiku for intake** when available.
 
+## Post-rebase re-verification (2026-06-30 19:45 IST) — sanctity check
+After rebasing onto the rewritten `feat/enterprise-fleet` (lean skill + new `bin/tokensmax` that
+prepends a header line to dispatch output), the harness was re-run on `opencode` over all 16 cases, K=3
+(report `report_20260630_194558.md`; console `eval_verify_opencode.log`):
+
+| metric | pre-rebase | **post-rebase** |
+|---|---|---|
+| **Recall (underspecified)** | 100% | **100%** (TP=7, FN=0) |
+| **Tool-wander** | 2% | **0%** (incl. repo-referencing trap U07/U08) |
+| **Schema strict-valid** | 94% | **98%** |
+| Empty-attempt (glm flake) | 29% | 26% |
+| Accuracy / precision | 88% / 78% | 69% / 58% |
+
+**The core invariant holds**: zero false-clears (the goal-misgeneralization error never fires), tool-wander
+eliminated, schema clean. The harness also proved robust to the new CLI output (it skips the header line
+and parses the NDJSON stream). The accuracy/precision dip is the known **terse-clear over-asking** —
+nondeterministic run-to-run (pass^K=50%, flip=44%) and a *safe* failure direction; recall is stable at 100%.
+
+**Blocker on the primary engine:** `claude`/haiku was **429 session-capped** at re-verification time
+(raw `claude -p …` returns `is_error:true, api_error_status:429, "session limit · resets 9:20pm"`), so
+the primary-engine re-run could not be completed — re-run `K=3 ENGINE=claude CASES=cases.jsonl python3
+run_eval.py` after the seat resets to confirm the primary path. *(Also noted: the new CLI surfaces only a
+prompt echo + trailer when an engine errors, swallowing the 429 message — a minor upstream UX gap.)*
+
 ## Reproduce
 ```bash
 cd skills/tokensmax/test/intake_eval

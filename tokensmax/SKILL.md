@@ -19,12 +19,18 @@ run the queue on a schedule with `tokensmax schedule on`. Every dispatch is reco
 
 1. **Brief.** Run `tokensmax status` and tell the user what's wired: subscriptions, each engine's model
    tiers, what each is for. Read it — don't assume the fleet.
-2. **Propose options — and build NOTHING yet.** Present routing choices via **AskUserQuestion**.
+2. **🛑 Ground the goal (Phase 0).** Before proposing, send the request to your **cheapest fast tier**
+   (`tokensmax run claude --research --fast` — haiku; OpenCode/GLM `--fast` is the $0 fallback) for a
+   strict-JSON read `{goal, slots, assumptions, clarity, gaps, clarifying_questions}` — **forbidding tool
+   use** (agentic cheap engines otherwise wander and return nothing). If `underspecified`, ask its 1–3
+   questions; if `clear`, restate the goal + assumptions and ask *"correct?"*. Either way **STOP until
+   the user confirms the goal** — don't propose routing for a goal you guessed (that's goal
+   misgeneralization; the plan gate can't catch it). Depth: [routing.md §Phase 0](routing.md).
+3. **Propose options — and build NOTHING yet.** Present routing choices via **AskUserQuestion**.
    🛑 If you are about to Write/Edit/run the task yourself before the user picks — **STOP. That is the
-   failure this skill exists to prevent.** (You may ask *one* scoping question first if the task is
-   ambiguous — but the routing picker still comes before any work.)
-3. **Dispatch** the chosen plan: `tokensmax run|fleet --yes [-m <model> | --effort <lvl>] --est S|M|L`.
-4. **Report.** `tokensmax usage` → who solved what, tokens + $.
+   failure this skill exists to prevent.**
+4. **Dispatch** the chosen plan: `tokensmax run|fleet --yes [-m <model> | --effort <lvl>] --est S|M|L`.
+5. **Report.** `tokensmax usage` → who solved what, tokens + $.
 
 ## Building the options — reason from the real fleet, never a hardcoded list
 

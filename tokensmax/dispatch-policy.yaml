@@ -10,6 +10,37 @@ mode: propose-then-confirm
 #                        a plan and then immediately executing it is the exact bug this prevents.
 # auto-announce        : pick and dispatch immediately, just state the path
 # auto-escalate        : auto for low-risk; pause only when risk/ambiguity is flagged
+#                        NOTE: this governs the PLAN gate. It is preceded by a GOAL gate (Phase 0,
+#                        `intake:` below) — ground the goal before classifying/routing anything.
+
+# ---------------------------------------------------------------------------
+# Phase 0 — intake & goal-grounding. Runs BEFORE any routing/classification.
+# Use the CHEAPEST FAST tier (resolved from `tokensmax status`), preferring claude --fast (haiku): in
+# our eval it was the most reliable intake engine (0% empty-output, 0% tool-wander). An OpenCode/GLM
+# cheap model is the $0 fallback but weaker + flaky non-interactive (~29% of attempts return empty;
+# bounded retry masks most). Do NOT spend a mid/deep model on intake — it's structured, low-reasoning.
+#   Why a goal gate before the plan gate: a plan is evaluated against the agent's (possibly wrong)
+#   internal goal — a plausible plan gets approved and the misread surfaces only after execution
+#   (goal misgeneralization). The goal gate surfaces a restated goal + assumptions FIRST.
+# ---------------------------------------------------------------------------
+intake:
+  engine: cheapest fast tier — prefer claude --fast (haiku); OpenCode/GLM cheap = $0 fallback
+  flags: [--research, --fast]          # read-only; NEVER --build
+  prompt_rule: "FORBID tool use + file reads in the prompt — agentic cheap engines otherwise wander off
+                and return no JSON on repo-referencing requests; demand STRICT JSON in the first and only
+                message (verified in test/intake_eval). Strip any ``` fence before reading."
+  output_schema:
+    goal: "one-line restated intent"
+    slots: {scope, success_criteria, constraints, in_scope, out_of_scope, definition_of_done}
+    assumptions: ["filled-in to proceed"]
+    clarity: "clear | underspecified"
+    gaps: ["missing required slots"]
+    clarifying_questions: ["1-3 sharpest questions"]
+  gate:                                # confirm-goal — STOP until accepted; silence != consent
+    if_clear: "restate goal + assumptions in one line, ask 'correct?'"
+    if_underspecified: "ask clarifying_questions (max 1-3) via AskUserQuestion, merge answers, re-confirm"
+  override: "user may say 'just do it / skip intake'; bar to skip is HIGH (QuestBench: models ~50% wrong at self-detecting underspecification)"
+  cost_note: "intake is the one auto-dispatch that needs no plan-pick — fixed/cheap/read-only; propose-then-confirm still governs the EXECUTION plan"
 
 # ---------------------------------------------------------------------------
 # Engines are declared by the user in ~/.config/tokensmax/engines.conf, each with `strengths`.
@@ -75,10 +106,15 @@ model_fit:
   hard:      # ambiguity, architecture/design, correctness/security-critical, novel, long-horizon
     claude: deep tier  (default top model, or -m <current top model>)
     codex:  high / xhigh effort
+  # Cross-family capability ordering — for ASSIGNING a model to a tier (resolve the concrete name from
+  # `tokensmax status`; never pin it here). Verified empirically + per user calibration:
+  #   cheap:   haiku > glm-4.7            (haiku = reliable cheap/intake pick; glm-4.7 weaker + flaky)
+  #   mid:     sonnet < glm-5.2           (glm-5.2 is upper-mid; use where sonnet is slightly thin)
+  #   deep:    opus-4.8 > glm-5.2         (glm-5.2 is a $0 near-deep — above sonnet, below opus)
   principle: enough capability to do it well, no more. Don't under-power a hard task to save money;
              don't burn the top model on something a smaller one nails. State the model + why in the proposal.
 
-rubric_axes: [task_magnitude, task_complexity, files_touched, independence, design_vs_logic_mix, risk_ambiguity, reversibility]
+rubric_axes: [intent_clarity, goal_grounded, task_magnitude, task_complexity, files_touched, independence, design_vs_logic_mix, risk_ambiguity, reversibility]
 
 # ---------------------------------------------------------------------------
 # Task magnitude — estimate by REASONING about scope (subsystems touched, breadth, open-endedness,
@@ -100,6 +136,9 @@ model_routing:
   # if you misjudge and a result comes back shallow/uncertain, re-run that one task one tier up.
 
 routing:
+  - if: "intent_clarity != high OR goal_grounded == false"
+    then: intake            # Phase 0 — ground the goal BEFORE classifying (see `intake:` above)
+    why: the rest of this block assumes an understood task — never route a guess; a polished plan against an assumed goal is goal misgeneralization, and the plan gate can't catch it
   - if: "task_magnitude == L"
     then: phased
     why: don't one-shot big work — bounded phases survive rate limits, parallelize, stay reviewable
