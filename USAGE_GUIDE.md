@@ -200,6 +200,61 @@ Most real tasks use **several** skills together. Typical flows:
 
 ---
 
+## Part 4 — Multi-Agent & Multi-Skill Orchestration
+
+For work too big for one agent/context: run **several agents in parallel/sequence**, each scoped tight. The skills that make this work (use them together):
+
+| Step | Skill |
+|------|-------|
+| Decide solo vs fleet; plan the decomposition | **agentic-engineering** (the operating model) + **agent-orchestration** |
+| Write each agent a tight brief (goal, files, contract, allowed tools, stop condition) | **agent-delegation-contracts** |
+| Give each agent only its minimal context (no leakage, token budget per agent) | **agent-context-manager** |
+| Actually dispatch the workers (parallel, model tiers, worktree-isolated writes) | **agent-fleet-runner** + **tokensmax** (CLI) |
+| Merge/reconcile the agents' outputs, resolve conflicts, final verify | **agent-integration-reviewer** |
+
+### Multi-agent playbook
+1. **Plan** ([[agentic-engineering]] + agent-orchestration): break the task into **independent, scoped sub-tasks**, each with `{goal, the 1–5 files it touches, input, expected output/contract, done-criteria}`. Mark dependencies so independents run in parallel.
+2. **Brief** (agent-delegation-contracts): each sub-agent gets ONLY its goal + its files + the one relevant skill (e.g. `jouletrack-angular`) + the contract — never "the whole codebase".
+3. **Dispatch** (agent-fleet-runner / tokensmax): run independent sub-agents **in parallel**, sequence only real dependencies; right-size the model per task (cheap for mechanical, strong for hard); writes go in isolated worktrees so they don't collide.
+4. **Each agent returns a structured result** (files changed + summary + new contracts) — NOT its whole transcript. The orchestrator keeps the plan + results, not the union of everything.
+5. **Integrate & verify** (agent-integration-reviewer): stitch results, reconcile cross-task contracts, run build/tests, diff-only review against [[engineering-standards]]; re-scope only the sub-tasks that fail.
+
+### Multi-skill on one task
+Most real tasks chain skills (see Part 3). The pattern: **brainstorm → plan → the domain skill(s) for the stack → engineering-standards (always) → tests → review**. You can name several explicitly ("use software-architecture-planner then code-reviewer"); skills also auto-load by description. Keep only the skills relevant to the current step in context.
+
+### tokensmax fleet (CLI, across your seats)
+`/tokensmax <task>` orchestrates Claude + Codex (+ GLM/OpenCode/Cursor) as a headless fleet — proposes routing options across seats/tiers, dispatches the chosen plan, reports cost. Read-only by default; writes worktree-isolated; nothing dispatches until you pick a plan. For unattended/long work: `tokensmax queue add|run`, `--bg`, and `schedule`. See the **tokensmax** skill.
+
+> **When NOT to go multi-agent:** a single-file or <3-step change. The orchestration overhead (briefs, integration) costs more than it saves (KISS).
+
+---
+
+## Part 5 — Low-Token Mode (cheaper runs)
+
+The lever isn't "use a smaller model" — it's **read less into context and offload**. Full operating model: **agentic-engineering**. The moves, in order of impact:
+
+1. **Retrieve, don't read.** Pull *precomputed, summarized* context first — `graphify-out/GRAPH_REPORT.md` ([[graphify-integration]]), `ai-context/*`, a repo's local KB ([[local-kb]]), and the relevant hyperbrain KB skill — instead of opening source "to understand". Summaries are 10–100× cheaper than files.
+2. **Targeted reads only.** grep for the symbol/route/class and read the matching lines + a small window; read the one function you'll change, not the 800-line file. Full-file read is a last resort.
+3. **Set a context budget per phase** and **summarize-and-discard**: after reading something large, write a 3–5 line note (what it does, the contract, the gotcha) and drop the source from context. Compact at phase boundaries. Avoid the last ~20% of the window for heavy multi-file work — decompose instead.
+4. **Decompose + scope** (Part 4): total tokens scale with **#sub-tasks, not files × tasks**, because each agent holds only its slice. This is the biggest structural saving on large work.
+5. **Right-size the model** (tokensmax tiers / model routing): cheap model for classification/lookups/mechanical edits, strong only for hard reasoning/verification. Don't run Opus on a rename.
+6. **MCP on demand** ([[mcp-on-demand]]): enable a heavy MCP server only for the step that needs it; don't hold them all open.
+7. **Tight prompts** ([[prompt-engineering]]): prompt caching for the stable prefix; truncate tool/retrieved results to what's needed; no redundant re-statements.
+8. **Persist** (self-learning / project memory): record decisions/contracts so the *next* run reads even less.
+
+### Quick low-token checklist
+- [ ] Used graphify/ai-context/KB BEFORE reading any source
+- [ ] Targeted symbol/grep reads, not whole files
+- [ ] Per-phase budget; summarized-and-discarded big reads
+- [ ] Decomposed large work into scoped sub-agents (Part 4)
+- [ ] Model tier matched to task difficulty
+- [ ] MCP enabled only where needed; prompts tight + cached
+
+> One-liner: **"Retrieve don't read · decompose don't accumulate · cheap model unless it's hard."**
+
+---
+
 For the full skill list with one-line summaries, see the [README](README.md).
+For how to call agents/skills + the full catalog, see [AGENTS_AND_SKILLS.md](AGENTS_AND_SKILLS.md).
 For the install/usage doc that ships to the JouleTRACK & jt-api-v2 repos, see
 `docs/HYPERBRAIN_SKILLS.md` in those repos.
