@@ -377,8 +377,11 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 ## 📋 Installation
 
 > 📖 **See [USAGE_GUIDE.md](USAGE_GUIDE.md)** for detailed install steps (Claude Code,
-> Codex/Cursor/Copilot, manual, update, verify) and a full **"which skill when"**
+> Pi, Codex/Cursor/Copilot, manual, update, verify) and a full **"which skill when"**
 > reference organized by scenario, plus how skills compose on real tasks.
+
+> **Pi (pi.dev) users:** `./install.sh --assistant pi` — Pi uses the same `SKILL.md`
+> format as Claude Code, so every skill works unchanged (installed to `~/.pi/agent/skills/`).
 
 ### Quick Install (Recommended)
 

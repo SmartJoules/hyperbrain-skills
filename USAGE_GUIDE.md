@@ -38,7 +38,24 @@ done
 # Restart Claude Code
 ```
 
-### 1B. Codex / Cursor / Copilot
+### 1B. Pi (pi.dev)
+
+Pi uses the **same `SKILL.md` format as Claude Code** (a directory per skill with
+`name` + `description` frontmatter), discovered under `~/.pi/agent/skills/`. So every
+skill works in Pi unchanged.
+
+```bash
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
+cd /tmp/hyperbrain-skills
+./install.sh --assistant pi
+```
+
+Skills load automatically (Pi advertises available skills in its system prompt) or on
+demand via `/skill:<name>`. A skill's `bin/` CLI installs to `~/.local/bin`; slash
+`commands/` install to `~/.pi/agent/commands/`. To install one skill by hand:
+`cp -r <skill> ~/.pi/agent/skills/<skill>`.
+
+### 1C. Codex / Cursor / Copilot
 
 These have no native `SKILL.md` registry, so the installer puts the skills under
 `skills/<name>/SKILL.md` **and generates an `AGENTS.md`** index (which Codex auto-reads).
@@ -53,13 +70,14 @@ The generated `AGENTS.md` lists every skill with its description and bakes in th
 mandatory engineering standards. The agent opens the matching `skills/<name>/SKILL.md`
 for the task at hand.
 
-### 1C. Update / re-install
+### 1D. Update / re-install
 
 Re-run `./install.sh` (it backs up the existing skills first).
-Default install dir per assistant: `~/.claude/skills`, `~/.cursor/skills`,
-`~/.copilot/skills`, `~/.codex/skills`. Override with `--dir`. Skip backup with `--skip-backup`.
+Default install dir per assistant: `~/.claude/skills`, `~/.pi/agent/skills`,
+`~/.cursor/skills`, `~/.copilot/skills`, `~/.codex/skills`. Override with `--dir`.
+Skip backup with `--skip-backup`.
 
-### 1D. Verify it worked
+### 1E. Verify it worked
 
 ```bash
 ls ~/.claude/skills        # each skill is its own folder containing SKILL.md

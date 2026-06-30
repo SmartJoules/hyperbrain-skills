@@ -49,6 +49,19 @@ done
 ```
 **Install Location:** `~/.claude/skills/`
 
+### Pi (pi.dev)
+```bash
+./install.sh --assistant pi
+```
+**Install Location:** `~/.pi/agent/skills/`
+
+> Pi uses the **same skill format as Claude Code** — a `SKILL.md` per directory with
+> `name` + `description` frontmatter — and discovers directories containing `SKILL.md`
+> under `~/.pi/agent/skills/`. So every hyperbrain skill works in Pi unchanged. Skills
+> load automatically (Pi lists available skills in its system prompt) or on demand via
+> `/skill:<name>`. Any skill that ships a `bin/` CLI goes to `~/.local/bin`; slash
+> `commands/` go to `~/.pi/agent/commands/`.
+
 ### Cursor AI
 ```bash
 ./install.sh --assistant cursor

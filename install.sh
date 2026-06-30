@@ -55,7 +55,7 @@ show_help() {
     echo ""
     echo -e "${YELLOW}Options:${NC}"
     echo "    -d, --dir DIR          Installation directory (default: ~/.claude/skills)"
-    echo "    -a, --assistant TYPE   Assistant type: claude, codex, cursor, copilot (default: claude)"
+    echo "    -a, --assistant TYPE   Assistant type: claude, pi, codex, cursor, copilot (default: claude)"
     echo "    -s, --skip-backup      Skip backup of existing skills"
     echo "    -h, --help             Show this help message"
     echo ""
@@ -74,6 +74,7 @@ show_help() {
     echo ""
     echo -e "${YELLOW}Supported Assistants:${NC}"
     echo "    - claude   Claude Code (default)"
+    echo "    - pi       Pi coding agent (pi.dev) — same SKILL.md format as Claude"
     echo "    - codex    OpenAI Codex"
     echo "    - cursor   Cursor AI Editor"
     echo "    - copilot  GitHub Copilot"
@@ -129,6 +130,7 @@ main() {
     if [ "$INSTALL_DIR_EXPLICIT" = false ]; then
         case "$ASSISTANT" in
             claude)  INSTALL_DIR="$HOME/.claude/skills" ;;
+            pi)      INSTALL_DIR="$HOME/.pi/agent/skills" ;;
             cursor)  INSTALL_DIR="$HOME/.cursor/skills" ;;
             copilot) INSTALL_DIR="$HOME/.copilot/skills" ;;
             codex)   INSTALL_DIR="$HOME/.codex/skills" ;;
@@ -184,12 +186,19 @@ main() {
     print_info "Installing skills for $ASSISTANT..."
 
     case "$ASSISTANT" in
-        claude)
-            # For Claude Code, each skill is a directory containing SKILL.md.
-            # Install as ~/.claude/skills/<skill-name>/ so Claude Code can register
-            # the skill by its frontmatter `name`. Copy the WHOLE directory so
-            # supporting files (README.md, examples/, bin/, *.json) come along.
+        claude|pi)
+            # Claude Code AND Pi (pi.dev) use the SAME skill format: each skill is
+            # a directory containing SKILL.md with YAML frontmatter (name +
+            # description). Claude discovers under ~/.claude/skills/; Pi discovers
+            # directories containing SKILL.md under ~/.pi/agent/skills/. So the same
+            # per-skill-directory install works for both. Copy the WHOLE directory
+            # so supporting files (README.md, examples/, bin/, *.json) come along.
             local count=0
+            local commands_dir
+            case "$ASSISTANT" in
+                pi) commands_dir="$HOME/.pi/agent/commands" ;;
+                *)  commands_dir="$HOME/.claude/commands" ;;
+            esac
             while IFS= read -r skill_md; do
                 local skill_dir
                 skill_dir="$(dirname "$skill_md")"
@@ -206,14 +215,14 @@ main() {
                     print_info "    + CLI -> ~/.local/bin (ensure it's on PATH)"
                 fi
                 if [ -d "$skill_dir/commands" ]; then
-                    mkdir -p "$HOME/.claude/commands"
-                    cp "$skill_dir"/commands/*.md "$HOME/.claude/commands/" 2>/dev/null || true
-                    print_info "    + slash commands -> ~/.claude/commands"
+                    mkdir -p "$commands_dir"
+                    cp "$skill_dir"/commands/*.md "$commands_dir/" 2>/dev/null || true
+                    print_info "    + slash commands -> $commands_dir"
                 fi
                 print_success "  installed: $skill_name"
                 count=$((count + 1))
             done < <(find "$CLONE_DIR" -name SKILL.md -not -path '*/.git/*' | sort)
-            print_success "Installed $count skills for Claude Code"
+            print_success "Installed $count skills for $ASSISTANT"
             ;;
 
         codex|cursor|copilot)
