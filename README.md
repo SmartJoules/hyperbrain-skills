@@ -30,7 +30,9 @@ cd /tmp/hyperbrain-skills && ./install.sh
 
 ## 🎯 Overview
 
-This is a **comprehensive AI-SDLC skill library** for complete software development, covering:
+This is a **comprehensive AI-SDLC skill library** for complete software development. HyperBrain is now organized around an **advanced AI workflow** that targets at least **40% developer-efficiency improvement** on non-trivial work by combining retrieve-first context, multi-agent fleet orchestration, repo-aware implementation, verification gates, and persistent learning.
+
+It covers:
 - **Frontend (FE)** - Angular, React, Vue, Next.js, web applications
 - **Backend (BE)** - Node.js, Python, Go, APIs, databases
 - **IoT** - MQTT, Kafka, InfluxDB, data pipelines, device management
@@ -51,9 +53,13 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - Interactive brainstorming with multiple techniques
    - Mandatory execution protocol for all tasks
    - **This is the entry point for all AI-assisted work**
+2. **Advanced AI Workflow** - Default high-efficiency operating model for non-trivial engineering
+   - Targets 40%+ efficiency via retrieve-first context, `tokensmax` fleet routing, repo-aware contracts, verification gates, and persistent learning
+   - Classifies work into product/spec, multi-file engineering, AI/LLM/RAG, diagnostics, UI, review/debug, and performance lanes
+   - Measures cycle time, context-loading steps, review iterations, test failures caught, token/cost spend, and reused knowledge artifacts
 
 ### Core Development Skills
-2. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
+3. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
    - **PRD → HTML Prototype** - Turns a PRD/feature spec into a standalone HTML prototype in the JouleTRACK/DeJoule theme (dark teal header, side nav, light background, white cards, Work Sans, `--n-*` tokens)
    - **Agentic Engineering** - Operating model for large development at low token cost: progressive context retrieval (graphify/ai-context/local-kb instead of whole-file reads), context budgeting + compaction, and planner→scoped-sub-agent orchestration with a verification gate. Ties together graphify-integration, local-kb, mcp-on-demand, and self-learning.
    - **Prompt Harness** - Repo-aware autonomous engineering harness. Detects the repo (JouleTRACK / jt-api-v2 / IoT / generic), binds the generic DB-first + connector-first codegen workflow to that repo's real stack and conventions, gathers context from connectors + precomputed artifacts before writing code, and outputs production-ready, security-checked, tested code per engineering-standards.
@@ -61,9 +67,13 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **Engineering AI Assistant** - Senior backend engineer + architect + reviewer that understands the project, inspects connected DBs (schema discovery), confirms risky assumptions, then generates production-ready controllers/services/repositories/DTOs/validation/tests/OpenAPI docs in the project's own patterns. Connector-first, fewer questions.
    - **Database Query Optimizer** - Senior DB performance engineer for PostgreSQL, DynamoDB, MongoDB, InfluxDB (Flux/InfluxQL), and Redis. Analyzes/optimizes/rewrites queries, interprets EXPLAIN/explain() plans, recommends indexes + schema changes, detects anti-patterns, and scores performance — while preserving correctness.
    - **Lumen Knowledge Base** - Real architecture of the Lumen AI chat assistant (JouleTRACK Angular frontend + jt-api-v2 Sails backend: AWS Bedrock agent, Neptune graph, InfluxDB, SSE chat, tool-registry, caching). Includes a single build prompt (`prompts/lumen-upgrade.md`) to develop the advanced-chat + cache-layer + JouleTRACK-aligned-UX upgrade across both repos in one go.
-   - **tokensmax** ⭐ - The productivity engine. Orchestrate your Claude + Codex (+ OpenCode/GLM/Cursor/Antigravity) seats as a headless **fleet** from one session — parallel research/review/builds, right-sized model tiers, read-only by default, worktree-isolated writes, and an enforced confirm gate. Ships a `tokensmax` CLI + `/tokensmax` slash commands. General-purpose (no MCP needed).
+   - **tokensmax** ⭐ - The productivity engine. Orchestrate your Claude + Codex (+ OpenCode/GLM/Cursor/Antigravity) seats as a headless **fleet** from one session — parallel research/review/builds, right-sized model tiers discovered from `tokensmax status`, read-only by default, worktree-isolated writes, live-access rules, and an explicit confirm gate. Ships a `tokensmax` CLI + `/tokensmax` slash commands. General-purpose (no MCP needed).
    - **proto-to-dejoule** - Turn an Intelligence-team prototype/MVP (HTML, Flask/Streamlit, Figma, spec) into a stack-aligned implementation plan for JouleTRACK + jt-api-v2.
    - **sj-ui-design-system** - dejoule-v4 Angular frontend design system reference — components, design tokens, accessibility, Highcharts, NgRx, loading/error/empty states.
+   - **rag-retrieval** - Production RAG patterns: chunking, embeddings (Bedrock Titan), vector + hybrid + graph-RAG, reranking, grounding/citations, freshness/invalidation, retrieval eval. Grounded in the DeJoule/Lumen stack.
+   - **prompt-engineering** - Systematic prompting: structure, few-shot, structured/JSON output, chain-of-thought, prompt caching, model-tier-aware prompting, and prompt-injection defense (Bedrock Converse / Claude / Qwen).
+   - **llm-eval-guardrails** - Evaluate LLM features (eval sets, LLM-as-judge, grounding/verify-gate, regression) and guard them (PII/secret redaction, injection defense, output validation, rate + cost limits, fallbacks).
+   - **agent-tool-design** - Design agent tool-registries and loops: tool granularity + schemas, the tool-use loop (turn limits/parallelism/timeouts/truncation), cost-tiered model routing, grounding, and tracing. Generalizes Lumen's Bedrock agent.
 
 ### DeJoule Operations & Diagnostics (need SmartJoules MCP: Sentinel, Morpheus)
    - **cpa-health** - Holistic health audit of CPA (Chiller Plant Automation) + the full IoT stack (sensors → PostgreSQL → runtime → InfluxDB → commands → BMS).
@@ -108,6 +118,15 @@ This library is inspired by **BuildLoop's AI-SDLC approach** and extends it for 
 ---
 
 ## 🚀 How It Works - The AI-SDLC Workflow
+
+### Step 0: Advanced AI Workflow (Default for Non-Trivial Work)
+For features, reviews, debugging, product-to-code, LLM/RAG, or multi-file tasks:
+1. Classify the lane and load the relevant skills
+2. Retrieve context from graph/KB/`ai-context`/targeted search before reading files
+3. Use `tokensmax` to route build/research/review to the right configured AI seat and model tier
+4. Implement with repo-aware contracts and minimal diffs
+5. Verify with tests, build, diff review, browser QA, or LLM evals as appropriate
+6. Persist reusable decisions and patterns back into the local knowledge base
 
 ### Step 1: 🧠 Activate Superpowers (Automatic)
 When you ask any question or request any feature:
