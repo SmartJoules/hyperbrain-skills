@@ -63,18 +63,18 @@ strategies:
 #   CLI: -m <model> to pick precisely, or --fast as the small/quick shortcut.
 # ---------------------------------------------------------------------------
 model_fit:
+  # Tiers, not model names — resolve the concrete model from `tokensmax status` + the current lineup.
   simple:    # mechanical, well-specified, bulk, low-risk, lint/format, summaries, extraction, lookups
-    claude: haiku  (--fast)
+    claude: cheap tier  (--fast / model_fast)
     codex:  low reasoning effort  (--fast)
-    opencode: cheap provider/model (e.g. glm) — ideal for bulk
+    other:  any cheap seat (e.g. an OpenCode/GLM small model) — ideal for bulk
     why: a small model is sufficient AND faster — overkill here just costs time + tokens
   moderate:  # multi-step but bounded, ordinary code/analysis, non-novel
-    claude: sonnet  (-m claude-sonnet-4-6)
+    claude: mid tier  (-m <current mid model>)
     codex:  medium effort
   hard:      # ambiguity, architecture/design, correctness/security-critical, novel, long-horizon
-    claude: opus  (default, or -m claude-opus-4-8)
+    claude: deep tier  (default top model, or -m <current top model>)
     codex:  high / xhigh effort
-    antigravity: gemini (ide-aware, design)
   principle: enough capability to do it well, no more. Don't under-power a hard task to save money;
              don't burn the top model on something a smaller one nails. State the model + why in the proposal.
 
