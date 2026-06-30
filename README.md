@@ -59,9 +59,12 @@ Open the dark-mode visual guide at [`agent-skills-guide.html`](agent-skills-guid
    - Targets 40%+ efficiency via retrieve-first context, `tokensmax` fleet routing, repo-aware contracts, verification gates, and persistent learning
    - Classifies work into product/spec, multi-file engineering, AI/LLM/RAG, diagnostics, UI, review/debug, and performance lanes
    - Measures cycle time, context-loading steps, review iterations, test failures caught, token/cost spend, and reused knowledge artifacts
+3. **Long-Term Memory** - Decides what durable engineering knowledge should be saved, where to store it, how to avoid secrets/PII/noise, and how to retrieve verified memory before future planning.
+4. **Self Verification** - Mandatory final self-check before completion: latest request alignment, diff review, tests/builds/parsers, source evidence, security/privacy, conventions, and residual-risk reporting.
+5. **Self Learning** - Captures user preferences, repo patterns, bug-fix learnings, review feedback, and successful workflows so future HyperBrain runs start with better context.
 
 ### Core Development Skills
-3. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
+6. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
    - **PRD → HTML Prototype** - Turns a PRD/feature spec into a standalone HTML prototype in the JouleTRACK/DeJoule theme (dark teal header, side nav, light background, white cards, Work Sans, `--n-*` tokens)
    - **Agentic Engineering** - Operating model for large development at low token cost: progressive context retrieval (graphify/ai-context/local-kb instead of whole-file reads), context budgeting + compaction, and planner→scoped-sub-agent orchestration with a verification gate. Ties together graphify-integration, local-kb, mcp-on-demand, and self-learning.
    - **Agent Orchestration** - Plan and run multi-agent workflows: agent allocation, agent creation, context packets, planning agents, specialist roles, delegation contracts, handoffs, worktree-safe ownership, integration, cross-checks, and verification gates.

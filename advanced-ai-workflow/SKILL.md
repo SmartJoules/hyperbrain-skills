@@ -56,6 +56,7 @@ Choose the lane:
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
 | Review/debug/performance | `database-query-optimizer`, `engineering-standards`, `tdd-workflow` |
 | Solved bug/postmortem learning | `bug-postmortem-learning`, `root-cause-analyzer`, `self-learning` |
+| Memory and self-verification | `long-term-memory`, `self-learning`, `self-verification` |
 
 ### 2. Retrieve Before Reading
 
@@ -110,6 +111,7 @@ Minimum gate:
 
 After meaningful work:
 - Add reusable decisions, API contracts, schema facts, and gotchas to the appropriate KB or memory artifact.
+- Use `long-term-memory` to decide what should persist, `self-learning` to capture repeatable patterns, and `self-verification` to check accuracy before finalizing.
 - After a bug is solved, use `bug-postmortem-learning` to write a postmortem, ask the user for KB-ingestion approval, and save only durable fix patterns.
 - Update skill guidance when a pattern becomes repeatable.
 - Keep graph/local context fresh after structural changes.
@@ -125,7 +127,7 @@ Use this compact plan unless the user gives a better one:
 3. If the task is non-trivial, route with `tokensmax`; otherwise do it locally.
 4. Implement in small, contract-shaped changes.
 5. Verify with focused tests/review/evals.
-6. Report changed files, verification, residual risk, and any persisted learning.
+6. Run `self-verification`, then report changed files, verification, residual risk, and any persisted learning.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: self-learning
-description: Continuously capture user preferences, coding style, and successful interaction patterns to improve future AI responses. Use automatically across interactions to build and apply a personalized project context.
+description: Continuously capture user preferences, coding style, successful interaction patterns, bug-fix patterns, review feedback, and reusable project knowledge to improve future AI responses. Use automatically across interactions with long-term-memory for durable storage decisions and self-verification before applying or persisting learnings.
 ---
 
 # Self-Learning & Context Improvement System
@@ -25,6 +25,8 @@ description: Continuously capture user preferences, coding style, and successful
 ---
 
 ## 🧠 How Self-Learning Works
+
+Pair this skill with `long-term-memory` before persisting durable facts and `self-verification` before using learned context for a final answer. Learnings must be accurate, useful, safe to store, and grounded in user feedback, repo evidence, or verified outcomes.
 
 ### Learning Pipeline
 
