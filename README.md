@@ -7,7 +7,7 @@
 **Author:** Atif Salafi <atif8486@gmail.com>
 **Purpose:** Complete AI-powered skill library for full-stack software development
 **Version:** 2.0.0
-**Last Updated:** 2026-05-03
+**Last Updated:** 2026-06-30
 
 ---
 
@@ -41,6 +41,55 @@ It covers:
 - **DevOps** - CI/CD, Docker, Kubernetes, infrastructure
 
 This library enables **complete AI-SDLC workflows** - from initial product requirements to production deployment.
+
+---
+
+## ⚡ Agentic Workflow Quick Start
+
+**Owner:** Atif Salafi (`itsatif`)
+
+Use this prompt for most non-trivial engineering tasks:
+
+```text
+Use skill-loading-runtime, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
+
+Goal:
+<your task>
+
+Load skills like Pi:
+1. Scan skill frontmatter first.
+2. Rank skills by user intent, repo signals, and risk.
+3. Load only selected SKILL.md files.
+4. Load references/scripts/assets only on demand.
+5. Plan, execute, verify, and summarize.
+```
+
+Use this for large multi-agent tasks:
+
+```text
+Use skill-loading-runtime, agent-planning-harness, agent-orchestration, agent-fleet-runner, agent-context-manager, agent-delegation-contracts, agent-integration-reviewer, and self-verification.
+
+Goal:
+<large task>
+
+Create worker context packets, assign agents, define acceptance criteria, run verification, and merge outputs safely.
+```
+
+Use this for Pi.dev or custom coding-agent workflows:
+
+```text
+Use pi-coding-agent and skill-loading-runtime.
+
+Build or run a Pi-style coding agent workflow for this repo:
+- Read AGENTS.md and README first.
+- Scan HyperBrain skill frontmatter.
+- Select the smallest useful skill set.
+- Use agent-planning-harness before coding.
+- Use self-verification before final output.
+- Report selected skills, changed files, and checks run.
+```
+
+Full copy-paste command guide: [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md)
 
 ---
 
