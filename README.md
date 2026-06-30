@@ -61,6 +61,15 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
    - **Engineering AI Assistant** - Senior backend engineer + architect + reviewer that understands the project, inspects connected DBs (schema discovery), confirms risky assumptions, then generates production-ready controllers/services/repositories/DTOs/validation/tests/OpenAPI docs in the project's own patterns. Connector-first, fewer questions.
    - **Database Query Optimizer** - Senior DB performance engineer for PostgreSQL, DynamoDB, MongoDB, InfluxDB (Flux/InfluxQL), and Redis. Analyzes/optimizes/rewrites queries, interprets EXPLAIN/explain() plans, recommends indexes + schema changes, detects anti-patterns, and scores performance — while preserving correctness.
    - **Lumen Knowledge Base** - Real architecture of the Lumen AI chat assistant (JouleTRACK Angular frontend + jt-api-v2 Sails backend: AWS Bedrock agent, Neptune graph, InfluxDB, SSE chat, tool-registry, caching). Includes a single build prompt (`prompts/lumen-upgrade.md`) to develop the advanced-chat + cache-layer + JouleTRACK-aligned-UX upgrade across both repos in one go.
+   - **tokensmax** ⭐ - The productivity engine. Orchestrate your Claude + Codex (+ OpenCode/GLM/Cursor/Antigravity) seats as a headless **fleet** from one session — parallel research/review/builds, right-sized model tiers, read-only by default, worktree-isolated writes, and an enforced confirm gate. Ships a `tokensmax` CLI + `/tokensmax` slash commands. General-purpose (no MCP needed).
+   - **proto-to-dejoule** - Turn an Intelligence-team prototype/MVP (HTML, Flask/Streamlit, Figma, spec) into a stack-aligned implementation plan for JouleTRACK + jt-api-v2.
+   - **sj-ui-design-system** - dejoule-v4 Angular frontend design system reference — components, design tokens, accessibility, Highcharts, NgRx, loading/error/empty states.
+
+### DeJoule Operations & Diagnostics (need SmartJoules MCP: Sentinel, Morpheus)
+   - **cpa-health** - Holistic health audit of CPA (Chiller Plant Automation) + the full IoT stack (sensors → PostgreSQL → runtime → InfluxDB → commands → BMS).
+   - **cpa-rca** - Takes a site complaint and produces a structured root-cause report.
+   - **iot-health** - Deep IoT infrastructure diagnosis — controllers, network, firmware, data pipeline, services.
+   - **smartjoules-influxdb** - How to query the SmartJoules time-series stores: TSDB (AWS Timestream raw) + IoT InfluxDB (processed) — auth, schema, Flux patterns, Python examples.
 3. **TDD Workflow** - Test-driven development with Red-Green-Refactor cycle
 3. **Angular Patterns** - Enterprise Angular development patterns
 4. **React Patterns** - Modern React with hooks, React Query, TypeScript

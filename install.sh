@@ -197,6 +197,19 @@ main() {
                 skill_name="$(basename "$skill_dir")"
                 rm -rf "$INSTALL_DIR/$skill_name"
                 cp -r "$skill_dir" "$INSTALL_DIR/$skill_name"
+                # If the skill ships a bin/ CLI, put it on ~/.local/bin; if it
+                # ships slash commands/, install them to ~/.claude/commands.
+                if [ -d "$skill_dir/bin" ]; then
+                    mkdir -p "$HOME/.local/bin"
+                    cp "$skill_dir"/bin/* "$HOME/.local/bin/" 2>/dev/null || true
+                    chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
+                    print_info "    + CLI -> ~/.local/bin (ensure it's on PATH)"
+                fi
+                if [ -d "$skill_dir/commands" ]; then
+                    mkdir -p "$HOME/.claude/commands"
+                    cp "$skill_dir"/commands/*.md "$HOME/.claude/commands/" 2>/dev/null || true
+                    print_info "    + slash commands -> ~/.claude/commands"
+                fi
                 print_success "  installed: $skill_name"
                 count=$((count + 1))
             done < <(find "$CLONE_DIR" -name SKILL.md -not -path '*/.git/*' | sort)

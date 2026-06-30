@@ -1,0 +1,70 @@
+# tokensmax engines (DeJoule fleet) — declare the agents you orchestrate.
+# Copy to ~/.config/tokensmax/engines.conf  — or just run: tokensmax init
+# `init` DISCOVERS installed CLIs + logged-in seats and writes this for you.
+#
+# Claude + Codex are the primary seats; OpenCode, Antigravity, GLM, Cursor are optional.
+# driver:      claude | codex | opencode | antigravity | cursor | anthropic-api
+# Auth is LINKED: the fields below are used by `tokensmax auth` AND at dispatch.
+# model:       optional; override per-run with -m <model>
+# strengths:   used by the dispatch policy (skill) to route work
+
+# --- Claude ---
+# config_dir semantics (READ THIS — a wrong value reintroduces the auth bug):
+#   • OMIT it (or leave commented) => DEFAULT seat. Claude reads ~/.claude.json.
+#     Setting config_dir = ~/.claude here would BREAK login detection — don't.
+#   • Set a custom path (e.g. ~/.claude-enterprise) => isolated seat; creds live in
+#     <dir>/.claude.json, and CLAUDE_CONFIG_DIR is pinned at dispatch so it can't fall
+#     back to your personal seat.
+[claude]
+driver = claude
+# config_dir = ~/.claude-enterprise   # uncomment ONLY for an isolated enterprise seat
+model = claude-opus-4-8           # deep/default. others: claude-sonnet-4-6, claude-fable-5, claude-opus-4-7/-4-6
+model_fast = claude-haiku-4-5     # cheap tier — used when you pass --fast
+strengths = design, reasoning, prose, planning, architecture
+# --- optional: LIVE access (lets a worker query your real system, gated by --grant-live) ---
+# mcp_config = ~/.config/tokensmax/mcp/labs.json   # MCP servers that reach your live data (Sentinel, Morpheus, InfluxDB…)
+# live_tools = mcp__sentinel__* mcp__morpheus__*   # which tools `--live` unlocks (space-separated patterns)
+#   Codex gets live tools from its own MCP setup instead: `codex mcp add <name> -- <cmd>` (still gated by --grant-live).
+# session_limit = 5000000         # OPTIONAL: your plan's rolling-window token cap → `usage` shows "N left".
+                                  #   No vendor API exposes remaining quota; set this from your plan for a remaining readout.
+
+# --- OpenAI Codex (login via `codex login`) ---
+[codex]
+driver = codex
+codex_home = ~/.codex
+model = gpt-5.5                    # a model your ChatGPT/Team plan offers (NOT gpt-5-codex; that needs API-key auth)
+effort = high                     # reasoning depth = your cost dial on a ChatGPT plan: low|medium|high|xhigh
+effort_fast = low                 # used with --fast
+strengths = logic, refactor, code-review, tests, mechanical-precision
+
+# --- OpenCode (headless `opencode run`; auth via `opencode auth`) ---
+# model is provider/model, e.g. zai-coding-plan/glm-4.6, anthropic/claude-sonnet-4-6, openai/gpt-5.1
+[opencode]
+driver = opencode
+opencode_data = ~/.local/share/opencode   # where auth.json + sessions live
+model = zai-coding-plan/glm-4.6
+# agent = <name>   # optional: pin an opencode agent (list with: opencode agent list)
+strengths = cheap, bulk, drafts, high-volume, fast
+
+# --- Antigravity IDE (Google Gemini; `antigravity-ide chat`) ---
+# GUI-backed: opens an IDE window per run — fine solo, noisy in a parallel fleet.
+[antigravity]
+driver = antigravity
+# cli = /Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide
+mode = agent                      # ask | edit | agent
+strengths = ide-aware, gemini, design
+
+# --- GLM / Z.ai (or any Anthropic-compatible endpoint) via API key ---
+# Runs the `claude` CLI pointed at the endpoint. Key read from secrets.env (key_env).
+[glm]
+driver = anthropic-api
+base_url = https://api.z.ai/api/anthropic
+key_env = GLM_API_KEY             # add `GLM_API_KEY=...` to ~/.config/tokensmax/secrets.env
+model = glm-4.6
+strengths = cheap, bulk, drafts, high-volume
+
+# --- Cursor CLI (login via `cursor-agent login`) ---
+[cursor]
+driver = cursor
+model = auto
+strengths = ide-aware, quick-edits

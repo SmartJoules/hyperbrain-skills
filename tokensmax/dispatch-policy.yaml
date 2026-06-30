@@ -1,0 +1,133 @@
+# tokensmax dispatch policy
+# The orchestrator (this session) consults this BEFORE dispatching any work.
+# It turns "which engine plans and which builds" from an ad-hoc call into an inspectable decision.
+# Override any rule by telling the orchestrator directly — user instruction always wins.
+
+mode: propose-then-confirm
+# propose-then-confirm : classify -> PRESENT path+roles+models+paths as the final message -> STOP
+#                        (end the turn, run NOTHING) -> dispatch ONLY after the user replies.
+#                        The CLI does NOT enforce this; the orchestrator must actually stop. Presenting
+#                        a plan and then immediately executing it is the exact bug this prevents.
+# auto-announce        : pick and dispatch immediately, just state the path
+# auto-escalate        : auto for low-risk; pause only when risk/ambiguity is flagged
+
+# ---------------------------------------------------------------------------
+# Engines are declared by the user in ~/.config/tokensmax/engines.conf, each with `strengths`.
+# Bind roles to engines by matching role nature to strengths — NEVER hardcode a seat here.
+# Typical strengths: design/prose/planning -> a reasoning model; logic/refactor/review -> a code model.
+# Invoke with:  tokensmax run <engine> ...   |   tokensmax fleet <eng,eng> ...
+# ---------------------------------------------------------------------------
+
+strategies:
+  solo:
+    when: single file, trivial/low-risk, no design+logic split
+    shape: one engine does it; no merge step
+    write_mode: "tokensmax run <eng> --build --repo DIR   (or --research if read-only)"
+
+  parallel-split:
+    when: 2+ INDEPENDENT files, clear design-vs-logic seam
+    shape: >
+      write SPEC.md first (DOM/data/API contract) and commit to HEAD; each engine builds its
+      OWN disjoint files in its own worktree; orchestrator assembles + verifies
+    write_mode: "tokensmax run <eng> --build --repo DIR per engine; stagger launches >1s"
+    note: each --build worktree STAGES but does not COMMIT — copy files out, then commit
+
+  planner-builder:
+    when: the design should be reasoned by one engine, implemented by another
+    shape: Engine A writes the spec/plan -> orchestrator reviews -> Engine B implements it
+
+  cross-check:
+    when: high-risk, ambiguous, security-sensitive, or correctness-critical
+    shape: BOTH engines do the SAME task independently -> orchestrator diffs + synthesizes -> flag disagreements
+    write_mode: "tokensmax fleet <eng,eng> --build (competitive) OR --research (analysis)"
+
+  pipeline:
+    when: output needs a review gate before it's trusted
+    shape: build (engine A) -> review the diff (engine B, --review) -> fix -> verify
+
+  phased:
+    when: task_magnitude == L — broad / multi-subsystem / open-ended / long-horizon work that would
+          otherwise be ONE huge run (the kind that slams a rate limit and returns empty)
+    shape: >
+      decompose into an ordered list of BOUNDED phases; dispatch each as its own run, carrying an
+      --est. A REVIEW GATE between phases: the other engine --review's phase i before phase i+1
+      starts (fix on fail). Independent phases fan out across both seats; dependent phases serialize.
+    why: bounded phases checkpoint progress (survive a rate-limit + resume after reset), parallelize
+         for real throughput, and stay reviewable. Phase big work by DEFAULT — don't one-shot it.
+    override: user can always say "just one-shot it" — user instruction wins.
+
+# ---------------------------------------------------------------------------
+# Model fit — pick the RIGHT model for the task. Not the biggest by default, not the cheapest by
+# default: the one that *fits*. Judge difficulty + stakes, then match capability. An inspectable
+# choice surfaced in the proposal; the user can adjust.
+#   CLI: -m <model> to pick precisely, or --fast as the small/quick shortcut.
+# ---------------------------------------------------------------------------
+model_fit:
+  simple:    # mechanical, well-specified, bulk, low-risk, lint/format, summaries, extraction, lookups
+    claude: haiku  (--fast)
+    codex:  low reasoning effort  (--fast)
+    opencode: cheap provider/model (e.g. glm) — ideal for bulk
+    why: a small model is sufficient AND faster — overkill here just costs time + tokens
+  moderate:  # multi-step but bounded, ordinary code/analysis, non-novel
+    claude: sonnet  (-m claude-sonnet-4-6)
+    codex:  medium effort
+  hard:      # ambiguity, architecture/design, correctness/security-critical, novel, long-horizon
+    claude: opus  (default, or -m claude-opus-4-8)
+    codex:  high / xhigh effort
+    antigravity: gemini (ide-aware, design)
+  principle: enough capability to do it well, no more. Don't under-power a hard task to save money;
+             don't burn the top model on something a smaller one nails. State the model + why in the proposal.
+
+rubric_axes: [task_magnitude, task_complexity, files_touched, independence, design_vs_logic_mix, risk_ambiguity, reversibility]
+
+# ---------------------------------------------------------------------------
+# Task magnitude — estimate by REASONING about scope (subsystems touched, breadth, open-endedness,
+# expected output size). NEVER from a token number, NEVER by keyword-matching the prompt — it's the
+# model's judgment. Distinct from complexity: a task can be simple-but-huge (rename across 200 files).
+# ---------------------------------------------------------------------------
+magnitude:
+  S: one bounded change/answer — dispatch directly
+  M: a few related steps — dispatch directly (or 2 phases if there's a natural seam)
+  L: broad / multi-subsystem / open-ended / long-horizon — PHASE IT (see the `phased` strategy)
+  estimate_vs_actual: pass your estimate with `--est <S|M|L|~tokens>`; `tokensmax usage` shows it
+                      against measured tokens so the loop calibrates. The ⚠ limit flag is the real ceiling.
+
+# match model to task_complexity (independent of strategy/engine choice)
+model_routing:
+  - if: "mechanical OR well_specified OR bulk"                         ->  simple   (small/fast)
+  - if: "ambiguous OR architectural OR correctness_critical OR novel"  ->  hard     (strong)
+  - default: moderate                                                  #   mid model
+  # if you misjudge and a result comes back shallow/uncertain, re-run that one task one tier up.
+
+routing:
+  - if: "task_magnitude == L"
+    then: phased
+    why: don't one-shot big work — bounded phases survive rate limits, parallelize, stay reviewable
+    note: phase-by-default; user can override ("just one-shot it")
+  - if: "risk_ambiguity == high OR security_sensitive"
+    then: cross-check
+    why: independent priors catch what one engine misses
+  - if: "files_touched == 1 AND risk_ambiguity == low"
+    then: solo
+    bind: { it: by-strength }
+  - if: "files_touched >= 2 AND independence == high AND has(design_and_logic)"
+    then: parallel-split
+    bind: { shell/ui: design-strength engine, behavior/logic: code-strength engine }
+  - if: "design_must_precede_build == true"
+    then: planner-builder
+  - if: "needs_review_gate == true"
+    then: pipeline
+  - default: parallel-split
+
+# ---------------------------------------------------------------------------
+# Blind spots — screen EVERY task before dispatch. Workers are headless: they can't see the user's
+# live system or the rendered screen. Dispatching into a blind spot wastes tokens + invents wrong answers.
+# ---------------------------------------------------------------------------
+blind_spots:
+  - needs_live_data:    # DBs/APIs/graph/metrics — a worker can't reach it unless GRANTED
+      if_configured:    propose --live, ASK the user to grant ("worker hits your live system w/ your creds"), then --live --grant-live
+      if_not_or_denied: run the query HERE in this session (you have the tools) — do NOT let a blind worker speculate
+  - needs_rendered_ui:  # "does this look right", spacing, colors → no worker can see a render
+      action: keep in this session with the user's eyes; never dispatch
+  - already_known_here: don't dispatch to "confirm" what you already know — pure waste
+sweet_spot: code-grounded build + review-the-diff (and data work WITH --live via MCP). Route there.

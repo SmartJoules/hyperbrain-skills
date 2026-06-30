@@ -1,0 +1,742 @@
+#!/usr/bin/env bash
+# tokensmax — orchestrate multiple coding-agent CLIs from one place.
+# Engines: Claude Code, Codex, Cursor, OpenCode, Antigravity, and any Anthropic-compatible API (GLM/Z.ai).
+# Per-engine auth + model config, access-control profiles (research/review/build), parallel dispatch.
+# Auth + engines are DISCOVERED: `tokensmax init` scans your installed CLIs and logged-in seats,
+# asks which to bind, and writes engines.conf. No hardcoded paths.
+# Docs: https://github.com/vicarious11/tokensmaxx
+set -euo pipefail
+
+CONF_DIR="${TOKENSMAX_HOME:-$HOME/.config/tokensmax}"
+CONF="$CONF_DIR/engines.conf"
+SECRETS="$CONF_DIR/secrets.env"
+REPORTS="${TOKENSMAX_REPORTS:-$HOME/.tokensmax/reports}"
+WORKTREES="${TOKENSMAX_WORKTREES:-$HOME/.tokensmax/worktrees}"
+
+die(){ printf 'tokensmax: %s\n' "$*" >&2; exit 1; }
+have(){ command -v "$1" >/dev/null 2>&1; }
+
+# ---- config (INI, bash-3.2-safe via awk) ----
+cfg(){ # cfg <engine> <key> -> value (~ expanded)
+  [[ -f "$CONF" ]] || return 0
+  awk -F'[ \t]*=[ \t]*' -v s="[$1]" -v k="$2" '
+    $0==s{ins=1;next} /^\[/{ins=0}
+    ins && $1==k{ v=$2; sub(/[ \t]+#.*/,"",v); sub(/[ \t]+$/,"",v); print v; exit }' "$CONF" \
+    | sed "s#^~#$HOME#"
+}
+engines(){ [[ -f "$CONF" ]] && grep -oE '^\[[A-Za-z0-9_-]+\]' "$CONF" | tr -d '[]' || true; }
+# shellcheck disable=SC1090  # $SECRETS is a user runtime file, intentionally dynamic
+load_secrets(){ if [[ -f "$SECRETS" ]]; then set -a; . "$SECRETS"; set +a; fi; }
+require_conf(){ [[ -f "$CONF" ]] || die "no config — run: tokensmax init"; }
+
+# ---- path / discovery helpers ----
+exp(){ # expand leading ~ safely (no shell pattern-subst, so $HOME may contain & or \)
+  local p="$1"
+  # shellcheck disable=SC2088  # the '~/' case patterns are literal matches — this IS the tilde expander
+  case "$p" in
+    '~')   printf '%s' "$HOME" ;;
+    '~/'*) printf '%s/%s' "$HOME" "${p#~/}" ;;
+    *)     printf '%s' "$p" ;;
+  esac
+}
+is_claude_default(){ local c; c="$(exp "${1:-}")"; [[ -z "$c" || "$c" == "$HOME/.claude" ]]; }
+
+# Claude Code stores creds at $HOME/.claude.json for the DEFAULT seat, but relocates the file
+# INTO CLAUDE_CONFIG_DIR when that dir is custom/non-default. Resolve the real creds file:
+claude_creds_path(){
+  if is_claude_default "${1:-}"; then printf '%s/.claude.json' "$HOME"
+  else printf '%s/.claude.json' "$(exp "${1:-}")"; fi
+}
+
+antigravity_cli(){  # echo absolute path to the antigravity-ide binary, or empty
+  if have antigravity-ide; then command -v antigravity-ide
+  elif [[ -x "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide" ]]; then
+    printf '%s' "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide"
+  fi
+}
+cli_for_driver(){  # echo the CLI binary name an engine driver uses
+  case "$1" in
+    claude|anthropic-api) echo claude ;;
+    codex) echo codex ;;
+    cursor) echo cursor-agent ;;
+    opencode) echo opencode ;;
+    antigravity) antigravity_cli ;;
+    *) echo "" ;;
+  esac
+}
+
+# list logged-in Claude seats: "<config_dir>\t<label>"
+discover_claude_seats(){
+  local f
+  # 1. default seat — creds live at ~/.claude.json (NOT inside ~/.claude/)
+  f="$HOME/.claude.json"
+  if [[ -f "$f" ]] && grep -q '"oauthAccount"' "$f" 2>/dev/null; then
+    printf '%s\t%s\n' "$HOME/.claude" "default seat (creds: ~/.claude.json)"
+  fi
+  # 2. custom / enterprise seats — creds live inside <dir>/.claude.json
+  #    The glob ~/.claude-* covers ~/.claude-enterprise, ~/.claude-team, etc.
+  #    Dedup via array (paths may contain spaces); no explicit literal entry (avoids double-print).
+  local -a seen=()
+  local g match s
+  for g in "$HOME"/.claude-*/ ; do
+    [[ -e "$g" ]] || continue
+    g="${g%/}"
+    is_claude_default "$g" && continue
+    match=0
+    for s in "${seen[@]+"${seen[@]}"}"; do [[ "$s" == "$g" ]] && { match=1; break; }; done
+    [[ $match -eq 1 ]] && continue
+    if [[ -f "$g/.claude.json" ]] && grep -q '"oauthAccount"' "$g/.claude.json" 2>/dev/null; then
+      printf '%s\t%s\n' "$g" "custom seat (creds: $g/.claude.json)"; seen+=("$g")
+    fi
+  done
+}
+
+opencode_data_default(){ printf '%s/.local/share/opencode' "$HOME"; }
+opencode_has_auth(){
+  local data f
+  data="${1:-$(opencode_data_default)}"; f="$data/auth.json"
+  [[ -f "$f" ]] && grep -qE '"(key|access_token|refresh_token|apiKey)"' "$f" 2>/dev/null
+}
+# Best-effort default provider name from opencode auth.json (first key whose value is an object
+# carrying a credential). Prefers python3 JSON parsing; falls back to a grep heuristic.
+opencode_default_provider(){
+  local f="$1"
+  [[ -f "$f" ]] || return 0
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$f" <<'PY' 2>/dev/null
+import json,sys
+try:
+    d=json.load(open(sys.argv[1]))
+    for k,v in d.items():
+        if isinstance(v,dict) and any(x in v for x in ("key","access_token","refresh_token","apiKey")):
+            print(k); break
+except Exception:
+    pass
+PY
+  else
+    grep -oE '"[A-Za-z0-9_.-]+"[[:space:]]*:[[:space:]]*\{' "$f" | head -1 | sed -E 's/[":{[:space:]]//g'
+  fi
+}
+
+# ---- interactive prompt helpers (fall back to defaults when non-interactive) ----
+NONINTERACTIVE=0
+tty_available(){ [[ -t 0 && -t 1 ]]; }
+prompt_yn(){ # <def(y|n)> <msg>  -> 0=yes
+  local def="$1" msg="$2" ans hint
+  [[ "$def" == y ]] && hint="[Y/n]" || hint="[y/N]"
+  if [[ "$NONINTERACTIVE" == 1 ]] || ! tty_available; then
+    printf '%s %s (auto: %s)\n' "$msg" "$hint" "$def"
+    [[ "$def" == y ]]; return $?
+  fi
+  read -r -p "$msg $hint " ans </dev/tty || ans=""
+  [[ -z "$ans" ]] && ans="$def"
+  [[ "$ans" =~ ^[Yy] ]]
+}
+prompt_str(){ # <default> <msg>  -> echoes chosen value (Enter accepts default)
+  local def="$1" msg="$2" ans
+  if [[ "$NONINTERACTIVE" == 1 ]] || ! tty_available; then printf '%s' "$def"; return; fi
+  read -r -p "$msg [$def]: " ans </dev/tty || ans=""
+  [[ -z "$ans" ]] && ans="$def"
+  printf '%s' "$ans"
+}
+
+# ---- timeout guard (an engine can hang; never block a fleet forever) ----
+TIMEOUT="${TOKENSMAX_TIMEOUT:-900}"        # seconds per engine run (0 = no limit)
+_TO=""; have timeout && _TO=timeout; have gtimeout && _TO=gtimeout
+exec_guarded(){ # run the prepared RUN_ENV/RUN_CMD in <cwd>, bounded by $TIMEOUT
+  local cwd="$1"
+  ( [[ -n "$cwd" ]] && cd "$cwd"
+    if [[ "$TIMEOUT" == 0 ]]; then
+      env ${RUN_ENV[@]+"${RUN_ENV[@]}"} "${RUN_CMD[@]}" < /dev/null
+    elif [[ -n "$_TO" ]]; then
+      env ${RUN_ENV[@]+"${RUN_ENV[@]}"} "$_TO" -k 10 "$TIMEOUT" "${RUN_CMD[@]}" < /dev/null
+    else  # portable bash watchdog (stock macOS has no `timeout`)
+      env ${RUN_ENV[@]+"${RUN_ENV[@]}"} "${RUN_CMD[@]}" < /dev/null & local p=$!
+      ( sleep "$TIMEOUT"; kill -TERM "$p" 2>/dev/null; sleep 10; kill -KILL "$p" 2>/dev/null ) >/dev/null 2>&1 & local w=$!
+      wait "$p"; local rc=$?; kill "$w" 2>/dev/null; wait "$w" 2>/dev/null
+      [[ $rc -ne 0 ]] && echo "⚠ engine timed out or exited $rc (TOKENSMAX_TIMEOUT=${TIMEOUT}s)" >&2
+      return $rc
+    fi
+  )
+}
+
+# ---- build env[] + cmd[] for an engine + profile ----
+RUN_ENV=(); RUN_CMD=(); POST=""
+build_cmd(){ # <engine> <profile> <model> <prompt>
+  local eng="$1" prof="$2" model="$3" prompt="$4" driver
+  driver="$(cfg "$eng" driver)"; [[ -n "$driver" ]] || die "engine '$eng' not in $CONF"
+  if [[ -z "$model" ]]; then
+    [[ "${TIER:-}" == fast ]] && model="$(cfg "$eng" model_fast)"   # cost-aware tier
+    [[ -z "$model" ]] && model="$(cfg "$eng" model)"                # engine default
+  fi
+  load_secrets
+  RUN_ENV=(); RUN_CMD=(); POST=""
+  case "$driver" in
+    claude|anthropic-api)
+      if [[ "$driver" == claude ]]; then
+        # Only pin CLAUDE_CONFIG_DIR for a CUSTOM seat. The default seat must be left
+        # unpinned so Claude Code reads its native ~/.claude.json (pinning ~/.claude would
+        # make Claude look for ~/.claude/.claude.json, which never exists).
+        local d; d="$(cfg "$eng" config_dir)"
+        is_claude_default "$d" || RUN_ENV+=("CLAUDE_CONFIG_DIR=$(exp "$d")")
+      else
+        local base ke; base="$(cfg "$eng" base_url)"; ke="$(cfg "$eng" key_env)"
+        [[ -n "$base" ]] && RUN_ENV+=("ANTHROPIC_BASE_URL=$base")
+        [[ -n "$ke" ]] && RUN_ENV+=("ANTHROPIC_AUTH_TOKEN=${!ke:-}")
+      fi
+      RUN_CMD=(claude -p "$prompt" --output-format json)   # json → capture actual token usage
+      POST=claude_json
+      [[ -n "$model" ]] && RUN_CMD+=(--model "$model")
+      case "$prof" in
+        research) RUN_CMD+=(--permission-mode plan) ;;
+        review)   RUN_CMD+=(--permission-mode default --allowedTools Read Grep Glob WebSearch WebFetch --disallowedTools Edit Write NotebookEdit Bash) ;;  # no Bash: read-only means read-only
+        build)    RUN_CMD+=(--permission-mode acceptEdits) ;;
+      esac
+      if [[ "${LIVE:-}" == 1 ]]; then   # gated LIVE access — query the user's live system via MCP tools
+        local mcpc lt; mcpc="$(cfg "$eng" mcp_config)"; lt="$(cfg "$eng" live_tools)"
+        [[ -n "$mcpc" ]] && RUN_CMD+=(--mcp-config "$mcpc" --strict-mcp-config)
+        [[ -n "$lt" ]] && { local _lt; read -ra _lt <<< "$lt"; RUN_CMD+=(--allowedTools "${_lt[@]}"); }
+      fi ;;
+    codex)
+      local home sb; home="$(cfg "$eng" codex_home)"; [[ -z "$home" ]] && home="$HOME/.codex"
+      RUN_ENV+=("CODEX_HOME=$home")
+      # LIVE access for codex = its globally-configured MCP servers (set up once: `codex mcp add <name> ...`);
+      # gated by --grant-live like claude. Nothing extra to inject here — codex exec loads them automatically.
+      case "$prof" in build) sb=workspace-write ;; *) sb=read-only ;; esac
+      RUN_CMD=(codex exec --skip-git-repo-check -s "$sb")
+      [[ -n "$model" ]] && RUN_CMD+=(-m "$model")
+      local eff="${EFFORT:-}"                                       # explicit --effort wins
+      [[ -z "$eff" && "${TIER:-}" == fast ]] && eff="$(cfg "$eng" effort_fast)"   # else --fast → effort_fast
+      [[ -z "$eff" ]] && eff="$(cfg "$eng" effort)"                 # else config default
+      [[ -n "$eff" ]] && RUN_CMD+=(-c "model_reasoning_effort=$eff")
+      RUN_CMD+=("$prompt") ;;
+    cursor)
+      RUN_CMD=(cursor-agent -p)
+      [[ -n "$model" ]] && RUN_CMD+=(--model "$model")
+      RUN_CMD+=("$prompt") ;;
+    opencode)
+      # opencode run is headless; prints to stdout. Model = provider/model (e.g. zai-coding-plan/glm-4.6).
+      # opencode has no native permission flag — its own config rules apply. Build isolation = git worktree.
+      local agent; agent="$(cfg "$eng" agent)"
+      RUN_CMD=(opencode)
+      [[ -n "$model" ]] && RUN_CMD+=(-m "$model")
+      [[ -n "$agent" ]] && RUN_CMD+=(--agent "$agent")
+      RUN_CMD+=(run --format json "$prompt") ;;
+    antigravity)
+      # Antigravity IDE `chat` is GUI-backed (opens a window), not truly headless — best-effort in a fleet.
+      local cli conf_mode mode
+      cli="$(cfg "$eng" cli)"; [[ -z "$cli" ]] && cli="$(antigravity_cli)"
+      [[ -n "$cli" ]] || die "antigravity: 'antigravity-ide' not found (set 'cli =' or install Antigravity IDE)"
+      conf_mode="$(cfg "$eng" mode)"
+      case "$prof" in
+        build) mode="${conf_mode:-agent}" ;;   # build: honor configured mode (default agent)
+        *)     mode=ask ;;                      # research/review: read-only 'ask' mode
+      esac
+      RUN_CMD=("$cli" chat --mode "$mode" "$prompt") ;;
+    *) die "unknown driver '$driver' (engine '$eng')" ;;
+  esac
+}
+
+# claude --output-format json → readable text + a 'tokens used' footer (parsed by `usage`).
+# Falls back to raw passthrough if it isn't json (e.g. a rate-limit message) so ⚠ still shows.
+emit_claude_json(){
+  have python3 || { cat; return; }
+  python3 -c '
+import sys,json
+raw=sys.stdin.read()
+try:
+    obj=json.loads(raw)
+    if not isinstance(obj,dict) or "result" not in obj: raise ValueError
+    txt=obj.get("result") or ""
+    u=obj.get("usage") or {}
+    inp=u.get("input_tokens"); out=u.get("output_tokens")
+    sys.stdout.write(txt.rstrip()+"\n")
+    if out is not None:
+        tot=(inp or 0)+(out or 0)
+        cost=obj.get("total_cost_usd")
+        line="tokens used: %d (in %s / out %s)"%(tot,inp,out)
+        if isinstance(cost,(int,float)): line+="; cost: $%.4f"%cost
+        sys.stdout.write("\n"+line+"\n")
+except Exception:
+    sys.stdout.write(raw)
+' 2>/dev/null
+}
+emit_engine(){ # <cwd>  — run guarded; transform claude json to text + token footer
+  if [[ "${POST:-}" == claude_json ]]; then
+    local out rc; out="$(exec_guarded "$1")"; rc=$?
+    printf '%s' "$out" | emit_claude_json
+    return $rc
+  fi
+  exec_guarded "$1"
+}
+
+run_engine(){ # <engine> <profile> <repo> <model> <prompt>
+  local eng="$1" prof="$2" repo="$3" model="$4" prompt="$5"
+  build_cmd "$eng" "$prof" "$model" "$prompt"
+  if [[ "${DRY:-}" == 1 ]]; then
+    local envk=""; for kv in ${RUN_ENV[@]+"${RUN_ENV[@]}"}; do envk+=" ${kv%%=*}"; done
+    printf '· %-8s [%s] %s   {env:%s}\n' "$eng" "$prof" "${RUN_CMD[*]}" "$envk"
+    return 0
+  fi
+  if [[ "$prof" == build ]]; then
+    [[ -n "$repo" ]] || die "--build needs --repo DIR"
+    git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$repo is not a git repo"
+    local ts br wt; ts="$(date +%Y%m%d-%H%M%S)"; br="tokensmax/$eng-$ts"; wt="$WORKTREES/$(basename "$repo")-$eng-$ts"
+    mkdir -p "$WORKTREES"; git -C "$repo" worktree add -q -b "$br" "$wt" HEAD
+    echo "▶ [$eng] worktree: $wt (branch $br)"
+    emit_engine "$wt" || true
+    git -C "$wt" add -A
+    echo "── [$eng] built ──"; git -C "$wt" --no-pager diff --cached --stat || true
+    echo "keep: git -C \"$repo\" merge --no-ff $br   |   discard: git -C \"$repo\" worktree remove --force \"$wt\" && git -C \"$repo\" branch -D $br"
+  else
+    emit_engine "$repo"
+  fi
+}
+
+# ---- argument parsing shared by run/fleet ----
+PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""
+parse_flags(){ # sets PROFILE/REPO/MODEL/TIER/DRY/EST/YES/LIVE/GRANT_LIVE/EFFORT, leaves rest in REST[]
+  PROFILE="research"; REPO=""; MODEL=""; TIER=""; DRY=""; EST=""; YES=""; LIVE=""; GRANT_LIVE=""; EFFORT=""; REST=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --research) PROFILE=research; shift ;;
+      --review)   PROFILE=review;   shift ;;
+      --build)    PROFILE=build;    shift ;;
+      --repo)     [[ -n "${2:-}" ]] || die "--repo needs a directory"; REPO="$2"; shift 2 ;;
+      -m|--model) [[ -n "${2:-}" ]] || die "-m needs a model name"; MODEL="$2"; shift 2 ;;
+      --fast)     TIER=fast; shift ;;
+      --effort)   [[ -n "${2:-}" ]] || die "--effort needs low|medium|high|xhigh"; EFFORT="$2"; shift 2 ;;  # codex reasoning depth (overrides config + --fast)
+      --est)      [[ -n "${2:-}" ]] || die "--est needs a value (S|M|L or ~tokens)"; EST="$2"; shift 2 ;;  # orchestrator's magnitude estimate (recorded, not computed)
+      --yes|--confirm) YES=1; shift ;;   # confirms the plan was shown to the user — see require_confirm
+      --live)     LIVE=1; shift ;;       # let the worker reach your LIVE system via MCP tools (gated by --grant-live)
+      --grant-live) GRANT_LIVE=1; shift ;;  # explicit permission for live access — added only after the user agrees
+      --dry)      DRY=1; shift ;;
+      --) shift; REST+=("$@"); break ;;
+      *) REST+=("$1"); shift ;;
+    esac
+  done
+}
+
+# Mechanically enforce propose-then-confirm: a NON-interactive dispatch (i.e. the orchestrator running
+# this via a tool, no TTY) must carry --yes. The tokensmax skill only adds --yes AFTER showing the user
+# the plan (each engine → role → model, the paths, write mode) and getting their OK. A human typing in a
+# terminal is treated as implicit consent. --dry is always allowed (it just prints the resolved command).
+require_confirm(){
+  [[ "${DRY:-}" == 1 ]] && return 0
+  # LIVE access is a SECOND, stronger gate: the worker would touch the user's live system with their
+  # credentials. It needs an explicit --grant-live (a TTY human typing --live counts as granting).
+  if [[ "${LIVE:-}" == 1 ]]; then
+    [[ "${GRANT_LIVE:-}" == 1 || -t 0 ]] && return 0
+    die "refusing LIVE dispatch without permission.
+  This run would let the worker query your LIVE system (MCP tools) using YOUR credentials.
+  ASK the user first, plainly: \"grant live access for this task? the worker will hit <your live tools>.\"
+  Only on an explicit yes, re-run with --grant-live. (This is a separate, stronger gate than --yes.)"
+  fi
+  [[ "${YES:-}" == 1 ]] && return 0
+  [[ -t 0 ]] && return 0   # interactive terminal: the human typed it = confirmed
+  die "refusing to dispatch without confirmation.
+  FIRST show the user the plan — magnitude, each engine → role → model, the paths (--repo / worktree),
+  and write mode — and WAIT for their OK. THEN re-run with --yes.
+  (This enforces propose-then-confirm. A human running this in a terminal is auto-confirmed.)"
+}
+
+cmd_run(){
+  require_conf
+  parse_flags "$@"
+  local eng="${REST[0]:-}"; [[ -n "$eng" ]] || die "usage: tokensmax run <engine> [--research|--review|--build --repo DIR] [-m model] \"task\""
+  local prompt="${REST[1]:-}"; [[ -n "$prompt" ]] || die "missing task prompt"
+  [[ -n "$(cfg "$eng" driver)" ]] || die "unknown engine '$eng' — not in $CONF (see: tokensmax list)"
+  require_confirm
+  run_engine "$eng" "$PROFILE" "$REPO" "$MODEL" "$prompt"
+}
+
+cmd_fleet(){
+  require_conf
+  parse_flags "$@"
+  # one positional = the task (engines default to all); two = <spec> <task>
+  local spec prompt
+  if [[ ${#REST[@]} -ge 2 ]]; then spec="${REST[0]}"; prompt="${REST[1]}"; else spec="all"; prompt="${REST[0]:-}"; fi
+  [[ -n "$prompt" ]] || die "usage: tokensmax fleet [<eng,eng>|all] [--profile --repo DIR] \"task\""
+  local list; if [[ "$spec" == all ]]; then list="$(engines)"; else list="$(echo "$spec" | tr ',' ' ')"; fi
+  [[ -n "$list" ]] || die "no engines configured — run: tokensmax init"
+  local _e; for _e in $list; do [[ -n "$(cfg "$_e" driver)" ]] || die "unknown engine '$_e' — not in $CONF (see: tokensmax list)"; done
+  require_confirm
+  local day out; day="$(date +%F)"; out="$REPORTS/$day"; mkdir -p "$out"
+  local slug; slug="$(printf '%s' "$prompt" | tr -cs 'A-Za-z0-9' '-' | cut -c1-40 | sed 's/-*$//')"
+  local pids=() files=()
+  for e in $list; do
+    local f; f="$out/$(date +%H%M%S)-$slug.$e.md"
+    { printf '# %s\n_%s · %s%s_\n\n' "$prompt" "$e" "$(date)" "${EST:+ · est:$EST}"; run_engine "$e" "$PROFILE" "$REPO" "$MODEL" "$prompt"; } > "$f" 2>&1 &
+    pids+=($!); files+=("$f"); echo "▶ $e → $f"
+    # builds create git worktrees on the same repo — stagger so concurrent `worktree add` can't race
+    [[ "$PROFILE" == build ]] && sleep 1.5
+  done
+  for p in "${pids[@]}"; do wait "$p" || true; done
+  # surface empty / rate-limited reports instead of leaving silent empty files
+  local f body
+  for f in ${files[@]+"${files[@]}"}; do
+    body="$(tail -n +4 "$f" 2>/dev/null)"
+    if [[ -z "${body//[[:space:]]/}" ]]; then
+      echo "  ⚠ $(basename "$f"): EMPTY — engine produced no output"
+    elif printf '%s' "$body" | grep -qiE 'session limit|usage limit|rate.?limit|quota|overloaded'; then
+      echo "  ⚠ $(basename "$f"): $(printf '%s' "$body" | grep -iE 'session limit|usage limit|rate.?limit|quota|overloaded' | head -1 | cut -c1-90)"
+    fi
+  done
+  echo "✓ reports in $out/"
+}
+
+# ---- auth checks (heuristic; validity confirmed on first real run) ----
+auth_status(){ # <engine> -> single line status (no header)
+  local e="$1" d; d="$(cfg "$e" driver)"; load_secrets
+  case "$d" in
+    claude)
+      # heuristic: oauthAccount presence in the REAL creds file (default ~/.claude.json, or <dir>/.claude.json for a custom seat)
+      local cd_ creds; cd_="$(cfg "$e" config_dir)"; creds="$(claude_creds_path "$cd_")"
+      if [[ -f "$creds" ]] && grep -q '"oauthAccount"' "$creds" 2>/dev/null; then
+        echo "~ configured ($creds) — validity confirmed on first run"
+      else
+        if is_claude_default "$cd_"; then
+          echo "✗ no login at $creds — run: claude   then /login, then /exit"
+        else
+          echo "✗ no login at $creds — run: CLAUDE_CONFIG_DIR=\"$cd_\" claude   then /login, then /exit"; fi
+      fi ;;
+    codex)
+      local home; home="$(cfg "$e" codex_home)"; [[ -z "$home" ]] && home="$HOME/.codex"
+      if CODEX_HOME="$home" codex login status >/dev/null 2>&1; then echo "✓ logged in ($home)"; else
+        echo "✗ run:  CODEX_HOME=\"$home\" codex login"; fi ;;
+    anthropic-api)
+      local ke; ke="$(cfg "$e" key_env)"
+      if [[ -n "${!ke:-}" ]]; then echo "✓ key present ($ke)"; else
+        echo "✗ add key:  echo '$ke=YOUR_KEY' >> \"$SECRETS\" && chmod 600 \"$SECRETS\""; fi ;;
+    cursor)
+      if have cursor-agent && cursor-agent status >/dev/null 2>&1; then echo "✓ logged in"; else
+        echo "✗ install cursor-agent + run:  cursor-agent login"; fi ;;
+    opencode)
+      local data; data="$(cfg "$e" opencode_data)"; [[ -z "$data" ]] && data="$(opencode_data_default)"
+      if opencode_has_auth "$data"; then echo "✓ credentials present ($data/auth.json)"; else
+        echo "✗ run:  opencode auth   (then add a provider)"; fi ;;
+    antigravity)
+      local cli; cli="$(cfg "$e" cli)"; [[ -z "$cli" ]] && cli="$(antigravity_cli)"
+      if [[ -n "$cli" ]]; then echo "~ IDE found ($cli) — Google login is confirmed inside the IDE, not headlessly"; else
+        echo "✗ Antigravity IDE not found — install it or set 'cli =' in engines.conf"; fi ;;
+    *) echo "? unknown driver" ;;
+  esac
+}
+
+cmd_auth(){
+  require_conf
+  local target="${1:-}"
+  for e in $(engines); do
+    [[ -n "$target" && "$target" != "$e" ]] && continue
+    local d; d="$(cfg "$e" driver)"; printf '── %s (%s) ──\n' "$e" "$d"
+    echo "  $(auth_status "$e")"
+  done
+}
+
+cmd_doctor(){
+  require_conf
+  echo "config: $CONF"
+  printf '%-12s %-15s %-9s %-8s %s\n' ENGINE DRIVER CLI BIN AUTH
+  for e in $(engines); do
+    local d cli ok bin; d="$(cfg "$e" driver)"
+    cli="$(cli_for_driver "$d")"
+    if [[ -z "$cli" ]]; then
+      ok="?"; bin="-"; printf 'tokensmax: warning: engine %q has unknown driver %q\n' "$e" "$d" >&2
+    elif have "$cli"; then
+      ok="ok"; bin="$(command -v "$cli")"
+    else
+      ok="MISSING"; bin="-"
+    fi
+    printf '%-12s %-15s %-9s %-8s %s\n' "$e" "$d" "$ok" "$bin" "$(auth_status "$e")"
+  done
+}
+
+cmd_list(){ require_conf; for e in $(engines); do printf '%-12s driver=%-13s model=%s\n' "$e" "$(cfg "$e" driver)" "$(cfg "$e" model)"; done; }
+
+ctx_for(){ # model -> per-request context window (the honest "potential" per call)
+  case "$1" in
+    *opus*|*sonnet*|*fable*) echo "1M" ;;
+    *haiku*)                 echo "200K" ;;
+    *glm-4*)                 echo "~128K" ;;
+    gpt-5*|*gpt-4*)          echo "~256K" ;;
+    *)                       echo "—" ;;
+  esac
+}
+tiers_for(){ # <driver> <deep-model> <fast-model> -> your configured defaults + how other tiers are reached.
+  # NB: no version names are baked in here — the CLI is model-agnostic; the orchestrator picks the
+  # actual tier from the provider's CURRENT lineup and passes it with -m.
+  case "$1" in
+    codex) printf 'model %s · depth via effort: low|medium|high|xhigh' "${2:-built-in}" ;;
+    *)     printf 'default %s%s · other tiers via -m (orchestrator picks from the current lineup)' "${2:-built-in}" "${3:+ · fast $3}" ;;
+  esac
+}
+cmd_status(){ # session-start briefing: subscriptions, models, what-for, per-call potential
+  require_conf
+  echo "tokensmax fleet — orchestrating from this session:"
+  local e d seat m mf eff strg
+  for e in $(engines); do
+    d="$(cfg "$e" driver)"; m="$(cfg "$e" model)"; mf="$(cfg "$e" model_fast)"
+    eff="$(cfg "$e" effort)"; strg="$(cfg "$e" strengths)"
+    case "$d" in
+      claude)        seat="$(cfg "$e" config_dir)"; [[ -n "$seat" ]] || seat="default seat (~/.claude.json)" ;;
+      codex)         seat="$(cfg "$e" codex_home)"; [[ -n "$seat" ]] || seat="$HOME/.codex" ;;
+      anthropic-api) seat="API key: $(cfg "$e" key_env)" ;;
+      opencode)      seat="$(cfg "$e" opencode_data)" ;;
+      *)             seat="$d" ;;
+    esac
+    printf '\n  ● %-10s (%s)\n' "$e" "$d"
+    printf '      account  : %s\n' "$seat"
+    printf '      models   : %s\n' "$(tiers_for "$d" "$m" "$mf")"
+    printf '      default  : %s%s%s\n' "${m:-built-in}" "${mf:+, fast=$mf}" "${eff:+, effort=$eff}"
+    printf '      used for : %s\n' "${strg:-—}"
+    printf '      potential: %s context per request\n' "$(ctx_for "$m")"
+  done
+  echo
+  echo "  'potential' is the per-request context window above. Live remaining quota on a subscription seat"
+  echo "  is NOT queryable by anyone — run \`tokensmax usage\` for ACTUAL tokens + cost(\$) spent + ⚠ + reset when maxed."
+}
+
+# ---- init: discovery-driven, interactive ----
+cmd_init(){
+  NONINTERACTIVE=0   # reset so re-entrant calls in one session behave consistently
+  local FORCE=0
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --force|-f) FORCE=1; shift ;;
+      --yes|-y)   NONINTERACTIVE=1; shift ;;
+      --)         shift; break ;;
+      -*)         die "init: unknown flag '$1' (use --force, --yes)" ;;
+      *)          die "init: unexpected argument '$1'" ;;
+    esac
+  done
+  mkdir -p "$CONF_DIR" "$REPORTS" "$WORKTREES"
+
+  echo "tokensmax init — discovering installed engines…"
+  echo
+
+  # --- detect CLIs ---
+  declare -a DETECTED=()        # parallel arrays (bash 3.2 has no assoc arrays)
+  declare -a D_DRIVER=()
+  local n=0
+  detect(){ # <name> <driver>   (records if CLI present)
+    local name="$1" driver="$2" cli
+    cli="$(cli_for_driver "$driver")"
+    if [[ -n "$cli" ]] && have "$cli"; then
+      DETECTED[$n]="$name"; D_DRIVER[$n]="$driver"; n=$((n+1))
+      printf '  ✓ %-12s (%s)  %s\n' "$name" "$driver" "$(command -v "$cli")"
+    else
+      printf '  · %-12s (%s)  not installed\n' "$name" "$driver"
+    fi
+  }
+  detect claude claude
+  detect codex codex
+  detect opencode opencode
+  detect antigravity antigravity
+  detect cursor cursor
+  echo
+
+  if [[ $n -eq 0 ]]; then
+    die "no supported coding-agent CLI found on PATH. Install at least one (claude, codex, opencode, …)."
+  fi
+
+  # --- existing config? ---
+  if [[ -f "$CONF" && $FORCE -ne 1 ]]; then
+    echo "config exists: $CONF  (re-run with --force to overwrite)"
+  else
+    # Build into a temp file then atomically move into place (no half-written config on SIGINT).
+    local tmp; tmp="$CONF.tmp.$$"
+    {
+      printf '# tokensmax engines — generated by `tokensmax init` (discovery-driven).\n'
+      printf '# Edit freely. driver: claude | codex | cursor | opencode | antigravity | anthropic-api\n'
+      printf '# Re-run: tokensmax init --force   |   Verify: tokensmax auth && tokensmax doctor\n\n'
+    } > "$tmp"
+
+    # --- per-engine prompts ---
+    local i name driver enabled
+    for ((i=0; i<n; i++)); do
+      name="${DETECTED[$i]}"; driver="${D_DRIVER[$i]}"
+      if prompt_yn y "Enable engine '$name'?"; then enabled=1; else enabled=0; fi
+      echo
+      [[ $enabled -ne 1 ]] && continue
+
+      case "$driver" in
+        claude)
+          printf '[%s]\ndriver = claude\n' "$name" >> "$tmp"
+          # choose seat: discover logged-in seats; if several or none, ask
+          local seats cnt=0 chosen_dir="" chosen_lbl
+          seats="$(discover_claude_seats)"
+          cnt="$(printf '%s\n' "$seats" | grep -c . || true)"
+          if [[ $cnt -eq 0 ]]; then
+            echo "  no logged-in Claude seat detected."
+            if prompt_yn y "Bind the DEFAULT seat (~/.claude)? (you'll need to run: claude  /login)"; then
+              chosen_dir=""   # empty => default, unpinned at dispatch
+            else
+              echo "  skipped claude — log in then re-run init."; echo; continue
+            fi
+          elif [[ $cnt -eq 1 ]]; then
+            chosen_dir="$(printf '%s' "$seats" | cut -f1)"; chosen_lbl="$(printf '%s' "$seats" | cut -f2)"
+            echo "  detected: $chosen_lbl"
+            if ! is_claude_default "$chosen_dir"; then
+              prompt_yn y "Pin this custom seat (CLAUDE_CONFIG_DIR=$chosen_dir)?" || chosen_dir=""
+            else
+              chosen_dir=""   # default seat: never pin (pinning would break creds discovery)
+            fi
+          else
+            echo "  multiple Claude seats detected:"
+            local idx=1 line pick max
+            declare -a SDIR=()
+            while IFS= read -r line; do
+              [[ -z "$line" ]] && continue
+              printf '    %d) %s\n' "$idx" "$(printf '%s' "$line" | cut -f2)"
+              SDIR[$idx]="$(printf '%s' "$line" | cut -f1)"; idx=$((idx+1))
+            done <<< "$seats"
+            max=$((idx-1))
+            if [[ "$NONINTERACTIVE" == 1 ]] || ! tty_available; then
+              pick=1; echo "  (auto-selected #1)"
+            else
+              while true; do
+                read -r -p "  pick seat [1]: " pick </dev/tty || { echo; pick=1; break; }
+                [[ -z "$pick" ]] && pick=1
+                if [[ "$pick" =~ ^[0-9]+$ ]] && (( pick >= 1 && pick <= max )); then break; fi
+                echo "  invalid choice '$pick' (enter a number 1–$max)" >&2
+              done
+            fi
+            chosen_dir="${SDIR[$pick]}"
+            is_claude_default "$chosen_dir" && chosen_dir=""
+          fi
+          if [[ -n "$chosen_dir" ]]; then
+            printf 'config_dir = %s   # custom seat — pinned via CLAUDE_CONFIG_DIR at dispatch\n' "$chosen_dir" >> "$tmp"
+          else
+            printf '# default seat (~/.claude) — left unpinned so Claude reads ~/.claude.json\n' >> "$tmp"
+          fi
+          echo "  models & role (press Enter to accept the default):"
+          local cm cf cs
+          cm="$(prompt_str claude-opus-4-8 "    deep model — opus/sonnet/fable")"
+          cf="$(prompt_str claude-haiku-4-5 "    fast model (used with --fast)")"
+          cs="$(prompt_str "design, reasoning, prose, planning, architecture" "    used for (strengths)")"
+          printf 'model = %s\nmodel_fast = %s\nstrengths = %s\n\n' "$cm" "$cf" "$cs" >> "$tmp"
+          ;;
+        codex)
+          echo "  models & role (Enter = default):"
+          local xm xe xs
+          xm="$(prompt_str gpt-5.5 "    model (your ChatGPT/Team plan; gpt-5-codex needs API-key auth)")"
+          xe="$(prompt_str high "    reasoning effort — low|medium|high|xhigh")"
+          xs="$(prompt_str "logic, refactor, code-review, tests, mechanical-precision" "    used for (strengths)")"
+          printf '[%s]\ndriver = codex\ncodex_home = ~/.codex\nmodel = %s\neffort = %s\neffort_fast = low\nstrengths = %s\n\n' "$name" "$xm" "$xe" "$xs" >> "$tmp"
+          ;;
+        opencode)
+          printf '[%s]\ndriver = opencode\nopencode_data = ~/.local/share/opencode\n' "$name" >> "$tmp"
+          # try to read a default provider/model from auth.json (robust JSON parse)
+          local f="$HOME/.local/share/opencode/auth.json" prov
+          prov="$(opencode_default_provider "$f")"
+          if [[ -n "$prov" ]]; then printf 'model = %s/glm-4.6   # provider/model — adjust to your plan\n' "$prov" >> "$tmp"
+          else printf 'model = zai-coding-plan/glm-4.6   # provider/model — adjust to your plan\n' >> "$tmp"; fi
+          printf '# agent = <name>   # optional: pin an opencode agent (see: opencode agent list)\n' >> "$tmp"
+          printf 'strengths = cheap, bulk, drafts, high-volume, fast\n\n' >> "$tmp"
+          ;;
+        antigravity)
+          printf '[%s]\ndriver = antigravity\n' "$name" >> "$tmp"
+          local acli; acli="$(antigravity_cli)"
+          [[ -n "$acli" ]] && printf 'cli = "%s"\n' "$acli" >> "$tmp"
+          printf 'mode = agent   # ask | edit | agent (GUI-backed; opens an IDE window)\nstrengths = ide-aware, gemini, design\n# NOTE: antigravity chat is GUI-backed, not headless — fine for solo, noisy in a fleet.\n\n' >> "$tmp"
+          ;;
+        cursor)
+          printf '[%s]\ndriver = cursor\nmodel = auto\nstrengths = ide-aware, quick-edits\n\n' "$name" >> "$tmp"
+          ;;
+      esac
+    done
+    mv -f "$tmp" "$CONF"   # atomic publish of the fully-built config
+    echo "wrote $CONF"
+  fi
+
+  [[ -f "$SECRETS" ]] || { umask 077; printf '# tokensmax secrets (API keys). chmod 600.\n# GLM_API_KEY=...\n' > "$SECRETS"; echo "wrote $SECRETS (600)"; }
+  echo
+  echo "next: tokensmax auth && tokensmax doctor"
+}
+
+usage(){ cat <<EOF
+tokensmax — orchestrate multiple coding agents (Claude, Codex, Cursor, OpenCode, Antigravity, GLM/any API)
+  tokensmax init [--force] [--yes]      discover installed CLIs + logged-in seats, write engines.conf
+  tokensmax auth [engine]               check/guide auth for each engine (linked to config)
+  tokensmax doctor                      show engines, CLIs, auth status
+  tokensmax status                      session briefing: accounts, models, what-for, per-call potential
+  tokensmax list                        list configured engines + models
+  tokensmax usage [today|all|DATE]      who solved what · EST vs ACTUAL tokens · cost($) · window total · ⚠ maxed + reset
+  tokensmax run <engine> [opts] "task"  run one engine
+  tokensmax fleet [eng,eng|all] [opts] "task"   run several in parallel (saves reports)
+Profiles:  --research (default) | --review | --build --repo DIR
+Model:     -m <model>   override the engine's configured model
+           --fast        use the engine's model_fast (cheap tier) if set
+           --effort LVL  codex reasoning depth: low|medium|high|xhigh (overrides config + --fast)
+           --est S|M|L   record the magnitude estimate (shown in `usage` vs actual)
+           --dry         show the resolved command + model, don't run
+           --yes         confirm dispatch (REQUIRED non-interactively — enforces propose-then-confirm)
+           --live        give the worker LIVE access to your system via MCP tools (config: mcp_config/live_tools)
+           --grant-live  permission for --live (REQUIRED non-interactively; added only after the user agrees)
+EOF
+}
+
+cmd_usage(){ # tokensmax usage [today|all|YYYY-MM-DD]  — per-run estimate vs actual + per-engine totals
+  set +e   # reporting/aggregation: a grep-no-match is normal here; don't let set -e abort mid-table
+  local scope="${1:-today}" root="$REPORTS" dir
+  case "$scope" in today) dir="$root/$(date +%F)";; all) dir="$root";; *) dir="$root/$scope";; esac
+  [[ -d "$dir" ]] || { echo "no reports under $dir  (run a fleet first)"; return 0; }
+  local files; files="$(find "$dir" -type f -name '*.md' 2>/dev/null | sort)"
+  [[ -z "$files" ]] && { echo "no reports under $dir"; return 0; }
+  echo "usage — $dir"
+  echo "  EST = orchestrator's pre-run estimate (--est) · ACTUAL = measured tokens · ⚠ = engine hit its limit"
+  local f base eng est act n limited when task
+  printf '  %-8s %-9s %4s %8s  %-34s %s\n' WHEN ENGINE EST ACTUAL 'TASK (who solved what)' ''
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    base="$(basename "$f")"; eng="$(printf '%s' "$base" | sed -E 's/.*\.([A-Za-z0-9_-]+)\.md$/\1/')"
+    when="${base:0:6}"; when="${when:0:2}:${when:2:2}:${when:4:2}"
+    est="$(sed -n 's/.*est:\([^ _]*\).*/\1/p' "$f" 2>/dev/null | head -1)"; [[ -n "$est" ]] || est="—"
+    n="$(grep -A1 -i 'tokens used' "$f" 2>/dev/null | grep -oE '[0-9][0-9,]*' | tr -d ',' | head -1)"; [[ -n "$n" ]] && act="$n" || act="—"
+    task="$(sed -n '1s/^# //p' "$f" 2>/dev/null | cut -c1-34)"; [[ -n "$task" ]] || task="—"
+    limited=""; grep -qiE 'session limit|usage limit|quota|rate.?limit|overloaded' "$f" 2>/dev/null && limited="⚠ limit" || true
+    printf '  %-8s %-9s %4s %8s  %-34s %s\n' "$when" "$eng" "$est" "$act" "$task" "$limited"
+  done <<< "$files"
+  echo
+  printf '  %-10s %5s %10s %9s  %s\n' TOTAL/eng RUNS ACTUAL 'COST$' STATE
+  local engs e ct tok cost c el reset cap rem costdisp gtok gcost
+  gtok=0; gcost=0
+  engs="$(printf '%s\n' "$files" | sed -E 's/.*\.([A-Za-z0-9_-]+)\.md$/\1/' | sort -u)"
+  for e in $engs; do
+    ct=0; tok=0; cost=0; el=""; reset=""
+    while IFS= read -r f; do
+      [[ -n "$f" ]] || continue; ct=$((ct+1))
+      n="$(grep -A1 -i 'tokens used' "$f" 2>/dev/null | grep -oE '[0-9][0-9,]*' | tr -d ',' | head -1)"; [[ -n "$n" ]] && tok=$((tok+n)) || true
+      c="$(grep -oE 'cost: \$[0-9.]+' "$f" 2>/dev/null | grep -oE '[0-9.]+' | head -1)"; [[ -n "$c" ]] && cost="$(awk -v a="$cost" -v b="$c" 'BEGIN{printf "%.4f",a+b}')" || true
+      if grep -qiE 'session limit|usage limit|quota|rate.?limit|overloaded' "$f" 2>/dev/null; then
+        el="⚠ maxed"; reset="$(grep -oiE 'resets [0-9:apm.]+' "$f" 2>/dev/null | head -1)"
+      fi
+    done < <(printf '%s\n' "$files" | grep "\.$e\.md$")
+    cap="$(cfg "$e" session_limit)"; rem=""
+    [[ "$cap" =~ ^[0-9]+$ && $tok -gt 0 ]] && rem="  ($(( cap>tok ? cap-tok : 0 )) left of $cap)"
+    costdisp="—"; [[ "$cost" != 0 ]] && costdisp="\$$cost"
+    gtok=$((gtok+tok)); gcost="$(awk -v a="$gcost" -v b="$cost" 'BEGIN{printf "%.4f",a+b}')"
+    printf '  %-10s %5s %10s %9s  %s%s%s\n' "$e" "$ct" "$([[ $tok -gt 0 ]] && echo "$tok" || echo "—")" "$costdisp" "$el" "${reset:+ ($reset)}" "$rem"
+  done
+  echo
+  printf '  window so far: %s tokens · $%s  (cost shown where the engine reports it — Claude does)\n' "$gtok" "$gcost"
+  echo "  No vendor exposes remaining session quota — the ⚠ maxed flag (+ reset time) is your real ceiling."
+  echo "  Want a 'remaining' number? set \`session_limit = <tokens>\` per engine (YOUR plan's window cap; we can't read it)."
+}
+
+main(){
+  local sub="${1:-}"; shift || true
+  case "$sub" in
+    init) cmd_init "$@" ;;
+    auth) cmd_auth "${1:-}" ;;
+    doctor) cmd_doctor ;;
+    status) cmd_status ;;
+    list) cmd_list ;;
+    usage) cmd_usage "${1:-}" ;;
+    run) cmd_run "$@" ;;
+    fleet) cmd_fleet "$@" ;;
+    ""|-h|--help|help) usage ;;
+    *) die "unknown command '$sub' (try: tokensmax help)" ;;
+  esac
+}
+main "$@"
