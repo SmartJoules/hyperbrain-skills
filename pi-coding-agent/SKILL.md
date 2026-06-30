@@ -25,11 +25,12 @@ For exact commands and flags, check the installed Pi version with `pi --help` or
 Start non-trivial Pi work with this stack:
 
 1. `skill-loading-runtime` to scan skill metadata first, rank skills, and load only selected instructions/resources.
-2. `agent-planning-harness` for goal, scope, workstreams, risks, and verification gates.
-3. `advanced-ai-workflow` for the default execution loop.
-4. `prompt-harness` for repo-aware code generation.
-5. `self-verification` before final answers, commits, or deployments.
-6. `long-term-memory` and `self-learning` when the work produces reusable knowledge.
+2. `model-selection-runtime` to choose the smallest safe model tier and define escalation rules.
+3. `agent-planning-harness` for goal, scope, workstreams, risks, and verification gates.
+4. `advanced-ai-workflow` for the default execution loop.
+5. `prompt-harness` for repo-aware code generation.
+6. `self-verification` before final answers, commits, or deployments.
+7. `long-term-memory` and `self-learning` when the work produces reusable knowledge.
 
 Add these only when the task needs them:
 
@@ -46,11 +47,12 @@ When a user asks Pi to build, fix, review, or research:
 
 1. Read `AGENTS.md`, repo README, package/build files, and the target files.
 2. Use `skill-loading-runtime` to scan all skill frontmatter, rank matches, and load only the smallest useful HyperBrain skill set.
-3. Classify the task with `advanced-ai-workflow`.
-4. Produce an execution plan with acceptance criteria and verification gates.
-5. Run the task through Pi, keeping tool calls and file edits tightly scoped.
-6. Verify with tests, build checks, static checks, or targeted inspection.
-7. Summarize changed files, verification, risks, and memory updates.
+3. Use `model-selection-runtime` to choose fast/balanced/deep/specialist tier with an escalation policy.
+4. Classify the task with `advanced-ai-workflow`.
+5. Produce an execution plan with acceptance criteria and verification gates.
+6. Run the task through Pi, keeping tool calls and file edits tightly scoped.
+7. Verify with tests, build checks, static checks, or targeted inspection.
+8. Summarize selected skills, selected model tier, changed files, verification, risks, and memory updates.
 
 ## Prompt Template Pattern
 
@@ -67,10 +69,12 @@ Context to load:
 - README/package/build metadata
 - Relevant HyperBrain skills: <skill names>
 - Relevant repo KB: <kb names>
+- Model tier: <fast | balanced | deep | specialist> with reason
 
 Plan requirements:
 - Define scope and non-scope.
 - Name workstreams, dependencies, and verification gates.
+- Choose the smallest safe model tier and escalation policy.
 - Ask only when blocked by missing facts or risky assumptions.
 
 Execution requirements:
@@ -106,6 +110,7 @@ When converting a HyperBrain skill into a Pi skill:
 
 - Pi-specific work uses current Pi docs or local `pi --help` for exact commands.
 - The chosen HyperBrain stack is named explicitly.
+- The model tier is selected with `model-selection-runtime` and recorded.
 - The plan includes scope, risks, verification, and stop conditions.
 - Outputs are machine-readable when used by JSON/RPC/SDK integrations.
 - Reusable bug fixes or domain discoveries are routed into `bug-postmortem-learning`, `long-term-memory`, or the relevant repo KB.

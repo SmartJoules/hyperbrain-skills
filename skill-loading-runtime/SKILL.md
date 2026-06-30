@@ -1,6 +1,6 @@
 ---
 name: skill-loading-runtime
-description: Use when designing or implementing Pi-like skill loading for Codex, Pi.dev, custom coding agents, CLIs, SDK/RPC agents, or orchestration systems. Defines progressive skill discovery: scan SKILL.md frontmatter first, rank skills from user intent and repo signals, load only selected skill bodies, then load references/scripts/assets only on demand while enforcing context budgets, trust boundaries, and verification.
+description: Use when designing or implementing Pi-like skill loading for Codex, Pi.dev, custom coding agents, CLIs, SDK/RPC agents, or orchestration systems. Defines progressive skill discovery: scan SKILL.md frontmatter first, rank skills from user intent and repo signals, load only selected skill bodies, then hand off to model-selection-runtime and load references/scripts/assets only on demand while enforcing context budgets, trust boundaries, and verification.
 ---
 
 # Skill Loading Runtime
@@ -55,8 +55,9 @@ Use this sequence for every non-trivial request:
    - Workflow harness skills.
    - General framework/pattern skills.
 5. Load only the smallest useful set of full `SKILL.md` bodies.
-6. Follow each loaded skill's resource instructions. Do not load all references just because a folder exists.
-7. Produce a plan, execute, verify, and record reusable learnings when appropriate.
+6. Run `model-selection-runtime` after skill selection to choose the smallest safe model tier for the selected skill stack.
+7. Follow each loaded skill's resource instructions. Do not load all references just because a folder exists.
+8. Produce a plan, execute, verify, and record reusable learnings when appropriate.
 
 ## Ranking Heuristic
 
@@ -78,6 +79,7 @@ Select the top skills until the task is covered. Prefer three to five skills for
 For ambiguous or large engineering tasks, start with:
 
 - `advanced-ai-workflow`
+- `model-selection-runtime`
 - `agent-planning-harness`
 - `prompt-harness`
 - `self-verification`
@@ -115,6 +117,12 @@ A custom loader should return:
       "resources": ["references/example.md"]
     }
   ],
+  "modelSelection": {
+    "tier": "balanced",
+    "reason": "Medium implementation with deterministic checks",
+    "score": 72,
+    "escalationPolicy": "Escalate to deep if verification fails twice or high-risk files are touched"
+  },
   "rejectedSkills": [
     {
       "name": "other-skill",
@@ -142,5 +150,6 @@ A custom loader should return:
 - A request can select skills without loading every `SKILL.md`.
 - Explicit skill names always win over fuzzy matches.
 - High-risk surfaces add security, RBAC, deployment, or verification skills automatically.
+- Model tier selection runs after skill selection and before implementation.
 - References are loaded only when named by the selected skill or required by the task.
-- Final output reports selected skills, checks run, and any skipped references or unresolved assumptions.
+- Final output reports selected skills, selected model tier, checks run, and any skipped references or unresolved assumptions.

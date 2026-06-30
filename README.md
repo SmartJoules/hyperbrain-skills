@@ -51,7 +51,7 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
 Use this prompt for most non-trivial engineering tasks:
 
 ```text
-Use skill-loading-runtime, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
+Use skill-loading-runtime, model-selection-runtime, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
 
 Goal:
 <your task>
@@ -60,30 +60,32 @@ Load skills like Pi:
 1. Scan skill frontmatter first.
 2. Rank skills by user intent, repo signals, and risk.
 3. Load only selected SKILL.md files.
-4. Load references/scripts/assets only on demand.
-5. Plan, execute, verify, and summarize.
+4. Select the smallest safe model tier like Pi: fast, balanced, deep, or specialist.
+5. Load references/scripts/assets only on demand.
+6. Plan, execute, verify, and summarize.
 ```
 
 Use this for large multi-agent tasks:
 
 ```text
-Use skill-loading-runtime, agent-planning-harness, agent-orchestration, agent-fleet-runner, agent-context-manager, agent-delegation-contracts, agent-integration-reviewer, and self-verification.
+Use skill-loading-runtime, model-selection-runtime, agent-planning-harness, agent-orchestration, agent-fleet-runner, agent-context-manager, agent-delegation-contracts, agent-integration-reviewer, and self-verification.
 
 Goal:
 <large task>
 
-Create worker context packets, assign agents, define acceptance criteria, run verification, and merge outputs safely.
+Create worker context packets, assign agents, select model tiers per worker, define acceptance criteria, run verification, and merge outputs safely.
 ```
 
 Use this for Pi.dev or custom coding-agent workflows:
 
 ```text
-Use pi-coding-agent and skill-loading-runtime.
+Use pi-coding-agent, skill-loading-runtime, and model-selection-runtime.
 
 Build or run a Pi-style coding agent workflow for this repo:
 - Read AGENTS.md and README first.
 - Scan HyperBrain skill frontmatter.
 - Select the smallest useful skill set.
+- Select the smallest safe model tier and escalation policy.
 - Use agent-planning-harness before coding.
 - Use self-verification before final output.
 - Report selected skills, changed files, and checks run.
@@ -126,6 +128,7 @@ Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for
    - **Agent Integration Reviewer** - Merge and verify multi-agent outputs: reconcile contracts, detect conflicting edits, review diffs, run final checks, and produce release-readiness handoffs.
    - **Pi Coding Agent** - Pi.dev workflow guide for building and using Pi terminal coding agents: skills, extensions, packages, prompt templates, AGENTS.md context, compaction, print/JSON/RPC/SDK modes, custom agent automation, and HyperBrain planning/verification integration.
    - **Skill Loading Runtime** - Pi-like progressive-disclosure loader for HyperBrain skills: scan `SKILL.md` frontmatter first, rank skills from user intent and repo signals, load selected skill bodies, then load references/scripts/assets only on demand with context-budget and verification rules.
+   - **Model Selection Runtime** - Pi-like model/tier selector for Codex, Pi.dev, tokensmax, Claude, SDK/RPC agents, and multi-agent fleets: score complexity, risk, context, tools, latency, cost, and verification to route work to fast, balanced, deep, or specialist models with escalation/downgrade rules.
    - **Prompt Harness** - Repo-aware autonomous engineering harness. Detects the repo (JouleTRACK / jt-api-v2 / IoT / generic), binds the generic DB-first + connector-first codegen workflow to that repo's real stack and conventions, gathers context from connectors + precomputed artifacts before writing code, and outputs production-ready, security-checked, tested code per engineering-standards.
    - **Algorithm Picker** - Choose the right algorithm/data structure before coding. General CS selection (sorting/search/graph/DP/hashing/heaps/tries/union-find, Big-O sanity checks) plus the JouleTRACK/IoT domain (time-series downsampling/LTTB, anomaly detection, scheduling/interval-merge, forecasting, Kafka windowing/dedup, Redis eviction).
    - **Engineering AI Assistant** - Senior backend engineer + architect + reviewer that understands the project, inspects connected DBs (schema discovery), confirms risky assumptions, then generates production-ready controllers/services/repositories/DTOs/validation/tests/OpenAPI docs in the project's own patterns. Connector-first, fewer questions.

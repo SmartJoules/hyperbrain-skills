@@ -51,10 +51,11 @@ Choose the lane:
 |---|---|
 | Product/spec/prototype to implementation | `proto-to-dejoule`, `prd-to-html-prototype`, `prompt-harness` |
 | Effective planning / agent handoff | `agent-planning-harness`, `agent-orchestration`, `agent-delegation-contracts` |
-| Pi-like skill discovery / runtime loading | `skill-loading-runtime`, `pi-coding-agent`, `agent-planning-harness`, `self-verification` |
+| Pi-like skill discovery / runtime loading | `skill-loading-runtime`, `model-selection-runtime`, `pi-coding-agent`, `agent-planning-harness`, `self-verification` |
+| Model tier selection / cost routing | `model-selection-runtime`, `skill-loading-runtime`, `agent-context-manager`, `self-verification` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
-| Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `skill-loading-runtime`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
+| Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
 | Review/debug/performance | `database-query-optimizer`, `engineering-standards`, `tdd-workflow` |
@@ -76,8 +77,9 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
 | Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
 | LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
-| Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `skill-loading-runtime`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
+| Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `skill-loading-runtime`, `model-selection-runtime`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
 | Skill discovery, `SKILL.md` frontmatter, progressive disclosure, context budget routing, custom skill loader | `skill-loading-runtime`, `pi-coding-agent`, `agent-context-manager`, `self-verification` |
+| Model choice, cost tiering, provider routing, escalation/downgrade after verification | `model-selection-runtime`, `skill-loading-runtime`, `agent-fleet-runner`, `self-verification` |
 | Bug fix, incident, flaky test, production regression | `root-cause-analyzer`, `bug-postmortem-learning`, `code-reviewer`, `tdd-workflow` |
 | Large cross-file task or unclear ownership | `agent-planning-harness`, `agentic-engineering`, `agent-orchestration`, `agent-context-manager` |
 
@@ -100,13 +102,13 @@ Do not load whole subsystems for "understanding" if a graph, KB, or targeted sea
 For any non-trivial build, research, or review task, use `tokensmax`:
 
 1. Run `tokensmax status`.
-2. Build routing options from the actual configured seats and model tiers.
+2. Use `model-selection-runtime` to score the task, then build routing options from the actual configured seats and model tiers.
 3. Recommend the best option, including one token-saving option.
 4. Wait for the user to choose unless they explicitly said to just do it.
 5. Dispatch with `tokensmax run` or `tokensmax fleet`.
 6. Report `tokensmax usage` after dispatch.
 
-Use cheap/fast tiers for mechanical tasks, mid tiers for bounded implementation, and deep tiers for ambiguous design, architecture, safety, or correctness-critical work. Never hardcode model versions; resolve the current lineup from `tokensmax status`.
+Use `model-selection-runtime` for the model/tier decision: fast for safe mechanical work, balanced for bounded implementation, deep for ambiguous design/security/architecture/correctness-critical work, and specialist for tool-heavy or long-context jobs. Never hardcode model versions; resolve the current lineup from `tokensmax status`, Pi config, provider metadata, or local agent configuration.
 
 ### 4. Implement With Repo-Aware Contracts
 
