@@ -1,0 +1,134 @@
+---
+name: neptune-graph
+description: Use when writing, reviewing, fetching, or updating SmartJoules Amazon Neptune RDF/SPARQL graph data for ontology-service: site graphs, equipment, devices, points, controllers, locations, telemetry refs, water loops, and Brick/sj relationships.
+---
+
+# SmartJoules Neptune Graph
+
+The ontology graph is RDF/SPARQL in Amazon Neptune. Use the repo tools; do not hand-roll signed HTTP requests.
+
+---
+
+## Graphs
+
+| Graph | Content |
+|---|---|
+| `http://smartjoules.org/<siteId>/brick` | One named graph per site; instance data |
+| `http://smartjoules.org/schema` | Shared `sj:` class/property definitions |
+
+Always scope site queries with `GRAPH <http://smartjoules.org/<siteId>/brick> { ... }`.
+
+---
+
+## Prefixes
+
+```sparql
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX sj:    <http://smartjoules.org/schema/BrickExtension#>
+PREFIX ref:   <https://brickschema.org/schema/Brick/ref#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX unit:  <http://qudt.org/vocab/unit/>
+```
+
+---
+
+## CLI
+
+Run from `SmartJoules/ontology-service`:
+
+```bash
+node tools/neptune.ts graphs
+node tools/neptune.ts query --query 'SELECT * WHERE { ?s ?p ?o } LIMIT 5'
+node tools/neptune.ts query --file query.rq --format table
+node tools/neptune.ts update --file update.rq
+node tools/neptune.ts export --out neptune-dump --format turtle
+node tools/neptune.ts load --source s3://<bucket>/<prefix>/ --role <iamRoleArn>
+```
+
+Prerequisites: VPN, AWS profile `sjpl-aws`, Node >= 22, `.env` Neptune endpoints.
+
+---
+
+## Query Guardrails
+
+- Include a site `GRAPH` for every per-site query.
+- Include `LIMIT` for list queries.
+- Use `COUNT` for counts.
+- Avoid unanchored property paths.
+- Prefer identity keys over labels: `sj:deviceId`, `sj:siteId`, `sj:abbr`, `sj:groupId`.
+- Live telemetry values are not in Neptune; fetch `ref:hasTimeseriesId` and query the time-series store.
+- Do not query the union graph for normal user questions.
+
+---
+
+## Safe Update Pattern
+
+Writes target the writer endpoint and are irreversible. Use surgical `DELETE/INSERT/WHERE`, scoped to one site graph.
+
+```sparql
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+
+DELETE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?node sj:mutablePredicate ?old .
+  }
+}
+INSERT {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?node sj:mutablePredicate "newValue" .
+  }
+}
+WHERE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?node sj:deviceId "known-id" .
+    OPTIONAL { ?node sj:mutablePredicate ?old . }
+  }
+}
+```
+
+Rules:
+- Never update without a site graph scope.
+- Do not delete identity or type triples unless doing an explicit full rebuild.
+- Test on one site first, verify with `SELECT`/`ASK`, then roll out.
+- Prefer repo tools or `NeptuneClient` for programmatic updates.
+
+---
+
+## Common Recipes
+
+```sparql
+# Count energy meters.
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+SELECT (COUNT(DISTINCT ?d) AS ?n) WHERE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?d a sj:Device ; sj:deviceType "em" .
+  }
+}
+```
+
+```sparql
+# Fetch timeseries ids for an asset.
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+SELECT ?abbr ?tsId WHERE {
+  GRAPH <http://smartjoules.org/suh-hyd/brick> {
+    ?asset rdfs:label "Emergency Critical AHU" ; brick:hasPoint ?p .
+    ?p sj:abbr ?abbr ; ref:hasExternalReference [ ref:hasTimeseriesId ?tsId ] .
+  }
+} LIMIT 100
+```
+
+```sparql
+# Immediate upstream equipment.
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX sj: <http://smartjoules.org/schema/BrickExtension#>
+SELECT ?upstream ?deviceType WHERE {
+  GRAPH <http://smartjoules.org/kmssh-nas/brick> {
+    ?target rdfs:label "Chiller 1 180TR" ; brick:isFedBy ?u .
+    ?u rdfs:label ?upstream ; sj:deviceType ?deviceType .
+  }
+} LIMIT 50
+```
