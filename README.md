@@ -1,8 +1,8 @@
 # HyperBrain Skills Library
 
-[![Install](https://github.com/itsatif/hyperbrain-skills/actions/workflows/install.yml/badge.svg)](https://github.com/itsatif/hyperbrain-skills/blob/main/INSTALL.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/itsatif/hyperbrain-skills/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/itsatif/hyperbrain-skills?style=social)](https://github.com/itsatif/hyperbrain-skills)
+[![Install](https://github.com/SmartJoules/hyperbrain-skills/actions/workflows/install.yml/badge.svg)](https://github.com/SmartJoules/hyperbrain-skills/blob/main/INSTALL.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/SmartJoules/hyperbrain-skills/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/SmartJoules/hyperbrain-skills?style=social)](https://github.com/SmartJoules/hyperbrain-skills)
 
 **Author:** Atif Salafi <atif8486@gmail.com>
 **Purpose:** Complete AI-powered skill library for full-stack software development
@@ -15,10 +15,10 @@
 
 ```bash
 # One-command installation
-curl -sSL https://raw.githubusercontent.com/itsatif/hyperbrain-skills/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/SmartJoules/hyperbrain-skills/main/install.sh | bash
 
 # Or clone and install
-git clone https://github.com/itsatif/hyperbrain-skills.git /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
 cd /tmp/hyperbrain-skills && ./install.sh
 
 # Skills are now active! Restart your AI assistant.
@@ -248,26 +248,38 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 
 ## 📋 Installation
 
-### Quick Install
+### Quick Install (Recommended)
+
+The installer copies each skill into its own folder under `~/.claude/skills/`,
+which is exactly what Claude Code expects.
 
 ```bash
-# Clone to Claude skills directory
-git clone https://github.com/itsatif/hyperbrain-skills.git ~/.claude/skills/
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
+cd /tmp/hyperbrain-skills
+./install.sh
 
-# Skills are immediately available in Claude Code
+# Restart Claude Code — skills are immediately available
 ```
 
-### Initial Setup
+### Manual Setup
+
+Each skill is a directory with a `SKILL.md` inside. Claude Code registers a skill
+by the `name` in its frontmatter and requires one folder per skill. Do **not**
+clone the repo straight into `~/.claude/skills` and do **not** `cp -r repo/* ...`
+(that copies top-level docs and `.git` as junk). Copy each skill directory:
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/itsatif/hyperbrain-skills.git ~/hyperbrain-skills
+# 1. Clone the repository to a temp location
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
 
-# 2. Copy to Claude skills
-cp -r ~/hyperbrain-skills/* ~/.claude/skills/
+# 2. Copy every skill (each dir containing a SKILL.md) into ~/.claude/skills/
+mkdir -p ~/.claude/skills
+find /tmp/hyperbrain-skills -name SKILL.md -not -path '*/.git/*' | while read -r f; do
+  d="$(dirname "$f")"
+  cp -r "$d" ~/.claude/skills/"$(basename "$d")"
+done
 
-# 3. Restart Claude Code
-# Skills are now active
+# 3. Restart Claude Code — skills are now active
 ```
 
 ---
@@ -498,10 +510,10 @@ origin: DeJoule
 
 ## 🔗 Links
 
-- **Repository:** [GitHub Repository](https://github.com/itsatif/hyperbrain-skills)
+- **Repository:** [GitHub Repository](https://github.com/SmartJoules/hyperbrain-skills)
 - **Installation:** [Installation Guide](INSTALL.md)
-- **Documentation:** [Full Documentation](https://github.com/itsatif/hyperbrain-skills/blob/main/README.md)
-- **Issues:** [Report Issues](https://github.com/itsatif/hyperbrain-skills/issues)
+- **Documentation:** [Full Documentation](https://github.com/SmartJoules/hyperbrain-skills/blob/main/README.md)
+- **Issues:** [Report Issues](https://github.com/SmartJoules/hyperbrain-skills/issues)
 
 ---
 

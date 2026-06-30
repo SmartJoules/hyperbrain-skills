@@ -1,3 +1,8 @@
+---
+name: ui-ux-design
+description: UI/UX design rules and patterns for Angular applications. Use when designing or reviewing UI, applying spacing, hierarchy, and component styling, or enforcing visual consistency in Angular apps.
+---
+
 # UI/UX Design Rules for Angular Applications
 
 **Author:** Atif Salafi <atif8486@gmail.com>

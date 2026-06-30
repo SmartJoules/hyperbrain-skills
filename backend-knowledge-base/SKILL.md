@@ -1,3 +1,8 @@
+---
+name: backend-knowledge-base
+description: Knowledge base for the JouleTRACK jt-api-v2 backend. Use when working on backend API endpoints, services, or data models in jt-api-v2, or when you need architecture and convention context for AI-assisted backend development.
+---
+
 # Backend Knowledge Base - jt-api-v2
 
 **Author:** Atif Salafi <atif8486@gmail.com>

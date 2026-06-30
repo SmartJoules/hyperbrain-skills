@@ -1,3 +1,8 @@
+---
+name: mcp-installer
+description: One-command installation of all MCP servers from the HyperBrain repository. Use when the user wants to install, set up, or configure the HyperBrain MCP servers for their AI assistant.
+---
+
 # MCP Installer - Automated MCP Server Setup
 
 **Part of HyperBrain Skills Library**

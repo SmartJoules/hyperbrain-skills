@@ -1,3 +1,8 @@
+---
+name: jouletrack-onboarding
+description: Team onboarding guide for JouleTRACK development. Use when onboarding to the JouleTRACK codebase or when you need a high-level orientation to its structure, stack, and workflows.
+---
+
 # JouleTRACK Team Onboarding
 
 **Author:** Atif Salafi <atif8486@gmail.com>

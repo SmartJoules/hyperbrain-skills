@@ -1,3 +1,8 @@
+---
+name: mcp-on-demand
+description: On-demand activation of specialized MCP servers. Use when a task needs a specific MCP server (such as Figma, Morpheus, or a database connector) that should be enabled only when required.
+---
+
 # On-Demand MCP Servers
 
 **Author:** Atif Salafi <atif8486@gmail.com>

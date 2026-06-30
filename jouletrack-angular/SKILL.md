@@ -1,3 +1,8 @@
+---
+name: jouletrack-angular
+description: Angular development patterns and conventions for the JouleTRACK frontend. Use for all Angular work in JouleTRACK: creating components, services, and modules, building dashboards, charts, and forms, and following the project's OnPush, RxJS, and styling conventions.
+---
+
 # JouleTRACK Angular Development
 
 **Author:** Atif Salafi <atif8486@gmail.com>

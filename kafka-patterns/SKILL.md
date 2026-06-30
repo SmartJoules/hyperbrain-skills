@@ -1,3 +1,8 @@
+---
+name: kafka-patterns
+description: Kafka stream-processing patterns and conventions for DeJoule IoT data pipelines. Use when designing producers, consumers, topics, or stream-processing logic for IoT data flows.
+---
+
 # Kafka Stream Processing Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

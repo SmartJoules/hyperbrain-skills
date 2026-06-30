@@ -1,3 +1,8 @@
+---
+name: playwright-patterns
+description: End-to-end testing patterns with Playwright for DeJoule applications. Use when writing, organizing, or debugging Playwright E2E tests and page objects.
+---
+
 # Playwright E2E Testing
 
 **Author:** Atif Salafi <atif8486@gmail.com>

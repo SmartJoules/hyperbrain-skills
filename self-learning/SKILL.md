@@ -1,3 +1,8 @@
+---
+name: self-learning
+description: Continuously capture user preferences, coding style, and successful interaction patterns to improve future AI responses. Use automatically across interactions to build and apply a personalized project context.
+---
+
 # Self-Learning & Context Improvement System
 
 **Author:** Atif Salafi <atif8486@gmail.com>

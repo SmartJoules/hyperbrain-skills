@@ -17,9 +17,9 @@ NC='\033[0m' # No Color
 
 # Print functions
 print_header() {
-    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗╗${NC}"
-    echo -e "${BLUE}║${NC}  ${GREEN}AI-SDLC Skills Library Installer${NC}                        ${BLUE}║${NC}"
-    echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝╝${NC}"
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC}  ${GREEN}AI-SDLC Skills Library Installer${NC}                            ${BLUE}║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
 
@@ -88,7 +88,7 @@ show_help() {
     echo "    - MQTT, Kafka, InfluxDB, IoT Architecture"
     echo ""
     echo -e "${YELLOW}Documentation:${NC}"
-    echo "    https://github.com/itsatif/hyperbrain-skills"
+    echo "    https://github.com/SmartJoules/hyperbrain-skills"
     echo ""
 }
 
@@ -158,7 +158,7 @@ main() {
 
     # Clone repository
     print_info "Cloning AI-SDLC skills library..."
-    git clone --depth 1 https://github.com/itsatif/hyperbrain-skills.git "$CLONE_DIR"
+    git clone --depth 1 https://github.com/SmartJoules/hyperbrain-skills.git "$CLONE_DIR"
     print_success "Repository cloned"
 
     # Create installation directory
@@ -171,11 +171,22 @@ main() {
 
     case "$ASSISTANT" in
         claude)
-            # For Claude Code, copy all skill directories
-            cp -r "$CLONE_DIR"/*-patterns/SKILL.md "$INSTALL_DIR/" 2>/dev/null || true
-            cp -r "$CLONE_DIR"/superpowers-*/SKILL.md "$INSTALL_DIR/" 2>/dev/null || true
-            cp -r "$CLONE_DIR"/tdd-*/SKILL.md "$INSTALL_DIR/" 2>/dev/null || true
-            print_success "Skills installed for Claude Code"
+            # For Claude Code, each skill is a directory containing SKILL.md.
+            # Install as ~/.claude/skills/<skill-name>/ so Claude Code can register
+            # the skill by its frontmatter `name`. Copy the WHOLE directory so
+            # supporting files (README.md, examples/, bin/, *.json) come along.
+            local count=0
+            while IFS= read -r skill_md; do
+                local skill_dir
+                skill_dir="$(dirname "$skill_md")"
+                local skill_name
+                skill_name="$(basename "$skill_dir")"
+                rm -rf "$INSTALL_DIR/$skill_name"
+                cp -r "$skill_dir" "$INSTALL_DIR/$skill_name"
+                print_success "  installed: $skill_name"
+                count=$((count + 1))
+            done < <(find "$CLONE_DIR" -name SKILL.md -not -path '*/.git/*' | sort)
+            print_success "Installed $count skills for Claude Code"
             ;;
 
         codex|cursor|copilot)
@@ -242,7 +253,7 @@ EOF
     echo "  3. Ask any question to activate AI Superpowers brainstorming"
     echo ""
     print_info "Documentation:"
-    echo -e "  ${BLUE}https://github.com/itsatif/hyperbrain-skills${NC}"
+    echo -e "  ${BLUE}https://github.com/SmartJoules/hyperbrain-skills${NC}"
     echo ""
     print_info "Skills installed:"
     list_installed_skills
@@ -265,7 +276,11 @@ if [ -d "$HOME/.claude/skills" ]; then
     echo "✓ Skills directory exists"
     echo ""
     echo "Installed Skills:"
-    ls -1 "$HOME/.claude/skills" | grep -E "SKILL\.md$" | sed 's/SKILL.md/  ✓/' || echo "  No skills found"
+    found=0
+    for d in "$HOME/.claude/skills"/*/; do
+        [ -f "$d/SKILL.md" ] && { echo "  ✓ $(basename "$d")"; found=1; }
+    done
+    [ "$found" -eq 0 ] && echo "  No skills found"
 else
     echo "✗ Skills directory not found"
     echo "  Run install.sh to install skills"
@@ -286,30 +301,15 @@ EOF
     chmod +x "$INSTALL_DIR/../activate-skills.sh"
 }
 
-# List installed skills
+# List installed skills (reads actual installed directories + their descriptions)
 list_installed_skills() {
-    local skills=(
-        "AI Superpowers:Brainstorming & Planning"
-        "TDD Workflow:Test-driven development"
-        "Angular:Enterprise Angular patterns"
-        "React:Modern React with hooks"
-        "Vue:Vue 3 Composition API"
-        "Next.js:Full-stack React SSR"
-        "State Management:Redux, Zustand, Pinia, NgRx"
-        "Node.js:Express/TypeScript APIs"
-        "Python:FastAPI async patterns"
-        "Go:Gin/GORM high-performance"
-        "Databases:PostgreSQL, InfluxDB, MongoDB, Redis"
-        "MQTT:IoT device communication"
-        "Kafka:Stream processing"
-        "InfluxDB:Time-series data"
-        "IoT Architecture:Complete IoT systems"
-    )
-
-    for skill in "${skills[@]}"; do
-        local name=$(echo "$skill" | cut -d: -f1)
-        local desc=$(echo "$skill" | cut -d: -f2)
-        echo -e "  ${GREEN}✓${NC} ${BLUE}${name}${NC} - ${desc}"
+    for d in "$INSTALL_DIR"/*/; do
+        [ -f "$d/SKILL.md" ] || continue
+        local name desc
+        name="$(basename "$d")"
+        # Pull the frontmatter description (first sentence) if present.
+        desc="$(sed -n 's/^description: //p' "$d/SKILL.md" | head -1 | cut -d. -f1)"
+        echo -e "  ${GREEN}✓${NC} ${BLUE}${name}${NC}${desc:+ - ${desc}}"
     done
 }
 

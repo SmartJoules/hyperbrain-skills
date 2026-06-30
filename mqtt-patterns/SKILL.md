@@ -1,3 +1,8 @@
+---
+name: mqtt-patterns
+description: MQTT messaging patterns and conventions for DeJoule IoT development. Use when designing MQTT topics, payloads, QoS levels, or device-to-cloud messaging.
+---
+
 # MQTT Message Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

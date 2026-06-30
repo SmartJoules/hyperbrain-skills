@@ -1,3 +1,8 @@
+---
+name: iot-architecture
+description: IoT system architecture patterns for DeJoule products. Use when designing or reviewing IoT systems, including device connectivity, data ingestion pipelines, edge processing, and cloud integration.
+---
+
 # IoT System Architecture
 
 **Author:** Atif Salafi <atif8486@gmail.com>

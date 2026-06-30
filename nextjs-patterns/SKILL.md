@@ -1,3 +1,8 @@
+---
+name: nextjs-patterns
+description: Next.js development patterns and conventions for DeJoule web applications. Use when building or reviewing Next.js apps, including routing, data fetching, server components, and API routes.
+---
+
 # Next.js Development Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

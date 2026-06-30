@@ -1,3 +1,8 @@
+---
+name: vue-patterns
+description: Vue.js development patterns and conventions for DeJoule frontend development. Use when building or reviewing Vue 3 components with the Composition API and following project conventions.
+---
+
 # Vue.js Development Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

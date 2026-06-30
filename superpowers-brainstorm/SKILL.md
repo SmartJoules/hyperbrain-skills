@@ -1,3 +1,8 @@
+---
+name: superpowers-brainstorm
+description: Advanced brainstorming and planning framework for AI agents. Use as a mandatory first step before any implementation: when starting a new task or feature, breaking down a complex problem, or clarifying ambiguous requirements.
+---
+
 # AI Superpowers - Brainstorming & Planning
 
 **Author:** Atif Salafi <atif8486@gmail.com>

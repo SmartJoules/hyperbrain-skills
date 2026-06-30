@@ -1,3 +1,8 @@
+---
+name: dejoule-knowledge-base
+description: Organizational knowledge base for DeJoule and Smart Joules. Use when you need company-wide architecture, product, or convention context for AI-assisted development across DeJoule projects.
+---
+
 # DeJoule Knowledge Base
 
 **Author:** Atif Salafi <atif8486@gmail.com>

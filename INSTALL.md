@@ -10,7 +10,7 @@
 
 ```bash
 # Clone and run installer
-git clone https://github.com/itsatif/hyperbrain-skills.git /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
 cd /tmp/hyperbrain-skills
 ./install.sh
 
@@ -19,12 +19,24 @@ cd /tmp/hyperbrain-skills
 
 ### Option 2: Manual Installation
 
-```bash
-# Clone repository
-git clone https://github.com/itsatif/hyperbrain-skills.git ~/.claude/skills
+Each skill is a directory containing a `SKILL.md`, and Claude Code expects every
+skill as its own folder under `~/.claude/skills/`. Do **not** clone the repo
+directly into `~/.claude/skills` — that nests everything one level too deep and
+adds the repo's top-level docs and `.git`. Instead, clone elsewhere and copy each
+skill directory:
 
-# Restart Claude Code
-# Skills are automatically active
+```bash
+# Clone the repo to a temp location
+git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
+
+# Copy every skill (each dir containing a SKILL.md) into ~/.claude/skills/
+mkdir -p ~/.claude/skills
+find /tmp/hyperbrain-skills -name SKILL.md -not -path '*/.git/*' | while read -r f; do
+  d="$(dirname "$f")"
+  cp -r "$d" ~/.claude/skills/"$(basename "$d")"
+done
+
+# Restart Claude Code — skills are automatically active
 ```
 
 ---
@@ -149,7 +161,7 @@ git pull origin main
 
 # Or re-run installer
 cd /tmp
-git clone https://github.com/itsatif/hyperbrain-skills.git
+git clone https://github.com/SmartJoules/hyperbrain-skills.git
 cd hyperbrain-skills
 ./install.sh --skip-backup
 ```
@@ -170,7 +182,7 @@ mv ~/.claude/skills ~/.claude/skills.old
 
 ## 📚 Documentation
 
-- **Full Documentation:** https://github.com/itsatif/hyperbrain-skills
+- **Full Documentation:** https://github.com/SmartJoules/hyperbrain-skills
 - **Skills Index:** See individual SKILL.md files
 - **Examples:** Check README.md for workflow examples
 
@@ -268,8 +280,8 @@ AI: "Great! Here's the implementation plan:
 
 ## 📞 Support
 
-- **Issues:** https://github.com/itsatif/hyperbrain-skills/issues
-- **Discussions:** https://github.com/itsatif/hyperbrain-skills/discussions
+- **Issues:** https://github.com/SmartJoules/hyperbrain-skills/issues
+- **Discussions:** https://github.com/SmartJoules/hyperbrain-skills/discussions
 - **Email:** atif8486@gmail.com
 
 ---

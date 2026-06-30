@@ -1,3 +1,8 @@
+---
+name: local-kb
+description: Generate a local knowledge base for any repository using Graphify to reduce token consumption and provide instant context. Use when you want to precompute and cache a repo's structure so the AI has fast, low-token access to project context.
+---
+
 # Local Knowledge Base Generator
 
 **Part of HyperBrain Skills Library**

@@ -1,3 +1,8 @@
+---
+name: react-patterns
+description: React development patterns and conventions for DeJoule frontend development. Use when building or reviewing React components, hooks, and state, following the project's conventions.
+---
+
 # React Development Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

@@ -1,3 +1,8 @@
+---
+name: go-patterns
+description: Go backend patterns and conventions for DeJoule services. Use when writing, reviewing, or refactoring Go code, including Gin handlers, error handling, and concurrency in DeJoule backends.
+---
+
 # Go Backend Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

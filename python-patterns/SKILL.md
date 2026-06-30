@@ -1,3 +1,8 @@
+---
+name: python-patterns
+description: Python backend patterns and conventions for DeJoule development. Use when writing or reviewing Python services, including FastAPI, async patterns, typing, and project structure.
+---
+
 # Python Backend Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

@@ -1,3 +1,8 @@
+---
+name: qa-automation
+description: QA automation knowledge base for automated testing. Use when planning test strategy, building automated test suites, or reviewing QA coverage across DeJoule applications.
+---
+
 # QA Automation Knowledge Base
 
 **Author:** Atif Salafi <atif8486@gmail.com>

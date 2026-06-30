@@ -1,3 +1,8 @@
+---
+name: nodejs-patterns
+description: Node.js backend patterns and conventions for DeJoule development. Use when writing or reviewing Node.js and Express services, including async patterns, error handling, and API structure.
+---
+
 # Node.js Backend Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

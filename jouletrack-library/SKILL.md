@@ -1,3 +1,8 @@
+---
+name: jouletrack-library
+description: Comprehensive development skill library index for the JouleTRACK team. Use as the entry point to discover which JouleTRACK skill applies to a given frontend, backend, IoT, or QA task.
+---
+
 # JouleTRACK Development Skill Library
 
 **Author:** Atif Salafi <atif8486@gmail.com>

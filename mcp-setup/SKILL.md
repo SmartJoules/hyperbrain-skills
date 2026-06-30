@@ -1,3 +1,8 @@
+---
+name: mcp-setup
+description: Set up and configure MCP (Model Context Protocol) servers for AI assistants. Use when configuring MCP servers, editing MCP config files, or troubleshooting MCP server connections.
+---
+
 # MCP Configuration Setup
 
 **Author:** Atif Salafi <atif8486@gmail.com>

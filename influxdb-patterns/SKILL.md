@@ -1,3 +1,8 @@
+---
+name: influxdb-patterns
+description: InfluxDB time-series patterns and conventions for DeJoule IoT data storage. Use when writing Flux/InfluxQL queries, designing measurements and tags, or modeling time-series sensor data.
+---
+
 # InfluxDB Time-Series Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

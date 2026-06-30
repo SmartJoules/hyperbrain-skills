@@ -1,3 +1,8 @@
+---
+name: iot-knowledge-base
+description: Knowledge base for the DeJoule IoT platform. Use when working on IoT ingestion, device management, or telemetry features and you need platform architecture and convention context.
+---
+
 # IoT Knowledge Base
 
 **Author:** Atif Salafi <atif8486@gmail.com>

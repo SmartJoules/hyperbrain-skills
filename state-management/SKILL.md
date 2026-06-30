@@ -1,3 +1,8 @@
+---
+name: state-management
+description: State management patterns for React, Vue, and Angular (Redux, Zustand, Pinia, NgRx). Use when choosing or implementing a state-management approach, structuring stores, or reviewing state logic.
+---
+
 # State Management Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

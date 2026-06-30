@@ -1,3 +1,8 @@
+---
+name: graphify-integration
+description: Transform a codebase into a queryable knowledge graph using AST-based extraction and semantic analysis. Use when you want to map a repository's structure, generate a knowledge graph, or reduce token usage by giving the AI precomputed code context.
+---
+
 # Graphify Integration - Knowledge Graph Creation
 
 **Part of HyperBrain Skills Library**

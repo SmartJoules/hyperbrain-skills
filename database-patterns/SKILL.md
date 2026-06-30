@@ -1,3 +1,8 @@
+---
+name: database-patterns
+description: Database design patterns and conventions for DeJoule backend development. Use when designing schemas, writing queries, creating migrations, or choosing data models across PostgreSQL and related stores.
+---
+
 # Database Design Patterns
 
 **Author:** Atif Salafi <atif8486@gmail.com>

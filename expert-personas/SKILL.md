@@ -1,3 +1,8 @@
+---
+name: expert-personas
+description: Adopt the right expert persona for the task at hand (PM, design engineer, backend/frontend engineer, IoT architect, SRE, QA, technical writer). Use automatically when starting a task that benefits from a specialized senior-engineer perspective, such as writing a PRD, designing UI/UX, architecting a backend, or planning tests.
+---
+
 # Expert Personas - AI-SDLC Workflow
 
 **Author:** Atif Salafi <atif8486@gmail.com>
