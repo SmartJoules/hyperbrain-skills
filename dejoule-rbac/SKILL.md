@@ -322,6 +322,236 @@ Use existing casing patterns. Avoid renaming existing module/subheading/policy k
 
 ---
 
+## Advanced RBAC Techniques
+
+Use these when basic route/action checks are not enough. They should extend the current DeJoule policy model without breaking existing roles.
+
+### 1. Deny-By-Default For New Sensitive Actions
+
+Current `hasResourceAccess` allows actions that are not found in `config/policy.json`. For new write/delete/control/export/admin actions, compensate explicitly:
+
+- Add the action to `routePolicyMap.actions`.
+- Add a focused `can*` policy for high-risk actions.
+- Add a test that fails if the action is missing from `config/policy.json`.
+
+Example audit test helper:
+
+```js
+const policies = require('../../config/policy.json');
+
+function actionExists(actionName) {
+  return Object.values(policies).some((modulePolicy) =>
+    Object.values(modulePolicy.subHeadings || {}).some((subHeading) =>
+      Object.values(subHeading.policies || {}).some((policy) =>
+        (policy.routePolicyMap?.actions || []).includes(actionName)
+      )
+    )
+  );
+}
+
+assert(actionExists('controls/send-command-to-control-asset'));
+```
+
+Longer-term improvement: change `hasResourceAccess` to deny unknown sensitive actions after a compatibility audit. Roll this out behind logging first: log unknown actions for 1-2 releases, fix legitimate gaps, then enforce.
+
+### 2. RBAC + ABAC Hybrid
+
+RBAC answers "can this role do this action?" ABAC answers "can this user do this action on this specific resource right now?"
+
+Use ABAC checks for:
+- site-scoped resources not represented by `req.params.siteId`
+- component/device/recipe ownership or membership
+- command permissions that depend on mode, asset state, system side, or maintenance state
+- user management rules such as "non-admin cannot edit admin"
+- time/window/state restrictions
+
+Pattern:
+
+```js
+async function assertCanOperateComponent({ userMeta, siteId, componentId }) {
+  const hasSite = await authService.userHasSiteAccess(userMeta.id, siteId);
+  if (!hasSite) return { ok: false, code: 'SITE_ACCESS_DENIED' };
+
+  const component = await ComponentService.findOne({ siteId, componentId });
+  if (!component) return { ok: false, code: 'COMPONENT_NOT_FOUND' };
+
+  if (component.isUnderMaintenance) {
+    return { ok: false, code: 'COMPONENT_UNDER_MAINTENANCE' };
+  }
+
+  return { ok: true, component };
+}
+```
+
+Keep ABAC in services or small policy helpers; do not bury it in Angular.
+
+### 3. Resource-Scoped Policies
+
+Some permissions are too broad as a single module action. Split them by resource class or risk:
+
+| Broad permission | Better split |
+|---|---|
+| `Command_Write` | `Command_Write`, `Command_ModeChange`, `Command_SetpointWrite`, `Command_EmergencyStop` |
+| `Configuration_Edit` | `Config_Edit`, `Config_Publish`, `Config_Delete`, `Config_DriverSync` |
+| `User_Update` | `User_UpdateProfile`, `User_UpdateRole`, `User_RemoveSiteAccess` |
+| `Site_Edit` | `Site_InfoEdit`, `Site_NetworkEdit`, `Site_OnPremToggle` |
+
+Do this when actions have different blast radii or approval owners.
+
+### 4. Hierarchical Roles Without Hardcoding
+
+Avoid code like `if role === 'admin'`. Prefer policy capabilities.
+
+If hierarchy is needed, model it as metadata outside enforcement logic:
+
+```json
+{
+  "roleName": "site_admin",
+  "inherits": ["operator"],
+  "policies": {}
+}
+```
+
+Then resolve inheritance when saving/updating a role, storing the fully expanded `policies` object. The current runtime remains simple: it reads one concrete role policy. Do not compute inheritance on every request unless caching and invalidation are explicit.
+
+### 5. Policy Versioning And Migration
+
+Role documents can become stale when `config/policy.json` gains new modules. Use a version marker:
+
+```json
+{
+  "policyVersion": "2026-06-rbac-02",
+  "policies": {}
+}
+```
+
+Migration pattern:
+- Keep default `hasAccess: false` for new permissions.
+- Merge defaults into existing role policies on read/edit.
+- Save migrated roles through role service so `Role-*` and `RBAC-*` caches invalidate.
+- Add a script/report that lists roles missing any current policy keys.
+
+### 6. Separation Of Duties
+
+For high-risk workflows, require different permissions or users for maker/checker:
+
+| Workflow | Maker | Checker |
+|---|---|---|
+| Role change | `UserRole_Update` | `UserRole_Approve` |
+| Config publish | `Systems_page_Edit` | `Systems_page_Publish` |
+| Command automation | `Command_Write` | `Schedule_Deploy` |
+| On-prem sync toggle | `Config_Create` or specific `OnPrem_Toggle` | admin/security review |
+
+Store approval state in the business table, not in the role policy itself. RBAC decides whether a user may submit/approve; workflow state decides whether the action is currently valid.
+
+### 7. Field-Level And Data Redaction
+
+Some users can read a resource but not all fields. Apply field-level filtering on the backend response:
+
+```js
+function redactUser(user, policy) {
+  if (policy?.User?.subHeadings?.user?.policies?.read_sensitive?.hasAccess) {
+    return user;
+  }
+  const { authKey, phone, mailConfig, msgConfig, ...safe } = user;
+  return safe;
+}
+```
+
+Use for:
+- auth keys and service secrets
+- phone/email notification settings
+- command payload internals
+- debug/config fields that expose site topology or credentials
+
+Never rely on Angular to hide sensitive fields already returned by the API.
+
+### 8. Policy Decision Logging
+
+For denied or high-risk allowed actions, log a structured decision:
+
+```js
+sails.log.info('[RBAC]', {
+  decision: 'deny',
+  userId,
+  roleName,
+  siteId,
+  action,
+  policyKey: 'Command_Write',
+  reason: 'hasAccess=false',
+});
+```
+
+Do not log tokens, passwords, request bodies, or secrets. For commands/config changes, include audit event id or request id so incident review can trace the full flow.
+
+### 9. Central Policy Resolver
+
+Avoid duplicating JSON traversal in every `can*` policy. Add a resolver helper when touching multiple policies:
+
+```js
+function getPolicyAccess(policies, moduleKey, subHeadingKey, policyKey) {
+  return Boolean(
+    policies?.[moduleKey]?.subHeadings?.[subHeadingKey]?.policies?.[policyKey]?.hasAccess
+  );
+}
+
+function getFlattenedPolicyKey(moduleKey, subHeadingKey, policyKey) {
+  if (policyKey === 'view') return `${moduleKey}_View`;
+  return `${subHeadingKey.charAt(0).toUpperCase()}${subHeadingKey.slice(1)}_${
+    policyKey.charAt(0).toUpperCase()
+  }${policyKey.slice(1)}`;
+}
+```
+
+Keep it in a backend utility/service with tests. Once centralized, action-specific policies become readable and consistent.
+
+### 10. Least-Privilege Role Design
+
+Design roles by jobs-to-be-done, not org chart labels:
+
+| Role style | Typical access |
+|---|---|
+| Viewer | page views + read-only data |
+| Operator | read + safe command write for assigned sites |
+| Configurator | config create/edit, no user-role admin |
+| Site Admin | user assignment within owned sites, no global role schema changes |
+| Super Admin | global role/site/admin capabilities |
+| Service/Webhook | machine-only narrow endpoint access, no UI role |
+
+Do not overload `admin` for every internal capability. Prefer explicit permission keys and site-scoped user-site-role mappings.
+
+### 11. Policy Testing Matrix
+
+For important APIs, test a matrix:
+
+| Case | Expected |
+|---|---|
+| no token | deny |
+| expired/invalid token | deny |
+| token site A, request site B without access | deny |
+| token site A, request site B with access | allow |
+| role has page view but not write | read allow, write deny |
+| role has write but resource state blocks action | deny with ABAC reason |
+| action removed from policy map | deny or test failure |
+| role policy cache stale after update | cache invalidated |
+
+Add at least one direct API-call test for every UI-hidden action; that catches "frontend-only RBAC" regressions.
+
+### 12. Break-Glass Access
+
+If emergency access is needed, do not silently grant `admin`.
+
+Better pattern:
+- time-bound break-glass role
+- reason/ticket required
+- elevated action audit log
+- automatic expiry/revocation
+- notification to security/engineering owner
+
+Use only for production support workflows.
+
+---
+
 ## Common Implementation Checklist
 
 - [ ] Route exists in `config/routes.js`.
