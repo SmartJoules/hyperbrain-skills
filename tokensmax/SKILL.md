@@ -122,9 +122,18 @@ produces confident wrong answers (three engines once "found" a bug that one live
    for this run? [y/N]"* — then dispatch `--live --grant-live`. If it's **not** configured or the user
    declines, **run the query HERE in this session** (you have the tools); do NOT let a blind worker
    guess at live data.
-2. **Does it need the rendered UI / a visual judgment** ("does this look right", spacing, colors)? No
-   worker can see a render — **keep it in this session, with the user's eyes.** Never dispatch it.
+2. **Visual JUDGMENT of a render** ("does this *look* right", spacing, colors of an *already-built*
+   thing) — no worker can see pixels, so **that verification** stays with the user's eyes. **But this
+   does NOT mean "don't build UI."** *Building* a component/page from a spec is normal **code-grounded
+   build work — the fleet's sweet spot — so DISPATCH it like any build**, then the user reviews the
+   render. Never refuse to orchestrate a "build a UI" task just because its output is visual; dispatch
+   the construction, keep only the looks-right call here.
 3. **Do you already know the answer here?** Don't dispatch to "confirm" it — that's pure waste.
+
+> **Default for a `/tokensmax` "build/do X" request is to ORCHESTRATE** — propose options, dispatch to
+> the fleet. The user invoked the orchestrator *on purpose*; don't silently decide to do it solo. Keep
+> work in-session ONLY when it's genuinely undispatchable (live data you can't grant · judging an
+> existing render · you already hold the answer). A code/UI **build** is dispatchable — show the picker.
 
 The fleet's real lane is **code-grounded build + review-the-diff** (and, *with* `--live`, data work via
 MCP). Route there; handle live-data and visual work yourself unless access is granted.
