@@ -48,6 +48,8 @@ This library enables **complete AI-SDLC workflows** - from initial product requi
 
 Open the dark-mode visual guide at [`agent-skills-guide.html`](agent-skills-guide.html) to see how the agent orchestration skills work together and how to use them.
 
+Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for copy-paste commands and prompts for Pi-like skill loading, multi-agent execution, RBAC/auth, ontology/Neptune, K8s, JouleTRACK frontend, bug postmortems, and verification.
+
 ### 🧠 Superpowers (Mandatory First Step)
 1. **AI Superpowers - Brainstorming & Planning** - **ACTIVATES AUTOMATICALLY** for all user requests
    - Comprehensive question generation before any planning

@@ -96,6 +96,7 @@
     "install.sh",
     "INSTALL.md",
     "README.md",
+    "docs/",
     "agent-skills-guide.html",
     "advanced-ai-workflow/",
     "long-term-memory/",
