@@ -91,6 +91,7 @@ Then add domain skills from routing signals:
 - Inference/LLM serving: `inference-engineering`, `model-selection-runtime`, `prompt-engineering`, `llm-eval-guardrails`
 - Multi-agent execution: `agent-orchestration`, `agent-fleet-runner`, `agent-context-manager`
 - Frontend/JouleTRACK: `jouletrack-angular`, `sj-ui-design-system`, `frontend-telemetry`
+- Data modeling/schema design: `data-modeling-algorithm`, `database-patterns`, `database-query-optimizer`
 - API/RBAC/auth: `api-design`, `dejoule-rbac`, `dejoule-authentication`, `security-review`
 - Ontology/graph: `ontology-service-knowledge-base`, `neptune-graph`, `brick`
 - Deployment: `sj-k8s-knowledge-base`, `deployment-patterns`
