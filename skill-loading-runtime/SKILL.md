@@ -88,6 +88,7 @@ For ambiguous or large engineering tasks, start with:
 Then add domain skills from routing signals:
 
 - Pi/custom agent runtime: `pi-coding-agent`, `agent-tool-design`, `prompt-engineering`
+- Inference/LLM serving: `inference-engineering`, `model-selection-runtime`, `prompt-engineering`, `llm-eval-guardrails`
 - Multi-agent execution: `agent-orchestration`, `agent-fleet-runner`, `agent-context-manager`
 - Frontend/JouleTRACK: `jouletrack-angular`, `sj-ui-design-system`, `frontend-telemetry`
 - API/RBAC/auth: `api-design`, `dejoule-rbac`, `dejoule-authentication`, `security-review`
