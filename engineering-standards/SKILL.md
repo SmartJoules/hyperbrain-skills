@@ -1,6 +1,6 @@
 ---
 name: engineering-standards
-description: Mandatory engineering standards for writing ANY code. Use whenever creating, modifying, or reviewing code, designing a system, or adding a Kafka/Redis/DB integration. Enforces OOP + SOLID, the strategy/decorator/observer/factory/builder design patterns, DRY/KISS, minimal-diff changes, robust connection standards (Kafka heartbeat/offset/lag, Redis singleton/retry/safe handling), and resilience: no memory leaks, no unhandled promises, explicit error/loading/empty/partial states, query optimization, fewer DB calls, and caching with an eviction strategy.
+description: Mandatory engineering standards for writing ANY code. Use whenever creating, modifying, or reviewing code, designing a system, frontend interactions, or adding a Kafka/Redis/DB integration. Enforces OOP + SOLID, the strategy/decorator/observer/factory/builder design patterns, DRY/KISS, minimal-diff changes, Google Analytics events for meaningful FE interactions, robust connection standards (Kafka heartbeat/offset/lag, Redis singleton/retry/safe handling), and resilience: no memory leaks, no unhandled promises, explicit error/loading/empty/partial states, query optimization, fewer DB calls, and caching with an eviction strategy.
 ---
 
 # Engineering Standards (Mandatory)
@@ -15,6 +15,7 @@ description: Mandatory engineering standards for writing ANY code. Use whenever 
 
 Apply **automatically and always** when:
 - Writing or modifying any code (frontend, backend, IoT, scripts)
+- Adding or changing any frontend user interaction
 - Designing or reviewing a system or feature
 - Adding or touching a Kafka, Redis, MQTT, or database integration
 - Reviewing a PR or diff
@@ -64,6 +65,15 @@ This skill is a hard requirement, not a suggestion.
 - [ ] **Input validation** — validate at system boundaries (API inputs, query params, external responses). Fail fast with clear messages. Never trust external data.
 - [ ] **No `any`** — type everything explicitly.
 
+## 2A. Frontend Interaction Analytics (mandatory)
+
+- [ ] **Google Analytics event** — every new or changed meaningful frontend interaction emits a GA event through the repo's existing analytics/telemetry service or helper.
+- [ ] **Meaningful interactions** include clicks, submits, saves, deletes, exports, downloads, filters, tab changes, modal opens, navigation/deep links, toggle changes, chart drilldowns, bulk actions, errors shown to users, and successful critical workflow completions.
+- [ ] **Do not spam analytics** for hover, mousemove, scroll noise, keystrokes per character, polling, render cycles, or high-frequency drag events. Debounce/throttle when needed.
+- [ ] **No PII or secrets** in analytics payloads. Do not send email, phone, token, raw user input, credentials, free-text comments, or sensitive identifiers. Prefer stable feature/action labels, site/module ids only when permitted, counts, booleans, and coarse status.
+- [ ] **Centralize tracking** in an analytics service/helper; do not scatter raw `gtag` calls through components unless that is already the local repo pattern.
+- [ ] **Test or verify** analytics calls for critical interactions with unit tests, spies, or a manual QA checklist.
+
 ---
 
 ## 3. Database & Performance
@@ -110,6 +120,7 @@ Every Kafka producer/consumer MUST follow these:
 - [ ] No memory leaks (subscriptions/timers/listeners/connections cleaned up)
 - [ ] No unhandled promises; errors handled at every boundary
 - [ ] Loading + error + empty + partial-data states all handled (UI)
+- [ ] Frontend interactions emit Google Analytics events via the central analytics helper, with no PII/secrets
 - [ ] Queries optimized; N+1 removed; fewer DB calls
 - [ ] Cache has a defined eviction strategy and is invalidated on write
 - [ ] Kafka: heartbeat, offset commit policy, lag monitored, DLQ, graceful shutdown

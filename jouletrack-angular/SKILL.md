@@ -17,9 +17,53 @@ description: Angular development patterns and conventions for the JouleTRACK fro
 **Use for ALL Angular development** in JouleTRACK:
 - Creating new components, services, modules
 - Implementing features and user stories
+- Adding or changing user interactions that must be tracked in Google Analytics
 - Working with dashboards, charts, forms
 - State management and data flow
 - Testing Angular code
+
+---
+
+## 📈 Google Analytics Rule (Mandatory for FE Interactions)
+
+Every new or changed meaningful JouleTRACK user interaction must emit a Google Analytics event through the existing analytics/telemetry abstraction. Search the repo first for the current helper/service before adding a new one.
+
+Track:
+- button/link/card clicks
+- form submit/save/delete/cancel actions
+- filter, date range, tab, drawer, modal, toggle, and chart drilldown changes
+- exports/downloads
+- route/deep-link interactions
+- critical workflow success/failure states shown to the user
+
+Do not track:
+- hover/mousemove/scroll noise
+- every keystroke
+- polling/render cycles
+- raw form values or free text
+- emails, phone numbers, tokens, credentials, or other PII/secrets
+
+Event naming should be stable and product-readable:
+
+```text
+<module>_<object>_<action>
+plant_schedule_recipe_link_click
+dashboard_filter_apply
+smart_alert_subscription_unsubscribe
+```
+
+Prefer payloads like:
+
+```typescript
+{
+  siteId,
+  module: 'plant_schedule',
+  action: 'recipe_link_click',
+  status: 'success',
+}
+```
+
+Verify analytics in tests with a spy when practical; otherwise include it in the manual QA checklist.
 
 ---
 

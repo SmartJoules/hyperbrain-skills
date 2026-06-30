@@ -84,6 +84,7 @@ For `JouleTRACK`:
 - Preserve Angular module/component/facade/selector/effect patterns already in the feature.
 - For NgRx scheduler-style work, keep derivation in selectors and state transitions in reducer/effects/facade as established.
 - Use route guards and `data.expectedPolicy` with the correct domain policy.
+- Add Google Analytics tracking for every meaningful new or changed frontend interaction, using the existing analytics helper/service and never sending PII or secrets.
 - Keep UI fixes scoped to the component/parent stylesheet when a shared component has many consumers.
 - Use existing utilities/helpers instead of direct DOM writes when null-safe helpers exist.
 
@@ -171,6 +172,8 @@ Use these patterns when building or fixing frontend code:
 - Prefer existing null-safe utility helpers over raw `querySelector(...).style`.
 - Scope CSS to the owning component or parent when shared components are reused widely.
 - Gate routes and deep links with the feature's actual policy, not a nearby unrelated policy.
+- Track meaningful clicks, submits, filters, tabs, toggles, modal opens, exports, downloads, route/deep-link actions, and workflow success/failure states in Google Analytics.
+- Do not track hover noise, render cycles, every keystroke, raw user input, emails, tokens, or secrets.
 - Keep local AI docs and planning files ignored or out of PRs.
 - Preserve normal browser affordances where relevant: left-click same tab, middle/Cmd/Ctrl/right-click new tab if implementing navigation behavior.
 
