@@ -20,6 +20,7 @@ Use this before `prompt-harness`, `agent-orchestration`, `engineering-planner`, 
    - Multi-agent execution: `agent-orchestration`, `agent-fleet-runner`, `agent-delegation-contracts`
    - Product/engineering plan: `engineering-planner`
    - Architecture/HLD/LLD: `software-architecture-planner`
+   - Pi.dev coding-agent / CLI harness: `pi-coding-agent`, `prompt-engineering`, `agent-tool-design`
    - Deployment/K8s: `devops-deployment-planner`, `sj-k8s-knowledge-base`
    - UI/JouleTRACK: `jouletrack-angular`, `sj-ui-design-system`
    - Bug/RCA: `root-cause-analyzer`, `bug-postmortem-learning`

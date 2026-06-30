@@ -53,6 +53,7 @@ Choose the lane:
 | Effective planning / agent handoff | `agent-planning-harness`, `agent-orchestration`, `agent-delegation-contracts` |
 | Multi-file engineering | `agentic-engineering`, `prompt-harness`, `engineering-standards` |
 | AI/LLM/RAG/agent work | `prompt-engineering`, `rag-retrieval`, `agent-tool-design`, `llm-eval-guardrails` |
+| Pi.dev / custom coding-agent workflow | `pi-coding-agent`, `agent-planning-harness`, `agent-tool-design`, `prompt-engineering` |
 | DeJoule diagnostics/live data | `cpa-health`, `cpa-rca`, `iot-health`, `smartjoules-influxdb` |
 | UI/frontend | `sj-ui-design-system`, `jouletrack-angular`, framework pattern skill |
 | Review/debug/performance | `database-query-optimizer`, `engineering-standards`, `tdd-workflow` |
@@ -66,7 +67,7 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | Code signal | Top skills to load |
 |---|---|
 | `angular.json`, `src/styles.css`, PrimeNG imports, `--n-*` tokens | `jouletrack-angular`, `sj-ui-design-system`, `engineering-standards`, `self-verification` |
-| PrimeNG templates such as `p-table`, `p-dropdown`, `pTooltip`, or `pi pi-*` icon classes | `sj-ui-design-system`, `jouletrack-angular`; migrate new icons toward Boxicons where appropriate |
+| PrimeNG templates such as `p-table`, `p-dropdown`, `pTooltip`, or PrimeIcons CSS classes (`pi pi-*`) | `sj-ui-design-system`, `jouletrack-angular`; migrate new icons toward Boxicons where appropriate |
 | Sails app files: `api/controllers`, `api/services`, `api/models`, `config/routes.js` | `prompt-harness`, `backend-knowledge-base`, `dejoule-rbac`, `engineering-standards` |
 | API/service generation, CRUD, DTOs, repositories, migrations | `prompt-harness`, `api-service-generator`, `backend-implementation-planner`, `database-query-optimizer` |
 | Kubernetes manifests, `deployment.yaml`, `service.yaml`, `hpa.yaml`, `pdb.yaml`, `CronJob` | `sj-k8s-knowledge-base`, `devops-deployment-planner`, `self-verification` |
@@ -74,6 +75,7 @@ When inspecting a repo, use code signals to select the top skills before plannin
 | RBAC/auth/JWT/MFA/policies/frontend guards | `dejoule-rbac`, `dejoule-authentication`, `security-review`, `code-reviewer` |
 | Kafka/MQTT/Influx/IoT consumers or telemetry pipelines | `iot-architecture`, `kafka-patterns`, `mqtt-patterns`, `influxdb-patterns`, `engineering-standards` |
 | LLM/RAG/agent tools, Bedrock, tool registries, evals | `agent-tool-design`, `prompt-engineering`, `rag-retrieval`, `llm-eval-guardrails`, `lumen-knowledge-base` |
+| Pi.dev / Pi coding-agent setup, `pi` CLI, skills, extensions, packages, prompt templates, RPC/SDK/JSON/print modes | `pi-coding-agent`, `agent-planning-harness`, `agent-orchestration`, `prompt-engineering`, `self-verification` |
 | Bug fix, incident, flaky test, production regression | `root-cause-analyzer`, `bug-postmortem-learning`, `code-reviewer`, `tdd-workflow` |
 | Large cross-file task or unclear ownership | `agent-planning-harness`, `agentic-engineering`, `agent-orchestration`, `agent-context-manager` |
 
