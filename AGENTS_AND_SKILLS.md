@@ -62,7 +62,7 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | Skill | What it does (when to use it) |
 |-------|-------------------------------|
 | **advanced-ai-workflow** | HyperBrain's default high-efficiency AI engineering workflow. |
-| **atif-coding-style** | Use when writing, reviewing, planning, or refactoring code that should match Atif/itsatif's engineering style in SmartJoules JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, |
+| **dejoule-coding** | Use when writing, reviewing, planning, or refactoring code that should match DeJoule/SmartJoules engineering style in JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, |
 | **brick** | Use when answering any Brick Schema or ontology-modeling question: whether a class/predicate is valid, what points belong on equipment, how to model a relationship, or how to validate RDF. |
 | **bug-postmortem-learning** | Use after a bug, regression, outage, incident, flaky test, production issue, PR fix, hotfix, or debugging session is solved or substantially understood. |
 | **cpa-health** | Holistic health audit of CPA (Chiller Plant Automation) and the full IoT stack — sensors, PostgreSQL, CPA runtime, InfluxDB, commands, BMS. |
@@ -116,4 +116,3 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | **tdd-workflow** | Use this skill when writing new features, fixing bugs, or refactoring code. |
 | **ui-ux-design** | UI/UX design rules and patterns for Angular applications. |
 | **vue-patterns** | Vue.js development patterns and conventions for DeJoule frontend development. |
-
