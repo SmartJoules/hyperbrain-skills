@@ -12,12 +12,12 @@ generated `AGENTS.md` and opened on demand.
 
 ### 1A. Claude Code (recommended path)
 
-The installer copies each skill into its own folder under `~/.claude/skills/`,
-which is exactly what Claude Code expects.
+The installer copies each skill into the assistant's configured skills directory,
+with one folder per skill.
 
 ```bash
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-cd /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills
+cd hyperbrain-skills
 ./install.sh
 
 # Restart Claude Code — skills are immediately available
@@ -25,15 +25,16 @@ cd /tmp/hyperbrain-skills
 
 **Manual (per-skill copy).** Each skill is a directory with a `SKILL.md`; Claude Code
 registers it by the `name` in the frontmatter and needs one folder per skill. Do **not**
-clone the repo straight into `~/.claude/skills`, and do **not** `cp -r repo/* ...`
+clone the repo straight into the assistant skills directory, and do **not** `cp -r repo/* ...`
 (that copies top-level docs and `.git` as junk):
 
 ```bash
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-mkdir -p ~/.claude/skills
-find /tmp/hyperbrain-skills -name SKILL.md -not -path '*/.git/*' | while read -r f; do
+# Run from the hyperbrain-skills repo root.
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+mkdir -p "$ASSISTANT_SKILLS_DIR"
+find . -name SKILL.md -not -path '*/.git/*' | while read -r f; do
   d="$(dirname "$f")"
-  cp -r "$d" ~/.claude/skills/"$(basename "$d")"
+  cp -R "$d" "$ASSISTANT_SKILLS_DIR/$(basename "$d")"
 done
 # Restart Claude Code
 ```
@@ -41,19 +42,18 @@ done
 ### 1B. Pi (pi.dev)
 
 Pi uses the **same `SKILL.md` format as Claude Code** (a directory per skill with
-`name` + `description` frontmatter), discovered under `~/.pi/agent/skills/`. So every
+`name` + `description` frontmatter), discovered through Pi's skills directory. So every
 skill works in Pi unchanged.
 
 ```bash
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-cd /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills
+cd hyperbrain-skills
 ./install.sh --assistant pi
 ```
 
 Skills load automatically (Pi advertises available skills in its system prompt) or on
-demand via `/skill:<name>`. A skill's `bin/` CLI installs to `~/.local/bin`; slash
-`commands/` install to `~/.pi/agent/commands/`. To install one skill by hand:
-`cp -r <skill> ~/.pi/agent/skills/<skill>`.
+demand via `/skill:<name>`. A skill's `bin/` CLI and slash commands are installed
+by the installer for the selected assistant.
 
 ### 1C. Codex / Cursor / Copilot
 
@@ -62,8 +62,7 @@ These have no native `SKILL.md` registry, so the installer puts the skills under
 
 ```bash
 ./install.sh --assistant codex     # or: cursor | copilot
-# Then point the agent at the generated AGENTS.md, e.g.:
-cp ~/.codex/skills/AGENTS.md /path/to/your/repo/AGENTS.md
+# Then point the agent at the generated AGENTS.md from the selected install.
 ```
 
 The generated `AGENTS.md` lists every skill with its description and bakes in the
@@ -73,15 +72,15 @@ for the task at hand.
 ### 1D. Update / re-install
 
 Re-run `./install.sh` (it backs up the existing skills first).
-Default install dir per assistant: `~/.claude/skills`, `~/.pi/agent/skills`,
-`~/.cursor/skills`, `~/.copilot/skills`, `~/.codex/skills`. Override with `--dir`.
+Each assistant has its own default skills directory. Override it with `--dir`.
 Skip backup with `--skip-backup`.
 
 ### 1E. Verify it worked
 
 ```bash
-ls ~/.claude/skills        # each skill is its own folder containing SKILL.md
-ls ~/.claude/skills/engineering-standards/SKILL.md
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+ls "$ASSISTANT_SKILLS_DIR"        # each skill is its own folder containing SKILL.md
+ls "$ASSISTANT_SKILLS_DIR/engineering-standards/SKILL.md"
 ```
 
 In Claude Code, ask something matching a skill (e.g. "scaffold a new endpoint in
@@ -235,7 +234,7 @@ The lever isn't "use a smaller model" — it's **read less into context and offl
 
 1. **Retrieve, don't read.** Pull *precomputed, summarized* context first — `graphify-out/GRAPH_REPORT.md` ([[graphify-integration]]), `ai-context/*`, a repo's local KB ([[local-kb]]), and the relevant hyperbrain KB skill — instead of opening source "to understand". Summaries are 10–100× cheaper than files.
 2. **Targeted reads only.** grep for the symbol/route/class and read the matching lines + a small window; read the one function you'll change, not the 800-line file. Full-file read is a last resort.
-3. **Set a context budget per phase** and **summarize-and-discard**: after reading something large, write a 3–5 line note (what it does, the contract, the gotcha) and drop the source from context. Compact at phase boundaries. Avoid the last ~20% of the window for heavy multi-file work — decompose instead.
+3. **Set a context budget per phase** and **summarize-and-discard**: after reading something large, write a 3–5 line note (what it does, the contract, the gotcha) and drop the source from context. Compact at phase boundaries. Avoid the final 20% of the window for heavy multi-file work — decompose instead.
 4. **Decompose + scope** (Part 4): total tokens scale with **#sub-tasks, not files × tasks**, because each agent holds only its slice. This is the biggest structural saving on large work.
 5. **Right-size the model** (tokensmax tiers / model routing): cheap model for classification/lookups/mechanical edits, strong only for hard reasoning/verification. Don't run Opus on a rename.
 6. **MCP on demand** ([[mcp-on-demand]]): enable a heavy MCP server only for the step that needs it; don't hold them all open.
