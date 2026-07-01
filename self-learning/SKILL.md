@@ -924,6 +924,18 @@ function isLearningEnabled(): boolean {
 
 ---
 
+## Recent Captured Learnings
+
+### 2026-07-01 - jt-api-v2 PR Feedback Handling
+
+- User prefers review feedback to be fixed directly in the same PR branch, then pushed, with focused tests rerun.
+- For `jt-api-v2`, reviewer feedback should be translated into repo-native placement: validators in `api/utils/<domain>/inputValidation*.js`, reusable builders/helpers in `api/utils/<domain>/utils*.js`, business orchestration in services, and thin controllers.
+- When a reviewer asks to replace a boolean mode like `apply`, use explicit operation names (`debug`, `update`) in the API contract.
+- Keep batch API computation deterministic and efficient by pre-indexing work items, assembling response slots in request order, and returning a structured summary without leaking internal indexes.
+- After fixing PR feedback, persist reusable lessons into the relevant HyperBrain memory and reviewer-agent skills.
+
+---
+
 ## 🎯 Summary
 
 **Self-Learning System:**

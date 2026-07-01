@@ -41,6 +41,16 @@ Lead with findings. Prioritize bugs and production risks over style. Cite file a
 
 Apply `engineering-standards` for non-negotiable coding rules.
 
+### DeJoule jt-api-v2 Review Checks
+
+When reviewing `jt-api-v2` Sails/Waterline changes, also check:
+
+- Domain validators live under `api/utils/<domain>/inputValidation*.js`; reusable builders/helpers live under `api/utils/<domain>/utils*.js`; service files should not grow ad hoc validator/helper blocks unless they are private to one service behavior.
+- Recovery or restore APIs should expose explicit operation modes such as `debug` and `update`, not ambiguous booleans such as `apply`, when the caller must choose preview versus mutation.
+- Event-driven audit/log emitters should match the repo contract. If the emitter service owns async error handling, controllers should not await/catch every emit just to duplicate handling.
+- Services should not log full IoT/config payloads unless there is an explicit operational reason; payload dumps can be noisy and may leak sensitive config.
+- Batch APIs should pre-index work items, avoid repeated `indexOf` or post-hoc sorting after concurrent pushes, return a clear summary, and strip internal ordering/debug fields from API responses.
+
 ---
 
 ## Output Format
