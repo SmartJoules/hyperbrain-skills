@@ -57,6 +57,13 @@
     padding:22px 24px;overflow:auto;font:13.5px/1.7 ui-monospace,"SF Mono",Menlo,monospace;color:#cfe4e6;margin:0}
   pre .c{color:var(--faint)}
   pre .k{color:var(--teal)}
+  .cmd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+  .cmd{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .cmd h3{display:flex;align-items:center;gap:10px;margin:0;padding:18px 20px;border-bottom:1px solid var(--line);
+    background:var(--panel-2);font-size:15px}
+  .cmd h3 i{color:var(--teal);font-size:19px}
+  .cmd pre{border:none;border-radius:0;background:#071619;padding:18px 20px;font-size:12.5px;max-height:380px}
+  .cmd.wide{grid-column:1/-1}
   .pills{margin-top:24px;display:flex;flex-wrap:wrap;gap:10px}
   .pill{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line-2);
     border-radius:100px;padding:8px 15px;font-size:13.5px;color:var(--ink)}
@@ -207,6 +214,224 @@ Fleet (CLI) : <span class="k">/tokensmax</span> build the comfort-index widget e
         <div class="tags"><span class="tag">root-cause-analyzer</span><span class="tag">self-learning</span><span class="tag">local-kb</span></div></div></div>
     </div>
     <p class="note">Net effect: the orchestrator holds a small plan and structured results — not the API layer, the query engine and the dashboard module all at once. Big feature, bounded context, consistent output.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">workflow commands</p>
+    <h2>Copy-paste prompts for the agentic workflow</h2>
+    <p class="sub">Use these prompts in Codex, Pi, Claude Code, Cursor, Copilot, or any HyperBrain-enabled agent. The full markdown version lives in <a href="AGENTIC_WORKFLOW_COMMANDS.md">docs/AGENTIC_WORKFLOW_COMMANDS.md</a>.</p>
+    <div class="cmd-grid">
+      <div class="cmd">
+        <h3><i class="ti ti-download" aria-hidden="true"></i>Update and install</h3>
+<pre>cd /Users/atif-salafi/Desktop/workspace/office-space/hyperbrain-skills
+git pull origin main
+./install.sh --assistant codex
+
+./install.sh --assistant claude
+./install.sh --assistant cursor
+./install.sh --assistant copilot</pre>
+      </div>
+
+      <div class="cmd wide">
+        <h3><i class="ti ti-brain" aria-hidden="true"></i>Default agentic workflow</h3>
+<pre>Use skill-loading-runtime, model-selection-runtime, production-safety-guards, advanced-ai-workflow, agent-planning-harness, prompt-harness, and self-verification.
+
+Goal:
+&lt;your task&gt;
+
+Load skills like Pi:
+1. Scan skill frontmatter first.
+2. Rank skills by user intent, repo signals, and risk.
+3. Load only selected SKILL.md files.
+4. Select the smallest safe model tier: fast, balanced, deep, or specialist.
+5. Load production-safety-guards for production/destructive/customer-data work.
+6. Do not run destructive delete/drop/truncate/flush/broad-update commands as an agent; warn and draft dry-run/runbooks only.
+7. Load references/scripts/assets only on demand.
+8. Plan, execute, verify, and summarize.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-shield-lock" aria-hidden="true"></i>Production safety</h3>
+<pre>Use production-safety-guards, model-selection-runtime, and self-verification.
+
+Task:
+&lt;production or destructive task&gt;
+
+Rules:
+- Do not execute DELETE, DROP, TRUNCATE, FLUSH, broad UPDATE, graph DELETE, Kubernetes/cloud delete, or irreversible control commands.
+- Warn the user three times: destructive risk, blast radius, and agent non-execution.
+- Provide read-only preview/dry-run first.
+- If still needed, draft only a DO NOT RUN WITHOUT HUMAN APPROVAL runbook with backup, rollback, scope, ticket, and two-person review.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-terminal-2" aria-hidden="true"></i>Pi-style coding agent</h3>
+<pre>Use pi-coding-agent, skill-loading-runtime, and model-selection-runtime.
+
+Build or run a Pi-style coding agent workflow for this repo:
+- Read AGENTS.md and README first.
+- Scan HyperBrain skill frontmatter.
+- Select the smallest useful skill set.
+- Select the smallest safe model tier and escalation policy.
+- Use agent-planning-harness before coding.
+- Use self-verification before final output.
+- Report selected skills, changed files, and checks run.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-users-group" aria-hidden="true"></i>Multi-agent execution</h3>
+<pre>Use skill-loading-runtime, model-selection-runtime, agent-planning-harness, agent-orchestration, agent-fleet-runner, agent-context-manager, agent-delegation-contracts, agent-integration-reviewer, and self-verification.
+
+Goal:
+&lt;large task&gt;
+
+Create worker context packets, assign agents, select model tiers per worker, define acceptance criteria, run verification, and merge outputs safely.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-adjustments" aria-hidden="true"></i>Model selection</h3>
+<pre>Use model-selection-runtime and skill-loading-runtime.
+
+Task:
+&lt;task&gt;
+
+Select the smallest safe model tier:
+- fast for search, summaries, formatting, and mechanical changes.
+- balanced for bounded implementation, tests, and focused reviews.
+- deep for architecture, security, RBAC, deployments, migrations, production RCA, or ambiguous debugging.
+- specialist for long-context, graph/RAG, browser/vision, or tool-heavy workflows.
+
+Return the tier, score, rationale, and escalation policy before execution.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-cpu" aria-hidden="true"></i>Inference engineering</h3>
+<pre>Use inference-engineering, model-selection-runtime, prompt-engineering, llm-eval-guardrails, agent-tool-design, production-safety-guards, and self-verification.
+
+Task:
+&lt;inference task&gt;
+
+Define the inference contract:
+- input, output, model, tool, safety, and eval contracts
+- model tier, prompt/model version, timeout, retry, fallback, and cost budget
+- structured output validation and safe parsing
+- streaming/batching/caching behavior
+- telemetry: trace ID, model tier, tokens, latency, cost, validation status, fallback
+- eval gate and canary/rollback plan</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-database-cog" aria-hidden="true"></i>Data modeling</h3>
+<pre>Use data-modeling-algorithm, database-patterns, database-query-optimizer, production-safety-guards, and self-verification.
+
+Task:
+&lt;data modeling task&gt;
+
+Create the best SQL/NoSQL model:
+- list entities, ownership, lifecycle, and invariants
+- list access patterns with filters, sort, cardinality, frequency, and latency SLO
+- choose SQL vs DynamoDB vs MongoDB vs time-series vs graph store
+- design relationships, constraints, indexes, composite keys, GSIs/LSIs, projections, and tenant/site scope
+- include migration/backfill/rollback plan and verification queries
+- explain trade-offs, hot partition risks, unbounded arrays, full scans, N+1 risks, and write amplification</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-bug" aria-hidden="true"></i>Bug postmortem learning</h3>
+<pre>Use root-cause-analyzer, bug-postmortem-learning, self-learning, and long-term-memory.
+
+Analyze this bug:
+&lt;bug details&gt;
+
+Find root cause, fix pattern, regression test, and ask before ingesting reusable KB.</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-affiliate" aria-hidden="true"></i>Ontology, Neptune, Brick</h3>
+<pre>Use ontology-service-knowledge-base, neptune-graph, brick, skill-loading-runtime, and self-verification.
+
+Task:
+&lt;ontology / SPARQL / Neptune / Brick schema task&gt;</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-cloud-up" aria-hidden="true"></i>Kubernetes deployments</h3>
+<pre>Use sj-k8s-knowledge-base, devops-deployment-planner, deployment-patterns, skill-loading-runtime, and self-verification.
+
+Task:
+&lt;new service deployment / manifest / Helm / EKS task&gt;</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-lock-access" aria-hidden="true"></i>RBAC and authentication</h3>
+<pre>Use dejoule-rbac, dejoule-authentication, security-review, api-design, skill-loading-runtime, and self-verification.
+
+Task:
+&lt;API or UI RBAC/auth task&gt;</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-layout-dashboard" aria-hidden="true"></i>JouleTRACK frontend</h3>
+<pre>Use jouletrack-angular, sj-ui-design-system, frontend-telemetry, skill-loading-runtime, and self-verification.
+
+Task:
+&lt;PrimeNG / Angular / UI task&gt;
+
+Rules:
+- Follow PrimeNG.
+- Use Boxicons.
+- Add Google Analytics tracking for every frontend interaction.</pre>
+      </div>
+
+      <div class="cmd wide">
+        <h3><i class="ti ti-json" aria-hidden="true"></i>Skill loader output contract</h3>
+<pre>{
+  "selectedSkills": [
+    {
+      "name": "skill-loading-runtime",
+      "reason": "Needed for Pi-like progressive skill loading",
+      "loaded": true,
+      "resources": []
+    }
+  ],
+  "modelSelection": {
+    "tier": "balanced",
+    "reason": "Medium implementation with deterministic verification",
+    "score": 72,
+    "escalationPolicy": "Escalate to deep if verification fails twice or auth/RBAC code is touched"
+  },
+  "rejectedSkills": [],
+  "contextBudget": {
+    "estimatedTokens": 0,
+    "dropped": []
+  },
+  "nextStep": "plan"
+}</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-checkup-list" aria-hidden="true"></i>Verification commands</h3>
+<pre>git status --short --branch
+git diff --check
+node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package ok')"
+find . -maxdepth 2 -name SKILL.md -print
+rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|advanced-ai-workflow|agent-planning-harness|pi-coding-agent" .
+python3 /Users/atif-salafi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skill-loading-runtime</pre>
+      </div>
+
+      <div class="cmd">
+        <h3><i class="ti ti-flag-check" aria-hidden="true"></i>Final report shape</h3>
+<pre>Final response:
+- Selected skills
+- Selected model tier and escalation policy
+- Changed files
+- Tests/checks run
+- Risks or follow-ups
+- Any reusable KB learned, and whether ingestion needs approval</pre>
+      </div>
+    </div>
   </div>
 </section>
 
