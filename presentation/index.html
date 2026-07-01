@@ -145,9 +145,9 @@
     <h2>Install once, then call by name</h2>
     <p class="sub">One install per tool. Skills auto-load by relevance, or you invoke them explicitly.</p>
 <pre><span class="c"># install for your agent (per tool)</span>
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hb &amp;&amp; cd /tmp/hb
-<span class="k">./install.sh</span>                 <span class="c"># Claude Code  -> ~/.claude/skills/</span>
-<span class="k">./install.sh</span> --assistant pi  <span class="c"># Pi (pi.dev)  -> ~/.pi/agent/skills/</span>
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills &amp;&amp; cd hyperbrain-skills
+<span class="k">./install.sh</span>                 <span class="c"># Claude Code</span>
+<span class="k">./install.sh</span> --assistant pi  <span class="c"># Pi (pi.dev)</span>
                               <span class="c"># also: --assistant codex | cursor | copilot</span>
 
 <span class="c"># use it</span>
