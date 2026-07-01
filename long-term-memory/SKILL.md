@@ -35,7 +35,7 @@ Choose the smallest durable place:
 
 - Repo-local KB: `ai-context/*.md`, `BUG_KB.md`, `GRAPH_REPORT.md`, or project docs when present.
 - HyperBrain skill: when the rule is broadly reusable across SmartJoules/DeJoule projects.
-- Domain KB skill: `sj-k8s-knowledge-base`, `ontology-service-knowledge-base`, `dejoule-rbac`, `jouletrack-angular`, `atif-coding-style`, etc.
+- Domain KB skill: `sj-k8s-knowledge-base`, `ontology-service-knowledge-base`, `dejoule-rbac`, `jouletrack-angular`, `dejoule-coding`, etc.
 - User memory: only for stable user/team preferences and with consent when sensitive.
 
 ## Save Protocol
