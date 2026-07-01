@@ -115,6 +115,7 @@ Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for
 3. **Long-Term Memory** - Decides what durable engineering knowledge should be saved, where to store it, how to avoid secrets/PII/noise, and how to retrieve verified memory before future planning.
 4. **Self Verification** - Mandatory final self-check before completion: latest request alignment, diff review, tests/builds/parsers, source evidence, security/privacy, conventions, and residual-risk reporting.
 5. **Self Learning** - Captures user preferences, repo patterns, bug-fix learnings, review feedback, and successful workflows so future HyperBrain runs start with better context.
+6. **LLM Wiki** - Karpathy-inspired compounding markdown wiki workflow for raw-source ingestion, durable interlinked KB pages, index/log maintenance, linting, and query synthesis.
 
 ### Core Development Skills
 6. **Engineering Standards** - Mandatory OOP+SOLID, design patterns (strategy/factory/builder/observer/decorator), DRY/KISS, minimal diffs, resilience (no leaks/unhandled promises, error/loading/empty/partial states), query optimization, caching with eviction, and Kafka/Redis connection standards (heartbeat, offset, lag, singleton, retry)
@@ -126,6 +127,7 @@ Use [`docs/AGENTIC_WORKFLOW_COMMANDS.md`](docs/AGENTIC_WORKFLOW_COMMANDS.md) for
    - **Agent Context Manager** - Build minimal context packets for each agent, manage token budgets, prevent leakage, summarize worker outputs, and keep orchestration state compact across multi-agent runs.
    - **Agent Delegation Contracts** - Write precise task briefs for planning, research, implementation, QA, review, and RCA agents with scope, permissions, acceptance criteria, evidence requirements, output schemas, and stop conditions.
    - **Agent Integration Reviewer** - Merge and verify multi-agent outputs: reconcile contracts, detect conflicting edits, review diffs, run final checks, and produce release-readiness handoffs.
+   - **Imported Superpowers Skills** - Full `obra/superpowers` skill set for brainstorming, writing plans, executing plans, subagent-driven development, dispatching parallel agents, TDD, systematic debugging, code-review request/reception, worktrees, completion verification, branch finishing, and writing skills.
    - **Pi Coding Agent** - Pi.dev workflow guide for building and using Pi terminal coding agents: skills, extensions, packages, prompt templates, AGENTS.md context, compaction, print/JSON/RPC/SDK modes, custom agent automation, and HyperBrain planning/verification integration.
    - **Skill Loading Runtime** - Pi-like progressive-disclosure loader for HyperBrain skills: scan `SKILL.md` frontmatter first, rank skills from user intent and repo signals, load selected skill bodies, then load references/scripts/assets only on demand with context-budget and verification rules.
    - **Model Selection Runtime** - Pi-like model/tier selector for Codex, Pi.dev, tokensmax, Claude, SDK/RPC agents, and multi-agent fleets: score complexity, risk, context, tools, latency, cost, and verification to route work to fast, balanced, deep, or specialist models with escalation/downgrade rules.

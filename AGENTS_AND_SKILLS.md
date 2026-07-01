@@ -2,14 +2,14 @@
 
 > Auto-generated from each skill's `SKILL.md` frontmatter by `scripts/gen-agents-doc.js`.
 > Do not hand-edit — re-run the generator after adding/removing a skill.
-> Total: **86** skills (24 agents/workers · 7 knowledge bases · 55 reference/pattern skills).
+> Total: **101** skills (24 agents/workers · 7 knowledge bases · 70 reference/pattern skills).
 
 ## How to call them
 
 A skill = a directory with `SKILL.md` (`name` + `description`). Skills load **automatically** when your task matches the description; you can also invoke explicitly:
 
-- **Claude Code** — name the skill in your ask ("use the *code-reviewer* skill on this diff") or via the Skill tool. Skills install under `~/.claude/skills/` (`./install.sh`).
-- **Pi (pi.dev)** — `/skill:<name>` (e.g. `/skill:design-doc-review-agent <doc>`); args after the command are passed to the skill. Install via `./install.sh --assistant pi` → `~/.pi/agent/skills/`.
+- **Claude Code** — name the skill in your ask ("use the *code-reviewer* skill on this diff") or via the Skill tool. Install from this repo with `./install.sh`.
+- **Pi (pi.dev)** — `/skill:<name>` (e.g. `/skill:design-doc-review-agent <doc>`); args after the command are passed to the skill. Install from this repo with `./install.sh --assistant pi`.
 - **Codex / Cursor / Copilot** — no native registry; `./install.sh --assistant codex` generates an `AGENTS.md` index they read, then open `skills/<name>/SKILL.md` for the task.
 - **CLI agents (tokensmax)** — the `tokensmax` skill ships a `tokensmax` CLI to dispatch work across Claude/Codex/GLM seats (`/tokensmax <task>`).
 - **CI** — `design-doc-reviewer` ships a deterministic gate + `anthropics/claude-code-action` workflow that runs the review agent on PRs.
@@ -62,7 +62,7 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | Skill | What it does (when to use it) |
 |-------|-------------------------------|
 | **advanced-ai-workflow** | HyperBrain's default high-efficiency AI engineering workflow. |
-| **dejoule-coding** | Use when writing, reviewing, planning, or refactoring code that should match DeJoule/SmartJoules engineering style in JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, |
+| **brainstorming** | "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. |
 | **brick** | Use when answering any Brick Schema or ontology-modeling question: whether a class/predicate is valid, what points belong on equipment, how to model a relationship, or how to validate RDF. |
 | **bug-postmortem-learning** | Use after a bug, regression, outage, incident, flaky test, production issue, PR fix, hotfix, or debugging session is solved or substantially understood. |
 | **cpa-health** | Holistic health audit of CPA (Chiller Plant Automation) and the full IoT stack — sensors, PostgreSQL, CPA runtime, InfluxDB, commands, BMS. |
@@ -70,11 +70,15 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | **data-modeling-algorithm** | Use when designing or reviewing database models, entities, tables, collections, DynamoDB keys, GSIs/LSIs, MongoDB schemas, PostgreSQL/MySQL schemas, indexes, relationships, constraints, migrations, te |
 | **database-patterns** | Database design patterns and conventions for DeJoule backend development. |
 | **dejoule-authentication** | DeJoule/JouleTRACK authentication best-practice guide. |
+| **dejoule-coding** | Use when writing, reviewing, planning, or refactoring code that should match DeJoule/SmartJoules engineering style in JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, Sentry |
 | **dejoule-geofencing-alerts** | Geofencing and spatial-context alerting guide for DeJoule/SmartJoules. |
 | **dejoule-onpremise** | Use when working on SmartJoules/DeJoule on-premise, hybrid cloud-on-prem sync, office-space on-prem repositories, SQS FIFO sync routing, cloud-to-onprem config sync, onprem-to-cloud bridge, MSK-to-IoT |
 | **dejoule-rbac** | DeJoule/JouleTRACK RBAC knowledge base and implementation guide. |
+| **dispatching-parallel-agents** | Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies |
 | **engineering-standards** | Mandatory engineering standards for writing ANY code. |
+| **executing-plans** | Use when you have a written implementation plan to execute in a separate session with review checkpoints |
 | **expert-personas** | Adopt the right expert persona for the task at hand (PM, design engineer, backend/frontend engineer, IoT architect, SRE, QA, technical writer). |
+| **finishing-a-development-branch** | Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup |
 | **go-patterns** | Go backend patterns and conventions for DeJoule services. |
 | **graphify-integration** | Transform a codebase into a queryable knowledge graph using AST-based extraction and semantic analysis. |
 | **inference-engineering** | Use when designing, building, reviewing, or optimizing production inference systems for LLMs, ML models, RAG, agents, Bedrock/OpenAI/Claude/Qwen providers, streaming chat, structured output, tool call |
@@ -86,6 +90,7 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | **jouletrack-onboarding** | Team onboarding guide for JouleTRACK development. |
 | **kafka-patterns** | Kafka stream-processing patterns and conventions for DeJoule IoT data pipelines. |
 | **llm-eval-guardrails** | Evaluate and guard production LLM/AI features. |
+| **llm-wiki** | Use when creating, maintaining, or querying an LLM-maintained markdown wiki or compounding knowledge base from raw sources, inspired by Karpathy's LLM Wiki pattern. |
 | **local-kb** | Generate a local knowledge base for any repository using Graphify to reduce token consumption and provide instant context. |
 | **long-term-memory** | Use when deciding what engineering knowledge should persist beyond the current chat or task: durable user preferences, repo conventions, architecture decisions, bug-fix learnings, deployment patterns, |
 | **mcp-installer** | One-command installation of all MCP servers from the HyperBrain repository. |
@@ -106,13 +111,23 @@ Agents compose: a planner → implementer → reviewer chain is normal. See `USA
 | **qa-automation** | QA automation knowledge base for automated testing. |
 | **rag-retrieval** | Production Retrieval-Augmented Generation patterns. |
 | **react-patterns** | React development patterns and conventions for DeJoule frontend development. |
+| **receiving-code-review** | Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative |
+| **requesting-code-review** | Use when completing tasks, implementing major features, or before merging to verify work meets requirements |
 | **self-learning** | Continuously capture user preferences, coding style, successful interaction patterns, bug-fix patterns, review feedback, and reusable project knowledge to improve future AI responses. |
 | **self-verification** | Use before finalizing any implementation, code review, plan, KB update, architecture decision, deployment manifest, data query, UI change, agent output, or bug fix. |
 | **sj-ui-design-system** | > |
 | **skill-loading-runtime** | Use when designing or implementing Pi-like skill loading for Codex, Pi.dev, custom coding agents, CLIs, SDK/RPC agents, or orchestration systems. |
 | **smartjoules-influxdb** | How to query SmartJoules InfluxDB databases — TSDB (AWS Timestream, raw sensor data) and IoT InfluxDB (processed data). |
 | **state-management** | State management patterns for React, Vue, and Angular (Redux, Zustand, Pinia, NgRx). |
+| **subagent-driven-development** | Use when executing implementation plans with independent tasks in the current session |
 | **superpowers-brainstorm** | Advanced brainstorming and planning framework for AI agents. |
+| **systematic-debugging** | Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes |
 | **tdd-workflow** | Use this skill when writing new features, fixing bugs, or refactoring code. |
+| **test-driven-development** | Use when implementing any feature or bugfix, before writing implementation code |
 | **ui-ux-design** | UI/UX design rules and patterns for Angular applications. |
+| **using-git-worktrees** | Use when starting feature work that needs isolation from current workspace or before executing implementation plans - ensures an isolated workspace exists via native tools or git worktree fallback |
+| **using-superpowers** | Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying questions |
+| **verification-before-completion** | Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence |
 | **vue-patterns** | Vue.js development patterns and conventions for DeJoule frontend development. |
+| **writing-plans** | Use when you have a spec or requirements for a multi-step task, before touching code |
+| **writing-skills** | Use when creating new skills, editing existing skills, or verifying skills work before deployment |
