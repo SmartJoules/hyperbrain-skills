@@ -248,12 +248,6 @@ find . -maxdepth 2 -name SKILL.md -print
 rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|advanced-ai-workflow|agent-planning-harness|pi-coding-agent" .
 ```
 
-If the official skill validator is available with PyYAML installed:
-
-```bash
-python3 "${HOME}/.codex/skills/.system/skill-creator/scripts/quick_validate.py" skill-loading-runtime
-```
-
 ## Recommended Completion Report
 
 Ask the agent to finish with:
