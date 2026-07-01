@@ -7,7 +7,7 @@ This guide shows how to use the HyperBrain agentic workflow, including Pi-like s
 Run these from the `hyperbrain-skills` repo:
 
 ```bash
-cd /Users/atif-salafi/Desktop/workspace/office-space/hyperbrain-skills
+# from the hyperbrain-skills repo root
 git pull origin main
 ./install.sh --assistant codex
 ```
@@ -251,7 +251,7 @@ rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|ad
 If the official skill validator is available with PyYAML installed:
 
 ```bash
-python3 /Users/atif-salafi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skill-loading-runtime
+python3 "${HOME}/.codex/skills/.system/skill-creator/scripts/quick_validate.py" skill-loading-runtime
 ```
 
 ## Recommended Completion Report
