@@ -10,8 +10,8 @@
 
 ```bash
 # Clone and run installer
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-cd /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills
+cd hyperbrain-skills
 ./install.sh
 
 # Skills are now active! Restart your AI assistant.
@@ -20,20 +20,18 @@ cd /tmp/hyperbrain-skills
 ### Option 2: Manual Installation
 
 Each skill is a directory containing a `SKILL.md`, and Claude Code expects every
-skill as its own folder under `~/.claude/skills/`. Do **not** clone the repo
-directly into `~/.claude/skills` — that nests everything one level too deep and
+skill as its own folder under the assistant skills directory. Do **not** clone the repo
+directly into that directory — that nests everything one level too deep and
 adds the repo's top-level docs and `.git`. Instead, clone elsewhere and copy each
 skill directory:
 
 ```bash
-# Clone the repo to a temp location
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-
-# Copy every skill (each dir containing a SKILL.md) into ~/.claude/skills/
-mkdir -p ~/.claude/skills
-find /tmp/hyperbrain-skills -name SKILL.md -not -path '*/.git/*' | while read -r f; do
+# Run from the hyperbrain-skills repo root.
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+mkdir -p "$ASSISTANT_SKILLS_DIR"
+find . -name SKILL.md -not -path '*/.git/*' | while read -r f; do
   d="$(dirname "$f")"
-  cp -r "$d" ~/.claude/skills/"$(basename "$d")"
+  cp -R "$d" "$ASSISTANT_SKILLS_DIR/$(basename "$d")"
 done
 
 # Restart Claude Code — skills are automatically active
@@ -47,38 +45,38 @@ done
 ```bash
 ./install.sh --assistant claude
 ```
-**Install Location:** `~/.claude/skills/`
+**Install Location:** assistant default skills directory
 
 ### Pi (pi.dev)
 ```bash
 ./install.sh --assistant pi
 ```
-**Install Location:** `~/.pi/agent/skills/`
+**Install Location:** Pi default skills directory
 
 > Pi uses the **same skill format as Claude Code** — a `SKILL.md` per directory with
 > `name` + `description` frontmatter — and discovers directories containing `SKILL.md`
-> under `~/.pi/agent/skills/`. So every hyperbrain skill works in Pi unchanged. Skills
+> under Pi's default skills directory. So every hyperbrain skill works in Pi unchanged. Skills
 > load automatically (Pi lists available skills in its system prompt) or on demand via
-> `/skill:<name>`. Any skill that ships a `bin/` CLI goes to `~/.local/bin`; slash
-> `commands/` go to `~/.pi/agent/commands/`.
+> `/skill:<name>`. Any skill that ships a `bin/` CLI or slash commands is installed
+> by the installer for the selected assistant.
 
 ### Cursor AI
 ```bash
 ./install.sh --assistant cursor
 ```
-**Install Location:** `~/.cursor/skills/`
+**Install Location:** Cursor default skills directory
 
 ### GitHub Copilot
 ```bash
 ./install.sh --assistant copilot
 ```
-**Install Location:** `~/.copilot/skills/`
+**Install Location:** Copilot default skills directory
 
 ### OpenAI Codex
 ```bash
 ./install.sh --assistant codex
 ```
-**Install Location:** `~/.codex/skills/`
+**Install Location:** Codex default skills directory
 
 > **How Codex / Cursor / Copilot use these skills.** These agents have no native
 > `SKILL.md` registry (that auto-activation is Claude-Code-specific). The installer
@@ -87,7 +85,7 @@ done
 > description and bakes in the mandatory engineering standards. To use it:
 >
 > - **Codex** auto-reads an `AGENTS.md` from the working directory — copy the
->   generated `~/.codex/skills/AGENTS.md` to your repo root, or point Codex at it.
+>   generated `AGENTS.md` from the Codex skills install into your repo root, or point Codex at it.
 > - The agent opens the matching `skills/<name>/SKILL.md` for the task at hand.
 > - `engineering-standards` applies to every change.
 >
@@ -100,7 +98,7 @@ done
 
 ### Custom Installation Directory
 ```bash
-./install.sh --dir ~/my-custom-skills
+./install.sh --dir ./my-custom-skills
 ```
 
 ### Skip Backup
@@ -120,11 +118,8 @@ done
 ### Check Installation
 
 ```bash
-# Run activation helper
-~/.claude/activate-skills.sh
-
-# Or manually check
-ls -la ~/.claude/skills/
+# Run from the hyperbrain-skills repo root.
+./install.sh --assistant claude
 ```
 
 ### Expected Output
@@ -183,13 +178,9 @@ Installed Skills:
 
 ```bash
 # Pull latest changes
-cd ~/.claude/skills
 git pull origin main
 
 # Or re-run installer
-cd /tmp
-git clone https://github.com/SmartJoules/hyperbrain-skills.git
-cd hyperbrain-skills
 ./install.sh --skip-backup
 ```
 
@@ -199,10 +190,11 @@ cd hyperbrain-skills
 
 ```bash
 # Remove skills directory
-rm -rf ~/.claude/skills
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+rm -rf "$ASSISTANT_SKILLS_DIR"
 
 # Or keep backup
-mv ~/.claude/skills ~/.claude/skills.old
+mv "$ASSISTANT_SKILLS_DIR" "${ASSISTANT_SKILLS_DIR}.old"
 ```
 
 ---
@@ -226,32 +218,26 @@ mv ~/.claude/skills ~/.claude/skills.old
 
 2. **Check Installation Directory**
    ```bash
-   ls -la ~/.claude/skills/
+   : "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+   ls -la "$ASSISTANT_SKILLS_DIR"
    ```
 
 3. **Verify File Permissions**
    ```bash
-   chmod -R 755 ~/.claude/skills/
+   : "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+   chmod -R 755 "$ASSISTANT_SKILLS_DIR"
    ```
 
 4. **Clear AI Assistant Cache**
-   ```bash
-   # Claude Code
-   rm -rf ~/.claude/cache/
-
-   # Cursor
-   rm -rf ~/.cursor/cache/
-
-   # Copilot
-   rm -rf ~/.copilot/cache/
-   ```
+   Use the assistant's own cache-clear or restart flow.
 
 ### Conflicting Skills
 
 If you have existing skills:
 ```bash
 # Backup first
-cp -r ~/.claude/skills ~/.claude/skills.backup
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+cp -R "$ASSISTANT_SKILLS_DIR" "${ASSISTANT_SKILLS_DIR}.backup"
 
 # Reinstall
 ./install.sh
