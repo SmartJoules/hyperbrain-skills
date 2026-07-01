@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
 <style>
   :root{
     --bg:#0a1416; --bg-2:#0f1e21; --panel:#13262a; --panel-2:#162d31;
@@ -23,7 +24,7 @@
   .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .wrap{max-width:1060px;margin:0 auto;padding:0 28px}
   a{color:var(--teal);text-decoration:none}
-  section{padding:72px 0;border-top:1px solid var(--line)}
+  section{padding:72px 0;border-top:1px solid var(--line);scroll-margin-top:86px}
   .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);font-weight:500;margin:0 0 14px}
   h1{font-size:52px;line-height:1.05;font-weight:600;margin:0;letter-spacing:-.5px}
   h2{font-size:30px;font-weight:600;margin:0 0 10px;letter-spacing:-.3px}
@@ -32,6 +33,20 @@
   .sub{color:var(--muted);font-size:16px;margin:0 0 34px;max-width:680px}
   i.ti{line-height:1}
 
+  /* header */
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(10,20,22,.86);
+    border-bottom:1px solid rgba(44,74,80,.82);backdrop-filter:blur(14px)}
+  .topbar .wrap{height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+  .brand{display:inline-flex;align-items:center;gap:10px;color:var(--ink);font-weight:600;white-space:nowrap}
+  .brand i{color:var(--teal);font-size:22px}
+  .nav{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav a{display:inline-flex;align-items:center;height:36px;padding:0 12px;border:1px solid transparent;
+    border-radius:100px;color:var(--muted);font-size:13.5px;font-weight:500;white-space:nowrap;
+    transition:color .18s,background .18s,border-color .18s,transform .18s}
+  .nav a:hover,.nav a.active{color:var(--ink);background:var(--teal-soft);border-color:rgba(63,182,168,.28)}
+  .nav a:hover{transform:translateY(-1px)}
+
   /* hero */
   .hero{padding:96px 0 80px;border-top:none;
     background:radial-gradient(1100px 520px at 18% -10%, #12262a 0%, var(--bg) 60%)}
@@ -39,15 +54,18 @@
     border:1px solid var(--line-2);border-radius:100px;padding:7px 16px;font-size:13px;color:var(--muted);font-weight:500}
   .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--teal)}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:46px}
-  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;
+    animation:rise-in .55s ease both}
+  .stat:nth-child(2){animation-delay:.06s}.stat:nth-child(3){animation-delay:.12s}.stat:nth-child(4){animation-delay:.18s}
   .stat .n{font-size:40px;font-weight:600;color:var(--ink);letter-spacing:-1px;line-height:1}
   .stat .l{font-size:13.5px;color:var(--faint);margin-top:8px}
 
   /* cards */
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:18px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
-    padding:26px 24px;transition:border-color .18s,background .18s}
-  .card:hover{border-color:var(--line-2);background:var(--panel-2)}
+    padding:26px 24px;transition:border-color .18s,background .18s,transform .18s,box-shadow .18s}
+  .card:hover{border-color:var(--line-2);background:var(--panel-2);transform:translateY(-3px);
+    box-shadow:0 18px 42px rgba(0,0,0,.18)}
   .card .ic{width:42px;height:42px;border-radius:11px;background:var(--teal-soft);color:var(--teal);
     display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:16px}
   .card p{margin:0;color:var(--muted);font-size:14.5px}
@@ -58,7 +76,9 @@
   pre .c{color:var(--faint)}
   pre .k{color:var(--teal)}
   .cmd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
-  .cmd{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .cmd{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    transition:transform .18s,border-color .18s,box-shadow .18s}
+  .cmd:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 18px 42px rgba(0,0,0,.16)}
   .cmd h3{display:flex;align-items:center;gap:10px;margin:0;padding:18px 20px;border-bottom:1px solid var(--line);
     background:var(--panel-2);font-size:15px}
   .cmd h3 i{color:var(--teal);font-size:19px}
@@ -76,8 +96,9 @@
   .step{display:grid;grid-template-columns:48px 1fr;gap:22px;padding:14px 0;position:relative}
   .step .num{width:48px;height:48px;border-radius:50%;background:var(--bg-2);border:2px solid var(--teal);
     color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:18px;z-index:1}
-  .step .b{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px}
-  .step .b:hover{border-color:var(--line-2)}
+  .step .b{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;
+    transition:border-color .18s,transform .18s,background .18s}
+  .step .b:hover{border-color:var(--line-2);transform:translateX(4px);background:var(--panel-2)}
   .step .w{color:var(--muted);font-size:14.5px;margin:2px 0 12px}
   .tags{display:flex;flex-wrap:wrap;gap:7px}
   .tag{font:500 12.5px/1 var(--font);background:var(--amber-soft);color:var(--amber);
@@ -96,12 +117,40 @@
 
   footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--faint);font-size:13.5px}
   footer .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center}
+  .reveal{opacity:1;transform:none}
+  .js .reveal{opacity:0;transform:translateY(18px);transition:opacity .55s ease,transform .55s ease}
+  .js .reveal.visible{opacity:1;transform:translateY(0)}
+  @keyframes rise-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .reveal,.stat,.card,.cmd,.step .b,.nav a{animation:none;transition:none;transform:none}
+    .js .reveal{opacity:1}
+  }
+  @media(max-width:760px){
+    .topbar .wrap{height:auto;min-height:64px;align-items:flex-start;flex-direction:column;padding-top:12px;padding-bottom:12px;gap:10px}
+    .nav{width:100%;padding-bottom:2px}
+  }
   @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:38px}.hero{padding:72px 0 56px}}
 </style>
 </head>
 <body>
 <h2 class="sr-only">HyperBrain Skills — an AI agentic engineering platform: benefits, usage, and a complete SDLC flow example.</h2>
 
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="HyperBrain Skills home"><i class="ti ti-brain" aria-hidden="true"></i> HyperBrain</a>
+    <nav class="nav" aria-label="Page sections">
+      <a href="#overview">Overview</a>
+      <a href="#benefits">Benefits</a>
+      <a href="#usage">Usage</a>
+      <a href="#flow">Flow</a>
+      <a href="#commands">Commands</a>
+      <a href="#catalog">Catalog</a>
+    </nav>
+  </div>
+</header>
+
+<div id="top"></div>
 <header class="hero">
   <div class="wrap">
     <span class="chip"><span class="dot"></span> SmartJoules · internal engineering platform</span>
@@ -116,7 +165,7 @@
   </div>
 </header>
 
-<section>
+<section id="overview" class="reveal">
   <div class="wrap">
     <p class="eyebrow">what it is</p>
     <h2>A shared brain for your coding agents</h2>
@@ -130,7 +179,7 @@
   </div>
 </section>
 
-<section>
+<section id="benefits" class="reveal">
   <div class="wrap">
     <p class="eyebrow">benefits</p>
     <h2>Why it moves the needle</h2>
@@ -146,7 +195,7 @@
   </div>
 </section>
 
-<section>
+<section id="usage" class="reveal">
   <div class="wrap">
     <p class="eyebrow">how to use it</p>
     <h2>Install once, then call by name</h2>
@@ -171,7 +220,7 @@ Fleet (CLI) : <span class="k">/tokensmax</span> build the comfort-index widget e
   </div>
 </section>
 
-<section>
+<section id="flow" class="reveal">
   <div class="wrap">
     <p class="eyebrow">one complete SDLC flow</p>
     <h2>Add a comfort-index widget to JouleTRACK</h2>
@@ -217,7 +266,7 @@ Fleet (CLI) : <span class="k">/tokensmax</span> build the comfort-index widget e
   </div>
 </section>
 
-<section>
+<section id="commands" class="reveal">
   <div class="wrap">
     <p class="eyebrow">workflow commands</p>
     <h2>Copy-paste prompts for the agentic workflow</h2>
@@ -479,7 +528,7 @@ rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|ad
   </div>
 </section>
 
-<section>
+<section id="catalog" class="reveal">
   <div class="wrap">
     <p class="eyebrow">the catalog</p>
     <h2>101 skills, three kinds</h2>
@@ -502,5 +551,40 @@ rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|ad
     <p class="note">Open <code class="inl">presentation/index.html</code> in any browser. Stats reflect the repo at time of generation.</p>
   </div>
 </footer>
+<script>
+  const navLinks = Array.from(document.querySelectorAll('.nav a'));
+  const sections = navLinks
+    .map((link) => document.querySelector(link.getAttribute('href')))
+    .filter(Boolean);
+
+  const setActive = (id) => {
+    navLinks.forEach((link) => {
+      link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+    });
+  };
+
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.16 });
+
+    document.querySelectorAll('.reveal').forEach((el) => revealObserver.observe(el));
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) setActive(entry.target.id);
+      });
+    }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+
+    sections.forEach((section) => sectionObserver.observe(section));
+  } else {
+    document.querySelectorAll('.reveal').forEach((el) => el.classList.add('visible'));
+  }
+</script>
 </body>
 </html>
