@@ -1,11 +1,11 @@
 ---
-name: atif-coding-style
-description: Use when writing, reviewing, planning, or refactoring code that should match Atif/itsatif's engineering style in SmartJoules JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, Sentry-driven fixes, Angular/NgRx UI work, Sails/Waterline backend work, system design, LLD, tests, PR descriptions, and commit hygiene. Ground output in local repo patterns, Atif commit history, and existing architecture before coding.
+name: dejoule-coding
+description: Use when writing, reviewing, planning, or refactoring code that should match DeJoule/SmartJoules engineering style in JouleTRACK and jt-api-v2: small production bug fixes, PR feedback cleanups, Sentry-driven fixes, Angular/NgRx UI work, Sails/Waterline backend work, system design, LLD, tests, PR descriptions, and commit hygiene. Ground output in local repo patterns, relevant commit history, and existing architecture before coding.
 ---
 
-# Atif Coding Style
+# DeJoule Coding
 
-Write code the way Atif/itsatif tends to land production changes in `JouleTRACK` and `jt-api-v2`: narrow, repo-native, evidence-driven, test-backed, and easy for reviewers to trust.
+Write code in the DeJoule/SmartJoules production style used across `JouleTRACK` and `jt-api-v2`: narrow, repo-native, evidence-driven, test-backed, and easy for reviewers to trust.
 
 This skill is not "copy someone's formatting". It is an engineering operating style:
 
@@ -23,8 +23,8 @@ This skill is not "copy someone's formatting". It is an engineering operating st
 When time allows, refresh examples from local history before making broad claims:
 
 ```bash
-git -C /Users/atif-salafi/Desktop/workspace/office-space/JouleTRACK log --all --author='Atif\|atif\|itsatif' --date=short --pretty=format:'%h %ad %s' -n 40
-git -C /Users/atif-salafi/Desktop/workspace/office-space/jt-api-v2 log --all --author='Atif\|atif\|itsatif' --date=short --pretty=format:'%h %ad %s' -n 60
+git -C ../JouleTRACK log --all --date=short --pretty=format:'%h %ad %s' -n 40
+git -C ../jt-api-v2 log --all --date=short --pretty=format:'%h %ad %s' -n 60
 ```
 
 Useful sampled commits:
@@ -46,7 +46,7 @@ Do not freeze these examples as dogma. Use them as precedent for how to think.
 
 Start from the production symptom, stack trace, Sentry issue, user complaint, or broken workflow.
 
-Good Atif-style fixes say:
+Good DeJoule-style fixes say:
 
 - what crashed or behaved incorrectly
 - why the existing code did that
@@ -90,7 +90,7 @@ For `JouleTRACK`:
 
 ### 4. Make Edge Cases First-Class
 
-Atif-style fixes often handle bad production data and timing races gracefully:
+DeJoule-style fixes often handle bad production data and timing races gracefully:
 
 - duplicate rows where `findOne()` expects one
 - null/undefined values before Waterline create/update
@@ -117,7 +117,7 @@ For `JouleTRACK`, add selector/service tests when the changed logic is testable.
 
 ## System Design And LLD Style
 
-When asked for design or LLD in Atif style:
+When asked for design or LLD in DeJoule coding style:
 
 1. Start with current repo/system context.
 2. State the product problem and the production failure modes.
@@ -252,4 +252,4 @@ When planning:
 
 1. Use `software-architecture-planner` for HLD/system design.
 2. Use `backend-implementation-planner` or `api-service-generator` for LLD/API work.
-3. Apply this skill to keep the plan in Atif's delivery style: incremental, testable, repo-native, and PR-clean.
+3. Apply this skill to keep the plan in DeJoule delivery style: incremental, testable, repo-native, and PR-clean.
