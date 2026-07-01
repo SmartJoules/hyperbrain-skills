@@ -14,12 +14,10 @@
 ## 🚀 Quick Install
 
 ```bash
-# One-command installation
-curl -sSL https://raw.githubusercontent.com/SmartJoules/hyperbrain-skills/main/install.sh | bash
-
-# Or clone and install
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-cd /tmp/hyperbrain-skills && ./install.sh
+# Clone and install
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills
+cd hyperbrain-skills
+./install.sh
 
 # Skills are now active! Restart your AI assistant.
 ```
@@ -394,16 +392,16 @@ Skills: tdd-workflow, testing-strategies, e2e-testing, performance-testing, secu
 > a self-contained overview of benefits, usage, and a complete SDLC flow example.
 
 > **Pi (pi.dev) users:** `./install.sh --assistant pi` — Pi uses the same `SKILL.md`
-> format as Claude Code, so every skill works unchanged (installed to `~/.pi/agent/skills/`).
+> format as Claude Code, so every skill works unchanged.
 
 ### Quick Install (Recommended)
 
-The installer copies each skill into its own folder under `~/.claude/skills/`,
-which is exactly what Claude Code expects.
+The installer copies each skill into the assistant's configured skills directory,
+with one folder per skill.
 
 ```bash
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-cd /tmp/hyperbrain-skills
+git clone https://github.com/SmartJoules/hyperbrain-skills.git hyperbrain-skills
+cd hyperbrain-skills
 ./install.sh
 
 # Restart Claude Code — skills are immediately available
@@ -413,21 +411,20 @@ cd /tmp/hyperbrain-skills
 
 Each skill is a directory with a `SKILL.md` inside. Claude Code registers a skill
 by the `name` in its frontmatter and requires one folder per skill. Do **not**
-clone the repo straight into `~/.claude/skills` and do **not** `cp -r repo/* ...`
+clone the repo straight into the assistant skills directory and do **not** `cp -r repo/* ...`
 (that copies top-level docs and `.git` as junk). Copy each skill directory:
 
 ```bash
-# 1. Clone the repository to a temp location
-git clone https://github.com/SmartJoules/hyperbrain-skills.git /tmp/hyperbrain-skills
-
-# 2. Copy every skill (each dir containing a SKILL.md) into ~/.claude/skills/
-mkdir -p ~/.claude/skills
-find /tmp/hyperbrain-skills -name SKILL.md -not -path '*/.git/*' | while read -r f; do
+# 1. Run from the hyperbrain-skills repo root.
+# 2. Set ASSISTANT_SKILLS_DIR to your assistant's skills directory.
+: "${ASSISTANT_SKILLS_DIR:?Set ASSISTANT_SKILLS_DIR first}"
+mkdir -p "$ASSISTANT_SKILLS_DIR"
+find . -name SKILL.md -not -path '*/.git/*' | while read -r f; do
   d="$(dirname "$f")"
-  cp -r "$d" ~/.claude/skills/"$(basename "$d")"
+  cp -R "$d" "$ASSISTANT_SKILLS_DIR/$(basename "$d")"
 done
 
-# 3. Restart Claude Code — skills are now active
+# 3. Restart your assistant — skills are now active
 ```
 
 ---
@@ -519,14 +516,14 @@ hyperbrain-skills/
 Enable AI assistants to access external services (Notion, Figma, GitHub, Slack, databases):
 
 ```bash
-# Navigate to MCP setup directory
-cd hyperbrain-skills/mcp-setup
+# Navigate to MCP setup directory from the repo root
+cd mcp-setup
 
 # Run automated setup
 ./setup-mcp.sh
 
 # This will:
-# - Create ~/.claude/.env for secure token storage
+# - Create the assistant env file for secure token storage
 # - Prompt you for API tokens
 # - Install MCP servers globally
 # - Update Claude settings with MCP configurations
