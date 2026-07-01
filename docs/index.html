@@ -225,7 +225,7 @@ Fleet (CLI) : <span class="k">/tokensmax</span> build the comfort-index widget e
     <div class="cmd-grid">
       <div class="cmd">
         <h3><i class="ti ti-download" aria-hidden="true"></i>Update and install</h3>
-<pre>cd /Users/atif-salafi/Desktop/workspace/office-space/hyperbrain-skills
+<pre># from the hyperbrain-skills repo root
 git pull origin main
 ./install.sh --assistant codex
 
@@ -418,7 +418,7 @@ git diff --check
 node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package ok')"
 find . -maxdepth 2 -name SKILL.md -print
 rg -n "skill-loading-runtime|model-selection-runtime|production-safety-guards|advanced-ai-workflow|agent-planning-harness|pi-coding-agent" .
-python3 /Users/atif-salafi/.codex/skills/.system/skill-creator/scripts/quick_validate.py skill-loading-runtime</pre>
+python3 "${HOME}/.codex/skills/.system/skill-creator/scripts/quick_validate.py" skill-loading-runtime</pre>
       </div>
 
       <div class="cmd">
