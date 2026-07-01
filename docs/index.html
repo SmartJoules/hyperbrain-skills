@@ -371,6 +371,28 @@ Analyze this bug:
 Find root cause, fix pattern, regression test, and ask before ingesting reusable KB.</pre>
       </div>
 
+      <div class="cmd wide">
+        <h3><i class="ti ti-refresh-dot" aria-hidden="true"></i>Invoke self-learning</h3>
+<pre>Use self-learning, long-term-memory, bug-postmortem-learning, local-kb, and self-verification.
+
+Analyze this completed session, bug fix, PR, or design decision:
+&lt;paste summary, PR link, commits, files changed, or incident notes&gt;
+
+Extract reusable learnings:
+- root cause pattern
+- fix pattern
+- regression test pattern
+- repo-specific convention
+- design/API/UI/deployment decision
+- what future agents should check first next time
+
+Ingestion rule:
+- Ask me before saving anything to KB, memory, or repo docs.
+- Show the exact proposed learning first.
+- Include where it should live: local KB, skill KB, README/docs, postmortem, or long-term memory.
+- Keep secrets, credentials, customer data, and temporary debugging noise out of memory.</pre>
+      </div>
+
       <div class="cmd">
         <h3><i class="ti ti-affiliate" aria-hidden="true"></i>Ontology, Neptune, Brick</h3>
 <pre>Use ontology-service-knowledge-base, neptune-graph, brick, skill-loading-runtime, and self-verification.
