@@ -35,6 +35,7 @@ Useful sampled commits:
 - `jt-api-v2` `aefdd1531`: production Sentry fix for Waterline `.findOne()` duplicates; add duplicate-tolerant private helper, bulk update, focused tests, and explicit follow-up.
 - `jt-api-v2` `91c6191b4`: preserve parameter mappings by snapshot -> recreate -> restore non-empty fields, with controller sequence and service helper tests.
 - `jt-api-v2` `46fad8e13`: optimize comfort-index by server-side downsampling, short-TTL fail-open Redis cache, cache invalidation seam, and tests.
+- `jt-api-v2` PR `#1927`: restore device parameter mappings from bulk audit and add batch super-recipe deploy by rebuilding a polluted branch from `origin/dev`, keeping only intended files, using repo-supported `async` concurrency limits, deterministic partial-result ordering, real update counts, and focused service tests.
 
 Do not freeze these examples as dogma. Use them as precedent for how to think.
 
@@ -154,6 +155,9 @@ Use these patterns when building or fixing backend code:
 - Bulk update when business correctness requires mutating all duplicate rows.
 - Snapshot -> destructive step -> restore when refresh/rebuild would otherwise lose device-specific fields.
 - Preserve non-empty existing values; do not overwrite good defaults with blank/null/undefined.
+- For restore/recovery APIs, validate route ownership (`siteId`, `deviceId`) against the recovered packet before mutating rows, expose apply/dry-run semantics where useful, and report real datastore update counts rather than attempted update tasks.
+- For batch APIs, cap input size and chunk/concurrency settings, use repo-supported concurrency primitives already present in the codebase, return per-item success/failure, and preserve request order in responses.
+- Await async side effects such as audit events when the API promises they are part of the operation, but log and fail open when the business mutation has already succeeded and audit failure should not convert the request to a 500.
 - Cache read-heavy queries with short TTL only when stale data is acceptable; fail open on cache errors.
 - Export pure helpers for tests when it improves coverage without exposing public API.
 - Preserve nulls/gaps in telemetry; do not convert missing sensor data to zero.
@@ -194,6 +198,8 @@ When addressing review feedback:
 - report partial failures instead of hiding them
 - keep CSS or shared-component changes scoped
 - keep public response shapes stable unless explicitly changing the contract
+- before pushing a corrected PR branch, verify the remote PR diff with `gh pr diff <PR> --name-only` and remove unrelated Slack, monitoring, local docs, or generated files
+- when cleaning a polluted branch, rebuild from the base branch and reapply narrow hunks for broad files like `config/routes.js` and `config/policy.json`
 
 Reviewers should see a cleaner, smaller PR after feedback, not a larger tangential rewrite.
 
