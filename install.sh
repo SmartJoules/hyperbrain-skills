@@ -214,6 +214,14 @@ main() {
                     chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
                     print_info "    + CLI -> ~/.local/bin (ensure it's on PATH)"
                 fi
+                # If the skill ships sourced libraries (lib/*.sh), install them where
+                # the CLI resolves them (~/.local/share/<skill>/lib) — a bin/ copied to
+                # ~/.local/bin can't find lib/ beside itself.
+                if [ -d "$skill_dir/lib" ]; then
+                    mkdir -p "$HOME/.local/share/$skill_name/lib"
+                    cp "$skill_dir"/lib/*.sh "$HOME/.local/share/$skill_name/lib/" 2>/dev/null || true
+                    print_info "    + lib -> ~/.local/share/$skill_name/lib"
+                fi
                 if [ -d "$skill_dir/commands" ]; then
                     mkdir -p "$commands_dir"
                     cp "$skill_dir"/commands/*.md "$commands_dir/" 2>/dev/null || true
