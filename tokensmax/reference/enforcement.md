@@ -21,6 +21,27 @@ Claude Code then **prompts the user to approve every `run|fleet` dispatch** (sho
 even under auto-accept; `--dry` and read-only ops pass through. This is the only layer that can pause a
 human while an LLM drives the CLI — the CLI itself can't (the LLM is its caller).
 
+## The frictionless choice — allow the CLI (recommended for interactive use)
+
+The hook above is the *paranoid* setting: a hard pause before every dispatch. For normal interactive
+use the meaningful confirm is already the **route-picker** (AskUserQuestion) plus the `--yes` gate — a
+raw Bash-approval prompt on top of that is redundant friction. Allow the CLI in `~/.claude/settings.json`:
+
+```json
+{ "permissions": { "allow": [
+  "Bash(tokensmax:*)",
+  "Bash(git merge --no-ff:*)",
+  "Bash(git apply:*)"
+] } }
+```
+
+`Bash(tokensmax:*)` covers the entire dispatch — tokensmax's workers (git worktree, `codex exec`,
+`claude -p`) run as **child processes** of the CLI, not as separate Bash tool calls, so Claude Code's
+permission layer only ever sees the one `tokensmax …` invocation. The two `git` rules let you accept a
+build (the printed `merge`/`apply`) without a prompt. Settings load at session start — open a fresh
+session. Pick **one** model: this allow-rule (gate = the picker) *or* the hook (gate = a hard pause);
+installing both means the hook still prompts.
+
 ## Honest limits
 
 - **`--build` isolation** is at the git-worktree level (review the diff, keep/discard). Codex build is

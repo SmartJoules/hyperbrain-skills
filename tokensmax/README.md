@@ -54,7 +54,10 @@ ladder, not a fixed menu. It runs **nothing** yet:
 ```
 
 **3. You pick "Cross-check."** It dispatches **both seats in parallel**, each in its own throwaway git
-worktree — your real branch never touched — then diffs the two builds and synthesizes the best of each.
+worktree — your real branch never touched. A build can run for minutes, so it's fired in the background
+and **`tokensmax watch`** streams each seat's live progress — a **health tag** (working / stalled /
+rate-limited), a milestone count, the files landing in its worktree, and its report tail — surfaced to
+you between turns. No silent spinner. Then it diffs the two builds and synthesizes the best of each.
 
 **4. It reports who did what, and the real cost:**
 
@@ -77,12 +80,21 @@ Most "run N agents" tools loop over a list and hope. tokensmax is opinionated wh
 - **Right-sized models, not max-by-default.** It offers the full ladder (cheap → mid → deep) and
   *recommends the fit* — you don't pay Opus prices for a lint pass, and it won't silently default to the
   top model. Uses the **current** lineup; no version is hardcoded.
-- **Confirm at the tool boundary.** `run`/`fleet` refuse to dispatch without `--yes`; and the optional
-  `tokensmax-guard` **hook** makes Claude Code **pause for your approval before every dispatch** — a real
-  human-in-the-loop, not the orchestrator's goodwill.
+- **Confirm at the tool boundary.** The interactive route-picker (plus the `--yes` gate) is the working
+  confirm — you pick before anything runs. For hands-off in-session use, allow `Bash(tokensmax:*)` (setup
+  step 4); prefer a hard pause on *every* dispatch instead? the optional `tokensmax-guard` **hook** does
+  exactly that. Pick one — not the orchestrator's goodwill.
 - **Big work auto-phases.** A broad task decomposes into bounded phases with a review gate — they
   checkpoint (survive a rate limit, resume after reset) and parallelize across seats. Real throughput,
   not raw burn.
+- **Never a black box.** Long builds run in the background; `tokensmax watch` streams each seat's
+  **health** (working / stalled / rate-limited), milestone count, files landing per worktree, and report
+  tail — so you see what every seat is *doing*, not a spinner. Every run also saves a durable report +
+  `.patch`; nothing is lost to cleanup.
+- **Bounded, evidence-gated review loops.** A `pipeline` reviews against the *acceptance criteria* (not
+  open-ended "find any bug" — that never converges), tags findings BLOCKING vs NIT, feeds the reviewer's
+  exact defects into the fix, and stops when a **test passes** — capped, not spinning. The orchestrator
+  ingests only a tiny verdict token, so a few bytes gate a whole fix-build.
 - **Honest about cost & quota.** Real `$` per run, window totals, and a reset time when a seat maxes
   out. It will **not** fake a "tokens left" number — no vendor exposes one.
 - **Inspectable routing.** Who-plans-who-builds is a policy file you can read and edit
@@ -103,7 +115,7 @@ tokensmax run claude --build  --repo ~/myapp "add a --version flag"   # isolated
 
 Need: **macOS or Linux**, stock **bash**, **git**, optionally **python3** (for Claude token/cost
 capture — works without it, just less precise), and **at least one agent CLI** logged into your own
-account. Four steps, in order.
+account. Five steps, in order.
 
 ### 1 — Install tokensmax
 
@@ -139,7 +151,28 @@ tokensmax init     # scans installed CLIs + logged-in seats, asks which to bind,
 
 No hand-writing paths. Re-run `tokensmax init --force` after adding an engine; `--yes` accepts defaults.
 
-### 4 — Verify, then go
+### 4 — Make in-session dispatch frictionless (one Claude Code rule) — **required for `/tokensmax`**
+
+So `/tokensmax` in a session dispatches without a redundant raw-Bash approval prompt, allow the CLI in
+`~/.claude/settings.json`. The meaningful confirm is the interactive **route-picker** (plus the `--yes`
+gate) — not an OS prompt — and tokensmax's workers run as *child processes*, so this one rule covers the
+whole dispatch without broadening anything risky:
+
+```json
+{ "permissions": { "allow": [
+  "Bash(tokensmax:*)",
+  "Bash(git merge --no-ff:*)",
+  "Bash(git apply:*)"
+] } }
+```
+
+`Bash(tokensmax:*)` is the must-have (all `run`/`fleet`/`watch`/`usage`/`workflow`/`queue`); the two
+`git` rules let you **keep** a build (`merge`/`apply` the printed diff) without a prompt. Settings load
+at session start — **open a fresh session** for it to take effect. Prefer a hard pause before *every*
+dispatch instead? Install the `tokensmax-guard` hook ([reference/enforcement.md](reference/enforcement.md))
+— the opposite choice.
+
+### 5 — Verify, then go
 
 ```bash
 tokensmax auth          # each engine logged in / configured?
@@ -159,9 +192,15 @@ All green in `doctor` → you're done. For API-keyed engines (e.g. GLM), put the
 
 ```
 tokensmax status                       what's wired: accounts, models, what-for, per-call context
-tokensmax run <engine> [opts] "task"   one engine
+tokensmax run <engine> [opts] "task"   one engine  (add --bg to fire it non-blocking)
 tokensmax fleet [eng,eng|all] "task"   several in parallel → saved reports
+tokensmax watch [--follow [n]]         live per-seat progress: health (working/stalled/rate-limited) + files per worktree + report tails
+tokensmax kill <match|all>             stop a live background run (the ⚠-stalled remedy) — partial report is kept
 tokensmax usage [today|all|DATE]       who solved what · est vs actual tokens · $ cost · ⚠ limits
+tokensmax reports [cat <match>]        list durable run/build reports + saved .patch files
+tokensmax queue add <eng> "task"       durable autonomous task queue: add | list | run | clear
+tokensmax schedule on [secs] | off     run `queue run` unattended (launchd/cron) · status
+tokensmax workflow run <name> k=v      saved, replayable multi-step pipeline: list | show | run | init
 tokensmax init | doctor | auth | list
 ```
 
@@ -203,6 +242,40 @@ gate between each — surfaced in the proposal, overridable with *"just one-shot
 model's *judgment about scope* — never a hardcoded budget, never a regex on your prompt. Tag a run with
 `--est S|M|L` and `usage` shows it against actuals.
 
+### Saved workflows — replayable multi-step pipelines
+
+A workflow is a plain-text `.wf` file under `~/.config/tokensmax/workflows` — an ordered list of steps,
+each a dispatch, with `{{param}}` substitution. `tokensmax workflow init` writes two to start:
+
+```bash
+tokensmax workflow init                                   # writes build-review.wf + cross-check.wf
+tokensmax workflow list                                   # name + description
+tokensmax workflow run build-review --repo ~/app task="add a --json flag"
+```
+
+`build-review` builds with one seat, then reviews **the diff** with another — the review step chains to
+the build's worktree via the `{{prev_worktree}}` token, so the reviewer reads exactly what was just
+built and returns a bounded `VERDICT: BUG|CLEAN`. `cross-check` runs the same task on both seats to
+compare. Steps take `engine · profile · model/effort · prompt` (+ optional `repo:`); edit the `.wf` or
+add your own. Like every dispatch, `workflow run` honors the `--yes` gate; add `--bg` to run the whole
+pipeline in the background and follow it with `watch`.
+
+**In a session**, saved workflows aren't a separate command you have to remember — when one fits the
+task, the orchestrator offers it as **one of the routing options** in the picker (e.g. *"▸ Saved
+workflow: build-review"*), shown only when it applies. You pick it like any other route.
+
+### Autonomous — queue + schedule
+
+```bash
+tokensmax queue add codex --build --repo ~/app "port the utils to typed"   # enqueue (durable)
+tokensmax queue run                                                        # run all pending → done/failed, each saves a report
+tokensmax schedule on 3600                                                  # run the queue hourly (launchd/cron); `off` to stop
+```
+
+Queue tasks are durable files (idempotent: done tasks move out); `schedule` wires `queue run` to
+launchd (macOS) or cron. **ToS note:** unattended load against *interactive subscription* seats is a
+gray area — prefer an API-key engine (e.g. GLM) for scheduled work.
+
 ### The dispatch policy
 
 Before dispatching, the orchestrator reads [`dispatch-policy.yaml`](./dispatch-policy.yaml) and follows
@@ -218,9 +291,10 @@ switches between `propose-then-confirm` (default), `auto-announce`, `auto-escala
 Two tiers — run **Tier 1** on every change; run **Tier 2** when you touch Phase 0 (intake), the routing
 policy, or the intake prompt.
 
-**Tier 1 — smoke test (no auth, ~1 s).** `./test.sh` exercises the CLI mechanics with no engine logged
-in: argument parsing, `--fast`/`--effort`/`-m` model resolution, the confirm gate (`run`/`fleet` refuse
-without `--yes`), `--dry`, and graceful `usage` with no reports.
+**Tier 1 — smoke test (no auth, ~1 s).** `./test.sh` runs 15 checks against the CLI mechanics with no
+engine logged in: argument parsing, model resolution (`--fast`/`--effort`/`-m`), the confirm gate
+(`run`/`fleet` refuse without `--yes`), `--dry`, **unknown-flag rejection**, graceful `usage` and
+`watch` on empty state, and `workflow` init/list/show/help. `shellcheck`-clean.
 
 **Tier 2 — Phase-0 intake eval (needs auth, ~10 min).** `test/intake_eval/` is a gold-labeled,
 stratified harness that dispatches each case through the **exact intake prompt** the skill prescribes,
@@ -295,7 +369,7 @@ maxes out (the honest ceiling). For a literal "N left", set `session_limit = <to
 | `--research` / `--review` read-only | ✅ Claude: no edit/write tools, no Bash. Codex: OS `-s read-only` sandbox. OpenCode/Cursor/Antigravity have no native flag — rely on `--build`'s worktree. |
 | `--build` isolation | ✅ git worktree (branch untouched). Codex build is also OS-sandboxed to the worktree; Claude build is git-isolated but not an OS jail — treat the *diff* as the boundary. |
 | Account binding | ✅ pinned per engine; a logged-out seat errors, never silently switches. |
-| Confirm-before-dispatch | ✅ two layers. The CLI refuses dispatch without `--yes` (stops *accidental* silent runs). For a true human gate, install the **PreToolUse hook** (`hooks/tokensmax-guard.sh`) — Claude Code then **prompts you to approve every dispatch**, since an LLM driving the CLI could otherwise self-confirm. `--dry` + read-only ops aren't gated. |
+| Confirm-before-dispatch | ✅ In a session the working gate is the **route-picker** (you pick before anything runs) + the CLI's `--yes` refusal (stops *accidental* silent runs). Allow `Bash(tokensmax:*)` (setup step 4) for frictionless dispatch, **or** install the **PreToolUse hook** (`hooks/tokensmax-guard.sh`) for a hard pause on every dispatch — pick one. `--dry` + read-only ops aren't gated. |
 | `doctor` auth status | ⚠️ heuristic (config present), not a live token check. |
 | "tokens left this session" | ❌ not exposed by any vendor — use cost + reset, or set `session_limit`. |
 

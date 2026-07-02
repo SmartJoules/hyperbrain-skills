@@ -61,7 +61,9 @@ strategies:
       write SPEC.md first (DOM/data/API contract) and commit to HEAD; each engine builds its
       OWN disjoint files in its own worktree; orchestrator assembles + verifies
     write_mode: "tokensmax run <eng> --build --repo DIR per engine; stagger launches >1s"
-    note: each --build worktree STAGES but does not COMMIT — copy files out, then commit
+    note: >
+      each --build COMMITS on its branch and saves a durable .patch — keep with
+      `git merge --no-ff <branch>` (or `git apply <patch>`); never hand-copy files out
 
   planner-builder:
     when: the design should be reasoned by one engine, implemented by another
@@ -74,7 +76,39 @@ strategies:
 
   pipeline:
     when: output needs a review gate before it's trusted
-    shape: build (engine A) -> review the diff (engine B, --review) -> fix -> verify
+    shape: build (engine A) -> review the diff (engine B, --review) -> fix -> re-review -> verify
+    review_gate:
+      # The review's job is to emit a DECISION SIGNAL the orchestrator can branch on cheaply.
+      # ALL of the below were validated (and corrected) in a sandbox build->review->fix->re-review run.
+      bounded_scope: >
+        Review against the ACCEPTANCE CRITERIA (the goal's success_criteria + any known defect list) —
+        NOT an open-ended "find any correctness bug". Sandbox lesson: an unbounded prompt NEVER
+        converges — once the seeded bug was fixed (probe-verified), a strong reviewer kept escalating to
+        deeper nitpicks (fractional cents, float artifacts, Decimal-context rounding). "Loop until the
+        reviewer is silent" is a TOKEN SINK; scope the review or it never ends.
+      severity_gate: >
+        Ask the reviewer to tag each finding BLOCKING vs NIT. Only BLOCKING defects re-trigger a fix;
+        NITs are logged for the user, not looped on. Convergence == the BLOCKING/flagged defects are
+        VERIFIED FIXED (a test/probe passes) — NOT "the reviewer has no further opinions" (it always will).
+      max_iterations: >
+        Cap the fix<->review loop (default 2). On hitting the cap with only NITs left, STOP and hand the
+        user the residual list + your recommendation. Don't spin seats chasing an unbounded standard.
+      feed_forward: >
+        When a fix is needed, carry the reviewer's SPECIFIC defect lines into the fix dispatch — not a
+        generic "fix it". PROVEN in sandbox: a generic re-instruction fixed withdraw but missed deposit;
+        feeding the exact defect list fixed every named defect in ONE pass (5/5 probes).
+      parse_the_signal: >
+        Read the verdict from the EXACT report path the CLI prints on dispatch — do NOT re-discover it by
+        globbing/`ls -t | grep | head` (mtime ties pick the wrong file). Parse the token from the ENGINE
+        OUTPUT region only (after the '- started:' header): the prompt is echoed into the transcript and
+        literally contains the example 'VERDICT: BUG', so a naive `head -1` reads the echo, not the answer.
+        Both bugs were hit for real. And never keyword-match the body ("negative", "limit") for control
+        flow — same failure class as flagging a rate-limiter task as a rate-limit hit. Missing/UNCLEAR -> ask.
+      cross_check: >
+        For high stakes, run two seats' reviews in parallel (fills idle capacity + independent priors).
+        Agreement -> trust and act. Disagreement -> that is the signal to spend the orchestrator's own
+        tokens and look yourself.
+      cost: the orchestrator ingests only the verdict token (~tens of bytes) — a 9-byte VERDICT can gate a 12k-token fix build.
 
   phased:
     when: task_magnitude == L — broad / multi-subsystem / open-ended / long-horizon work that would

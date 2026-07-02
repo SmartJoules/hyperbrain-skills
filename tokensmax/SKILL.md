@@ -1,6 +1,6 @@
 ---
 name: tokensmax
-description: Orchestrates the user's coding-agent subscriptions (Claude, Codex, OpenCode, GLM, Cursor, Antigravity) as a fleet via the `tokensmax` CLI — briefs what's available, proposes routing options across seats and model tiers, dispatches the chosen plan, reports cost. Use whenever the user asks to build, write, research, review, or "do" a non-trivial task and a fleet is configured: route the work to the right (often cheaper) seat instead of doing it all in this session. This is the default way to handle such tasks here, not only when the user says "use my agents".
+description: Orchestrates the user's coding-agent subscriptions (Claude, Codex, OpenCode, GLM, Cursor, Antigravity) as a fleet via the `tokensmax` CLI — briefs what's available, proposes routing options across seats and model tiers, dispatches the chosen plan, reports cost. Use whenever the user asks to build, write, research, review, or "do" a non-trivial task and a fleet is configured — route the work to the right (often cheaper) seat instead of doing it all in this session. This is the default way to handle such tasks here, not only when the user says "use my agents".
 ---
 
 # tokensmax — you orchestrate, you don't do
@@ -12,13 +12,16 @@ all yourself burns this expensive session's tokens — delegating to a cheaper o
 to cheaper seats. **Any configured engine can do any task** (not just Codex). You may spawn a worker as
 a sub-orchestrator. Offload **without blocking** with `--bg` (fire a worker, keep going, read its report
 later). For unattended work, **queue it** (`tokensmax queue add <engine> … "task"` → `queue run`), and
-run the queue on a schedule with `tokensmax schedule on`. Every dispatch is recorded: `tokensmax usage`
-/ `reports` show **tokens + $ per task per agent** (the whole tree); nothing is lost to cleanup.
+run the queue on a schedule with `tokensmax schedule on`. For a repeatable multi-step pipeline, save a
+**workflow** (`tokensmax workflow run <name> k=v …`; `build-review` chains build→review-the-diff across
+two seats). Every dispatch is recorded: `tokensmax usage` / `reports` show **tokens + $ per task per
+agent** (the whole tree); nothing is lost to cleanup.
 
 ## The loop — MUST follow, in order
 
 1. **Brief.** Run `tokensmax status` and tell the user what's wired: subscriptions, each engine's model
-   tiers, what each is for. Read it — don't assume the fleet.
+   tiers, what each is for. Read it — don't assume the fleet. If it reports **no engines configured**,
+   stop the loop and guide the user through `tokensmax init` (then `doctor`) before anything else.
 2. **🛑 Ground the goal (Phase 0).** Before proposing, send the request to your **cheapest fast tier**
    (`tokensmax run claude --research --fast` — haiku; OpenCode/GLM `--fast` is the $0 fallback) for a
    strict-JSON read `{goal, slots, assumptions, clarity, gaps, clarifying_questions}` — **forbidding tool
@@ -30,7 +33,13 @@ run the queue on a schedule with `tokensmax schedule on`. Every dispatch is reco
    🛑 If you are about to Write/Edit/run the task yourself before the user picks — **STOP. That is the
    failure this skill exists to prevent.**
 4. **Dispatch** the chosen plan: `tokensmax run|fleet --yes [-m <model> | --effort <lvl>] --est S|M|L`.
-5. **Report.** `tokensmax usage` → who solved what, tokens + $.
+   **Never block the session on a long build.** A `--build` (esp. the claude driver, which buffers its
+   whole reply to the end) is a black box for minutes if you foreground it — and a blocking call can even
+   hit the tool timeout and look "hung". So for anything M/L or a **build+review across seats**, fire each
+   seat with **`--bg`**, then **surface progress between turns with `tokensmax watch`** — it shows what
+   each seat has produced *so far* (files landing per worktree + each background report's tail). Show the
+   user that snapshot; don't sit on a silent spinner. Loop `watch` until the seats finish.
+5. **Report.** `tokensmax watch` for the final frame, then `tokensmax usage` → who solved what, tokens + $.
 
 ## Building the options — reason from the real fleet, never a hardcoded list
 
@@ -42,6 +51,11 @@ From `tokensmax status`, form the sensible **permutation × combination** of `se
   GLM, solo) so this session spends almost nothing — pick the concrete seat from what's configured.
 - **Span the tiers:** a cheap, a mid (often the pick), a top, and — with ≥2 seats — a cross-check. Vary
   Codex effort; reach any model with `-m` from the current lineup. Never pin to the top, never hardcode names.
+- **Surface a saved workflow when one fits.** Run `tokensmax workflow list`; if a saved `.wf` matches the
+  task shape (a build → `build-review`; a high-stakes task → `cross-check`), offer it as **one of the
+  picker options** ("▸ Saved workflow: build-review — build → review-the-diff"). It's not forced and not a
+  separate flow — just another route, shown only when it fits. On pick → `tokensmax workflow run <name>
+  --repo DIR --yes key=value` (add `--bg` for M/L, then `watch`).
 - More seats → more options; one seat → fewer. **The user picks the model + path, every time.**
 
 ## Default to orchestrating
@@ -50,7 +64,8 @@ Any build / research / review / "do X" request → run the loop. Do it **in this
 when it's genuinely undispatchable — and then say so and ask first:
 - needs **live data** a worker can't reach → offer `--live` (see [reference/access.md](reference/access.md)),
 - it's **judging an already-rendered UI** (no worker sees pixels — but *building* UI IS dispatchable),
-- you **already hold the answer**.
+- you **already hold the answer**, or the task is **smaller than the dispatch itself** (a one-line edit,
+  a rename, a quick fact) — dispatch overhead must never exceed the work.
 
 ## Depth — read on demand
 

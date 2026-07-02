@@ -7,8 +7,9 @@ Headless workers can't see two things; screen for them before dispatching.
 A worker can't reach the user's DB / API / graph / metrics **unless granted**. If an engine has
 `mcp_config` set (Codex: `codex mcp add …`), propose `--live` and **ask the user**: *"the worker will
 query your live system with your credentials — grant for this run?"* On yes, dispatch
-`--live --grant-live` (a separate, stronger gate than `--yes`; a human typing it in a terminal is
-auto-granted). If it's not configured or the user declines, **run the query yourself in this session** —
+`--live --grant-live` (a separate, stronger gate than `--yes` — always explicit; a TTY is not
+consent, since `ssh -t`/`docker -t` allocate pseudo-TTYs). If it's not configured or the user
+declines, **run the query yourself in this session** —
 never let a blind worker speculate about live data (it will confidently invent answers).
 
 ## Visual judgment

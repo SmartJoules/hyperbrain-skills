@@ -63,8 +63,10 @@ single bounded action + a success criterion; when in doubt, run intake.
    gate; Phase 0 was the goal gate). Don't dump text; offer the interactive
    picker (like brainstorming). Build **3–5 options from `tokensmax status`** (the actual engines +
    models), scaled to what's configured: recommended split · swapped split · cross-check (if ≥2
-   engines) · cheap/fast · phased-if-large. Each option label names `engine → role → model` + write
-   mode. **Run nothing** (no Bash, no worktree, no `run/fleet`) until the user picks. Silence ≠ consent.
+   engines) · cheap/fast · phased-if-large · **a saved workflow if one fits** (`tokensmax workflow list`
+   — offer it as one route, e.g. "▸ Saved workflow: build-review", never a forced separate step). Each
+   option label names `engine → role → model` + write mode. **Run nothing** (no Bash, no worktree, no
+   `run/fleet`/`workflow run`) until the user picks. Silence ≠ consent.
    (Exception: an explicit up-front "just do it".) If AskUserQuestion is unavailable, fall back to this
    text block and wait:
    ```
@@ -80,6 +82,21 @@ single bounded action + a success criterion; when in doubt, run intake.
    independent phases across both seats. On pushback → adjust. If a result comes back shallow, **re-run
    one tier up**. Check `tokensmax usage` for estimate vs actual + cost + any ⚠ limit hits.
 
+## Show progress — don't block on a black box
+A `--build` runs headless and the **claude driver buffers its whole reply to the end** (json), so a
+blocking foreground dispatch shows *nothing* for minutes — and can hit the calling tool's timeout and look
+hung. For M/L work or a **build+review across two seats**, dispatch each seat with **`--bg`** (returns
+immediately with a pid + report path), then between turns run **`tokensmax watch`** and **relay the frame
+to the user** — it's a health + milestone view, per seat: a status tag (**● working · ⚠ stalled — no
+output · ⚠ rate-limited**), a milestone count (report lines, and files landing per worktree), and how
+many **seconds idle** (freshest of the report *or* the worktree — so a claude build that buffers its
+reply still reads as working while files land). Keep polling `watch` until the seats finish, then read the
+reports. If a seat stays **⚠ stalled** (or you dispatched the wrong thing), stop it with
+**`tokensmax kill <match|all>`** — the partial report is kept — then re-route.
+The point: the user sees *what each seat did and whether it's healthy, periodically* — never a
+silent spinner. For a **continuous** in-session stream, arm a background monitor on the reports dir (emit
+a line per new report/worktree file) so milestones arrive as notifications; otherwise poll `watch` each turn.
+
 ## After dispatch — assembly invariants
 - `--build` **commits its work on the branch** and saves a durable `.patch`. To keep it, run the printed
   `keep:` command (`git -C <repo> merge --no-ff <branch>`) or `git apply` the `.patch`. Output is **never
@@ -87,6 +104,15 @@ single bounded action + a success criterion; when in doubt, run intake.
 - The CLI **staggers** parallel `--build` launches and **auto-seeds HEAD** on a fresh `git init` repo.
 - For `parallel-split`, commit `SPEC.md` to HEAD **before** dispatch so every worktree sees it.
 - **Verify** before claiming done: contract IDs present, code parses, hooks line up.
+- **Review gates return a signal, not prose — but scope them or they never end.** Review against the
+  **acceptance criteria + known defect list**, not open-ended "find any bug" (a strong reviewer escalates
+  to endless nitpicks and never says CLEAN — a token sink). Have it tag findings **BLOCKING vs NIT**; only
+  BLOCKING re-triggers a fix. **Converge on "flagged defects verified fixed" (a test passes), not
+  "reviewer silent"**, and **cap the loop (≈2)** — then hand the user the residual nits. On a fix, **feed
+  the reviewer's exact defect lines into the fix dispatch** (generic "fix it" leaves siblings unpatched —
+  proven). Parse the verdict from the **exact report path the CLI prints**, from the engine-output region
+  (the echoed prompt contains a literal `VERDICT:` example — a naive `head -1` reads the echo, not the
+  answer). All of this was learned by running it. See `dispatch-policy.yaml` → `strategies.pipeline.review_gate`.
 
 ## Switching modes
 Edit `mode:` in `dispatch-policy.yaml` (`propose-then-confirm` | `auto-announce` | `auto-escalate`),
@@ -96,5 +122,5 @@ or the user says so inline for one task. User instruction overrides the file.
 Task: a small static dashboard, HTML/CSS + JS. Classified: 3 files, high independence, clear
 design↔logic seam, low risk → **parallel-split**. Bind shell/ui → reasoning engine, behavior →
 code engine. Write `SPEC.md` (DOM ids + data model), commit to HEAD, dispatch both `--build`
-staggered, copy files out, verify ids + JS parse. Under propose-then-confirm this is shown and
+staggered, merge each branch (or `git apply` its saved `.patch`), verify ids + JS parse. Under propose-then-confirm this is shown and
 confirmed before dispatch.

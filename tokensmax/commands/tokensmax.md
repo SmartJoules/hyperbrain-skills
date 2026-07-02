@@ -18,8 +18,10 @@ If `$ARGUMENTS` is a bare subcommand (`status` · `usage` · `doctor` · `list` 
 2. **Options reasoned from the real fleet** (`status`) — recommended first, labelled by outcome,
    mechanics (engine→model/effort + cost) in the description. **Include a token-saving option** (hand the
    whole task to a cheaper seat solo). Building UI/code IS dispatchable — never solo it because it's visual.
-3. **User picks → dispatch** `tokensmax run|fleet --yes [-m … | --effort …] --est …`, then report who
-   solved what + tokens + $ via `tokensmax usage`.
+3. **User picks → dispatch** `tokensmax run|fleet --yes [-m … | --effort …] --est …`. For an M/L build or
+   a build+review across seats, add **`--bg`** and poll **`tokensmax watch`** between turns — relay each
+   frame so the user sees what every seat has produced *so far* (never a silent multi-minute spinner).
+   Then report who solved what + tokens + $ via `tokensmax usage`.
 
 Do it in-session only if genuinely undispatchable (live data you can't reach · judging an already-rendered
 thing · you already hold the answer) — and then say so and ask first.
